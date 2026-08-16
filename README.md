@@ -14,6 +14,8 @@ RealMe 1.2 does **not** treat either predecessor repository as an absolute imple
 
 ChatGPT-specific operational scaffolding in `fpserg/RealMe` is requirements evidence, not automatically native-app architecture.
 
+This public repository deliberately retains accepted references to Sergey’s authored founding instance as product and regression evidence. It contains no personal observations, conversation archive, credentials or runtime seed derived from that instance.
+
 ## 1.1 status
 
 Frozen reference branch:

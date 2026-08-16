@@ -10,6 +10,7 @@ describe("HomePage", () => {
     expect(
       screen.getByRole("heading", { name: "The foundation is taking form." }),
     ).toBeInTheDocument();
+    expect(screen.getByText("96 accepted · 97 not started")).toBeInTheDocument();
     expect(screen.getByText("Unformed by design")).toBeInTheDocument();
   });
 });

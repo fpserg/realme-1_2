@@ -2,6 +2,8 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
+import { importsFrom } from "./import-specifiers.mjs";
+
 const sourceRoot = path.resolve("src");
 const layers = ["domain", "application", "projections", "infrastructure"];
 const allowedLayers = {
@@ -49,13 +51,6 @@ function importedLayer(specifier, importer) {
   return relative.split(path.sep)[0];
 }
 
-function importsFrom(source) {
-  const matches = source.matchAll(
-    /(?:from\s+|import\s*\()\s*["']([^"']+)["']/g,
-  );
-  return [...matches].map((match) => match[1]);
-}
-
 const violations = [];
 
 for (const layer of layers) {
@@ -64,9 +59,13 @@ for (const layer of layers) {
   for (const file of files) {
     const source = await readFile(file, "utf8");
 
-    for (const specifier of importsFrom(source)) {
+    for (const specifier of importsFrom(source, file)) {
       const packageViolation = forbiddenPackages[layer].some(
-        (prefix) => specifier === prefix || specifier.startsWith(`${prefix}/`),
+        (prefix) =>
+          specifier === prefix ||
+          (prefix.endsWith("/")
+            ? specifier.startsWith(prefix)
+            : specifier.startsWith(`${prefix}/`)),
       );
       const targetLayer = importedLayer(specifier, file);
       const layerViolation =

@@ -16,6 +16,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "audit:security": "pnpm audit --audit-level high",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "test": "vitest",
     "test:unit": "vitest run",

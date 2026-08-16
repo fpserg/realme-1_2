@@ -17,7 +17,7 @@ export default function HomePage() {
           </div>
           <div>
             <dt>Current step</dt>
-            <dd>96 · Infrastructure bootstrap</dd>
+            <dd>96 accepted · 97 not started</dd>
           </div>
           <div>
             <dt>World state</dt>
