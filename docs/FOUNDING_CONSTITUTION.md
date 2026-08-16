@@ -1,7 +1,7 @@
 # RealMe 1.2 — Founding Constitution
 
-Version: 0.4  
-Status: STEP 95 ACCEPTED / STEP 96 NOT STARTED
+Version: 0.5  
+Status: FOUNDING SEQUENCE COMPLETE / STEP 96 ACCEPTED
 
 ## 1. Purpose
 
@@ -226,13 +226,11 @@ The accepted frontend, server, database, auth, AI, memory, time, security, deplo
 
 The accepted classification of all 105 frozen 1.1 files is recorded in `docs/LEGACY_1_1_SALVAGE_MAP.md`.
 
-### Step 96 — Infrastructure bootstrap — NOT STARTED
+### Step 96 — Infrastructure bootstrap — ACCEPTED
 
-Establish clean application skeleton, Git workflow, CI, deploy previews, database strategy, secrets and baseline tests.
+The accepted clean application skeleton, Git workflow, CI, deployment configuration, database strategy, secret contracts and baseline tests are recorded in `docs/INFRASTRUCTURE_BOOTSTRAP.md`.
 
-Step 96 requires a separate explicit Warden instruction.
-
-Only after these steps should substantive product migration begin.
+The founding sequence is complete. Substantive product implementation may now proceed only through separately scoped, bounded steps that preserve this constitution.
 
 ## 15. Acceptance records
 
@@ -243,6 +241,10 @@ The Warden explicitly accepted Step 94 on 2026-08-16 after accepting the six arc
 The Warden explicitly accepted Step 95 on 2026-08-16 after accepting the complete 105-file salvage map and its four defaults.
 
 Step 95 acceptance freezes legacy classifications. It does not itself authorize Step 96, infrastructure implementation or legacy-code migration.
+
+The Warden explicitly accepted Step 96 on 2026-08-16 after accepting its ten bootstrap defaults and reviewing the verified infrastructure candidate. The frozen dependency graph, formatting, linting, strict type checking, architecture-boundary validation, unit and component tests, production build and mobile Playwright smoke test all passed before acceptance.
+
+Step 96 acceptance completes the founding sequence. It does not provision external Netlify or Supabase resources, introduce product schema, authorize personal-data migration or approve an unbounded migration of legacy product code.
 
 ## 16. Founding maxim
 

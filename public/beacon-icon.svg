@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <rect width="100" height="100" fill="#090c14" rx="22"/>
+  <defs>
+    <radialGradient id="bg-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="35%" stop-color="#ffe680" stop-opacity="0.95"/>
+      <stop offset="70%" stop-color="#d4af37" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#8a6318" stop-opacity="0.7"/>
+    </radialGradient>
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="40%" stop-color="#eab308"/>
+      <stop offset="80%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="40" stroke="url(#gold-grad)" stroke-width="2" fill="none"/>
+  <circle cx="50" cy="50" r="38.5" stroke="#fef08a" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.4" fill="none"/>
+  <circle cx="50" cy="50" r="7.5" fill="url(#bg-glow)"/>
+  <g fill="url(#gold-grad)">
+    <polygon points="50,13 52.5,42 50,44.5 47.5,42"/>
+    <polygon points="50,87 52.5,58 50,55.5 47.5,58"/>
+    <polygon points="87,50 58,52.5 55.5,50 58,47.5"/>
+    <polygon points="13,50 42,52.5 44.5,50 42,47.5"/>
+    <g transform="rotate(45 50 50)">
+      <polygon points="50,23 52,42 50,44 48,42"/>
+      <polygon points="50,77 52,58 50,56 48,58"/>
+      <polygon points="77,50 58,52 56,50 58,48"/>
+      <polygon points="23,50 42,52 44,50 42,48"/>
+    </g>
+  </g>
+</svg>
