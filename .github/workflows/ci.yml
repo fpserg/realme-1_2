@@ -34,7 +34,7 @@ jobs:
           corepack install --global pnpm@11.19.0
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Verify formatting
         run: pnpm format:check
@@ -59,12 +59,3 @@ jobs:
 
       - name: Run mobile smoke test
         run: pnpm test:e2e
-
-      - name: Preserve generated bootstrap lockfile
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-pnpm-lock
-          path: pnpm-lock.yaml
-          if-no-files-found: error
-          retention-days: 1
