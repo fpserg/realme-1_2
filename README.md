@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **STEP 93 ACCEPTED / STEP 94 IN SYNTHESIS**
+Status: **STEP 94 ACCEPTED / STEP 95 NOT STARTED**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -41,6 +41,7 @@ Before transplanting code, every major 1.1 subsystem is classified as:
 
 - [`docs/FOUNDING_SYNTHESIS.md`](docs/FOUNDING_SYNTHESIS.md) — accepted Step 93 product truths and inheritance classifications.
 - [`docs/FOUNDING_CONSTITUTION.md`](docs/FOUNDING_CONSTITUTION.md) — constitutional requirements governing subsequent architecture.
+- [`docs/NATIVE_ARCHITECTURE_CONSTITUTION.md`](docs/NATIVE_ARCHITECTURE_CONSTITUTION.md) — accepted Step 94 application, data, AI, time, security, deployment and Living World boundaries.
 
 ## Post-Step-93 product decisions
 
@@ -52,6 +53,10 @@ Before transplanting code, every major 1.1 subsystem is classified as:
 
 The Warden accepted Step 93 on 2026-08-16. The repository records one universal named ontology tier (Realm), emergent Realmers, evidence-preserving memory, native temporal continuity, an evolving Living World and the Graduated Evidence Law.
 
-**Step 94 — Native architecture constitution: IN SYNTHESIS.**
+**Step 94 — Native architecture constitution: ACCEPTED.**
 
-Step 94 was opened by explicit Warden instruction. Its architecture remains unaccepted; Product Discovery decisions recorded after Step 93 are binding inputs to the synthesis. No production architecture or legacy subsystem becomes canonical merely because it already exists.
+The Warden accepted Step 94 on 2026-08-16. The accepted architecture is a TypeScript modular monolith: mobile-first Next.js PWA on Netlify, Supabase/PostgreSQL/Auth/Storage, server-side provider-independent AI, versioned evidence and admission, native temporal continuity and modular Living World generation over a code-native fallback.
+
+**Step 95 — 1.1 salvage map: NOT STARTED.**
+
+Step 95 requires a separate explicit Warden instruction. No concrete legacy file, module or component has yet been approved for transplantation.

@@ -1,7 +1,7 @@
 # RealMe 1.2 — Founding Constitution
 
-Version: 0.2  
-Status: STEP 93 ACCEPTED / STEP 94 NOT STARTED
+Version: 0.3  
+Status: STEP 94 ACCEPTED / STEP 95 NOT STARTED
 
 ## 1. Purpose
 
@@ -218,15 +218,15 @@ Production code must not be changed directly merely because an AI agent can writ
 
 The explicit inheritance map and founding product decisions are recorded in `docs/FOUNDING_SYNTHESIS.md`.
 
-### Step 94 — Native architecture constitution — NOT STARTED
+### Step 94 — Native architecture constitution — ACCEPTED
 
-Decide frontend, server, database, auth, AI, memory, time and deployment boundaries from the accepted requirements rather than predecessor structure.
+The accepted frontend, server, database, auth, AI, memory, time, security, deployment and Living World boundaries are recorded in `docs/NATIVE_ARCHITECTURE_CONSTITUTION.md`.
 
-Step 94 requires a separate explicit Warden instruction.
-
-### Step 95 — 1.1 salvage map
+### Step 95 — 1.1 salvage map — NOT STARTED
 
 Classify concrete files, modules and components as TRANSPLANT / ADAPT / RETIRE / RE-DISCOVER.
+
+Step 95 requires a separate explicit Warden instruction.
 
 ### Step 96 — Infrastructure bootstrap
 
@@ -234,11 +234,13 @@ Establish clean application skeleton, Git workflow, CI, deploy previews, databas
 
 Only after these steps should substantive product migration begin.
 
-## 15. Acceptance record
+## 15. Acceptance records
 
 The Warden explicitly accepted Step 93 on 2026-08-16 after Product Discovery resolved the founding questions concerning personal ontology, companion and Realmers, memory and evidence, temporal continuity, the Living World and graduated evidence.
 
-Acceptance closes Step 93. It does not itself authorize Step 94 or product implementation.
+The Warden explicitly accepted Step 94 on 2026-08-16 after accepting the six architecture defaults and incorporating the post-Step-93 modular Living World generation decision.
+
+Step 94 acceptance freezes native architecture boundaries. It does not itself authorize Step 95 or infrastructure implementation.
 
 ## 16. Founding maxim
 
@@ -247,4 +249,3 @@ Acceptance closes Step 93. It does not itself authorize Step 94 or product imple
 # PRESERVE WORK THAT PROVED ITS VALUE, NOT WORK MERELY BECAUSE IT EXISTS.
 
 # DESIGN THE NATIVE APP FOR THE PROBLEM REALME IS NOW KNOWN TO SOLVE.
-
