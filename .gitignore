@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Local environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Supabase local state
+supabase/.branches/
+supabase/.temp/
+
+# Netlify local state
+.netlify/
+
+# Editors and operating systems
+.DS_Store
+*.swp
+
+# Logs
+*.log

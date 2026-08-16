@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **STEP 95 ACCEPTED / STEP 96 NOT STARTED**
+Status: **STEP 95 ACCEPTED / STEP 96 IN PROGRESS**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -43,6 +43,7 @@ Before transplanting code, every major 1.1 subsystem is classified as:
 - [`docs/FOUNDING_CONSTITUTION.md`](docs/FOUNDING_CONSTITUTION.md) — constitutional requirements governing subsequent architecture.
 - [`docs/NATIVE_ARCHITECTURE_CONSTITUTION.md`](docs/NATIVE_ARCHITECTURE_CONSTITUTION.md) — accepted Step 94 application, data, AI, time, security, deployment and Living World boundaries.
 - [`docs/LEGACY_1_1_SALVAGE_MAP.md`](docs/LEGACY_1_1_SALVAGE_MAP.md) — accepted Step 95 classification of every frozen 1.1 file.
+- [`docs/INFRASTRUCTURE_BOOTSTRAP.md`](docs/INFRASTRUCTURE_BOOTSTRAP.md) — Step 96 candidate application, test, deployment and database foundation.
 
 ## Post-Step-93 product decisions
 
@@ -62,6 +63,6 @@ The Warden accepted Step 94 on 2026-08-16. The accepted architecture is a TypeSc
 
 The Warden accepted Step 95 on 2026-08-16. Of 105 frozen 1.1 files, 2 are TRANSPLANT, 36 ADAPT, 49 RETIRE and 18 RE-DISCOVER. No subsystem is approved for wholesale transplantation.
 
-**Step 96 — Infrastructure bootstrap: NOT STARTED.**
+**Step 96 — Infrastructure bootstrap: IN PROGRESS.**
 
-Step 96 requires a separate explicit Warden instruction. Step 95 acceptance does not authorize infrastructure changes or legacy-code migration.
+The Warden opened Step 96 and accepted its bootstrap defaults on 2026-08-16. The candidate remains unaccepted until its branch, dependency graph and automated checks have been verified and the Warden explicitly accepts Step 96.
