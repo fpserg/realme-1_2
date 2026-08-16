@@ -1,0 +1,39 @@
+name: Refresh PostCSS security lock
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Activate pnpm
+        run: |
+          corepack enable
+          corepack install --global pnpm@11.19.0
+
+      - name: Refresh lockfile
+        run: pnpm install --lockfile-only --no-frozen-lockfile
+
+      - name: Preserve generated lockfile
+        uses: actions/upload-artifact@v6
+        with:
+          name: postcss-8-5-23-lock
+          path: pnpm-lock.yaml
+
+      - name: Audit complete dependency graph
+        run: pnpm audit:security
