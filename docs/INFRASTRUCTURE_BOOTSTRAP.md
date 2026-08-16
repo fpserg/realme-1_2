@@ -71,17 +71,26 @@ No concrete queue, job table or worker is introduced until its first separately 
 
 Baseline response headers disable framing, MIME sniffing and unnecessary camera/microphone permissions. Content Security Policy is deferred until authenticated application and provider requirements are known; a false or permissive placeholder policy would not provide meaningful protection.
 
+### 7.1 Post-acceptance advisory policy
+
+CI audits the complete lockfile and blocks high and critical advisories. Moderate findings require explicit attack-surface triage and remain tracked until removed; passing the severity gate is not a permanent waiver.
+
+The 2026-08-17 hardening baseline enforces `postcss` 8.5.23 and `sharp` 0.35.0 through pnpm workspace overrides. The remaining esbuild advisory, GHSA-67mh-4wv8-2f99, is accepted temporarily because esbuild is a development-only transitive dependency of Drizzle tooling and no esbuild development server is exposed. It must be removed through a compatible dependency update and reassessed before any development tooling is exposed beyond trusted local or CI execution.
+
 ## 8. Validation gates
 
 Every pull request must pass:
 
-1. formatting;
-2. ESLint;
-3. strict TypeScript;
-4. architecture-boundary validation;
-5. unit and component tests;
-6. production build;
-7. mobile-viewport Playwright smoke test.
+1. frozen dependency installation;
+2. complete-lock high/critical advisory audit;
+3. environment-secret exclusion verification;
+4. formatting;
+5. ESLint;
+6. strict TypeScript;
+7. architecture-boundary validation;
+8. unit, component and enforcement-parser tests;
+9. production build;
+10. mobile-viewport Playwright smoke test.
 
 The health route discloses only service and build-phase state. It does not query dependencies or expose secrets.
 
