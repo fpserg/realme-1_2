@@ -1,7 +1,7 @@
 # RealMe 1.2 — Founding Constitution
 
-Version: 0.3  
-Status: STEP 94 ACCEPTED / STEP 95 NOT STARTED
+Version: 0.4  
+Status: STEP 95 ACCEPTED / STEP 96 NOT STARTED
 
 ## 1. Purpose
 
@@ -182,7 +182,7 @@ The implementation or concept is superseded, unsafe, redundant or structurally i
 
 Evidence is insufficient to make a durable 1.2 decision yet.
 
-No large subsystem is copied wholesale merely to save time. Step 93 grants no subsystem unconditional TRANSPLANT status; Step 95 will classify concrete files, modules and components against the accepted architecture.
+No large subsystem is copied wholesale merely to save time. The accepted concrete classification is recorded in `docs/LEGACY_1_1_SALVAGE_MAP.md`.
 
 ## 12. Native-app principles
 
@@ -222,15 +222,15 @@ The explicit inheritance map and founding product decisions are recorded in `doc
 
 The accepted frontend, server, database, auth, AI, memory, time, security, deployment and Living World boundaries are recorded in `docs/NATIVE_ARCHITECTURE_CONSTITUTION.md`.
 
-### Step 95 — 1.1 salvage map — NOT STARTED
+### Step 95 — 1.1 salvage map — ACCEPTED
 
-Classify concrete files, modules and components as TRANSPLANT / ADAPT / RETIRE / RE-DISCOVER.
+The accepted classification of all 105 frozen 1.1 files is recorded in `docs/LEGACY_1_1_SALVAGE_MAP.md`.
 
-Step 95 requires a separate explicit Warden instruction.
-
-### Step 96 — Infrastructure bootstrap
+### Step 96 — Infrastructure bootstrap — NOT STARTED
 
 Establish clean application skeleton, Git workflow, CI, deploy previews, database strategy, secrets and baseline tests.
+
+Step 96 requires a separate explicit Warden instruction.
 
 Only after these steps should substantive product migration begin.
 
@@ -240,7 +240,9 @@ The Warden explicitly accepted Step 93 on 2026-08-16 after Product Discovery res
 
 The Warden explicitly accepted Step 94 on 2026-08-16 after accepting the six architecture defaults and incorporating the post-Step-93 modular Living World generation decision.
 
-Step 94 acceptance freezes native architecture boundaries. It does not itself authorize Step 95 or infrastructure implementation.
+The Warden explicitly accepted Step 95 on 2026-08-16 after accepting the complete 105-file salvage map and its four defaults.
+
+Step 95 acceptance freezes legacy classifications. It does not itself authorize Step 96, infrastructure implementation or legacy-code migration.
 
 ## 16. Founding maxim
 

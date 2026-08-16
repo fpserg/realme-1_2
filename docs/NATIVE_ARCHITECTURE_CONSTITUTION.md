@@ -4,7 +4,7 @@ Version: 1.0
 Status: ACCEPTED — STEP 94 COMPLETE  
 Accepted by: Warden  
 Accepted on: 2026-08-16  
-Next step: Step 95 — NOT STARTED
+Next step: Step 96 — NOT STARTED
 
 ## 1. Purpose and authority
 
@@ -390,10 +390,9 @@ Step 94 does not decide:
 - detailed visual-generation prompts;
 - exact composition algorithms;
 - automatic Realmer names or characters;
-- concrete 1.1 file transplantation;
 - infrastructure provisioning details.
 
-These are assigned to later product decisions, Step 95 or Step 96 as appropriate.
+These are assigned to later product decisions or Step 96 as appropriate. Concrete 1.1 classifications are recorded in [`LEGACY_1_1_SALVAGE_MAP.md`](LEGACY_1_1_SALVAGE_MAP.md).
 
 ## 21. Architectural consequences for 1.1
 
@@ -410,7 +409,7 @@ The following 1.1 structures are architecturally incompatible:
 - complete chat history as required memory;
 - hard-coded universal fantasy atlas.
 
-Potentially valuable components and algorithms remain unclassified until Step 95.
+Concrete files, components and algorithms are classified in [`LEGACY_1_1_SALVAGE_MAP.md`](LEGACY_1_1_SALVAGE_MAP.md). Those classifications do not authorize wholesale subsystem transplantation.
 
 ## 22. Accepted defaults
 
@@ -425,7 +424,6 @@ The Warden accepted the following defaults before accepting this constitution:
 
 ## 23. Acceptance boundary
 
-Step 94 is complete and accepted. This constitution freezes native architecture boundaries; it does not classify concrete 1.1 files or authorize infrastructure implementation.
+Step 94 is complete and accepted. This constitution freezes native architecture boundaries. Step 95 subsequently classified concrete 1.1 files without changing those boundaries.
 
-Step 95 may begin only through a separate explicit Warden instruction.
-
+Step 96 infrastructure implementation may begin only through a separate explicit Warden instruction.
