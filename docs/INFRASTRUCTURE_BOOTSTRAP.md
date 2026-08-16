@@ -1,9 +1,10 @@
 # RealMe 1.2 — Infrastructure Bootstrap
 
-Version: 0.1  
-Status: STEP 96 CANDIDATE — AWAITING WARDEN ACCEPTANCE  
-Defaults accepted by: Warden  
-Defaults accepted on: 2026-08-16
+Version: 1.0  
+Status: ACCEPTED — STEP 96 COMPLETE  
+Accepted by: Warden  
+Accepted on: 2026-08-16  
+Next phase: Bounded substantive product implementation — NOT STARTED
 
 ## 1. Scope
 
@@ -96,6 +97,6 @@ Repository readiness does not create external resources. Before provisioning, th
 
 ## 10. Acceptance boundary
 
-This is a Step 96 candidate. Accepted defaults authorize its construction but do not constitute acceptance of the resulting bootstrap.
+Step 96 is complete and accepted. Acceptance freezes the runtime and package baseline, dependency direction, migration discipline, durable-work boundary, repository secret contracts, deployment configuration and automated validation gates recorded here.
 
-Step 96 completes only after the Warden reviews the verified candidate and explicitly says `Accept 96`.
+Acceptance does not provision external services, introduce product schema, authorize personal-data migration or begin substantive product implementation. Each subsequent implementation step requires its own bounded scope and review.
