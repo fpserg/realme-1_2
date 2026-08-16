@@ -50,11 +50,5 @@
     "typescript": "^5.9.0",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "4.1.10"
-  },
-  "pnpm": {
-    "overrides": {
-      "postcss": "8.5.18",
-      "sharp": "0.35.0"
-    }
   }
 }
