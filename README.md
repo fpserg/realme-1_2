@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **FOUNDING / ARCHITECTURE BEFORE IMPLEMENTATION**
+Status: **STEP 93 ACCEPTED / STEP 94 NOT STARTED**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -12,7 +12,7 @@ RealMe 1.2 does **not** treat either predecessor repository as an absolute imple
 - `fpserg/realme-mvp-1_1` is the strongest record of implemented UX, working components, data structures and engineering experiments.
 - `fpserg/realme-1_2` synthesizes the best validated findings from both.
 
-ChatGPT-specific operational scaffolding in `fpserg/RealMe` (for example file-based continuity mechanisms created to compensate for chat memory/time limitations) is requirements evidence, not automatically native-app architecture.
+ChatGPT-specific operational scaffolding in `fpserg/RealMe` is requirements evidence, not automatically native-app architecture.
 
 ## 1.1 status
 
@@ -30,15 +30,25 @@ Frozen source commit:
 
 **Product truth is discovered from evidence; implementation is designed natively for the app.**
 
-Before transplanting code, every major 1.1 subsystem should be classified as:
+Before transplanting code, every major 1.1 subsystem is classified as:
 
 - **TRANSPLANT** — proven and compatible with 1.2 architecture;
 - **ADAPT** — valuable but coupled to obsolete assumptions;
 - **RETIRE** — superseded or structurally wrong;
 - **RE-DISCOVER** — insufficient evidence to freeze yet.
 
+## Founding records
+
+- [`docs/FOUNDING_SYNTHESIS.md`](docs/FOUNDING_SYNTHESIS.md) — accepted Step 93 product truths and inheritance classifications.
+- [`docs/FOUNDING_CONSTITUTION.md`](docs/FOUNDING_CONSTITUTION.md) — constitutional requirements governing subsequent architecture.
+
 ## Current phase
 
-**Step 93 — RealMe 1.2 Founding Constitution / synthesis.**
+**Step 93 — Founding synthesis: ACCEPTED.**
 
-No production architecture or legacy subsystem is canonical merely because it already exists.
+The Warden accepted Step 93 on 2026-08-16. The repository records one universal named ontology tier (Realm), emergent Realmers, evidence-preserving memory, native temporal continuity, an evolving Living World and the Graduated Evidence Law.
+
+**Step 94 — Native architecture constitution: NOT STARTED.**
+
+Step 94 requires a separate explicit Warden instruction. No production architecture or legacy subsystem becomes canonical merely because it already exists.
+

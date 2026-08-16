@@ -1,7 +1,7 @@
 # RealMe 1.2 — Founding Constitution
 
-Version: 0.1
-Status: FOUNDING / SYNTHESIS BEFORE ARCHITECTURE FREEZE
+Version: 0.2  
+Status: STEP 93 ACCEPTED / STEP 94 NOT STARTED
 
 ## 1. Purpose
 
@@ -17,6 +17,8 @@ The founding task is to separate:
 4. obsolete or falsified concepts;
 5. unresolved questions that require fresh design.
 
+The accepted Step 93 synthesis is recorded in `docs/FOUNDING_SYNTHESIS.md` and is constitutional input to subsequent architecture.
+
 ## 2. Evidence sources
 
 ### `fpserg/RealMe`
@@ -26,8 +28,8 @@ Treat as strongest evidence for:
 - product meaning and terminology;
 - roles and interaction philosophy;
 - World Model discoveries;
-- Realm / Domain / Locus semantics;
-- visual canon and semantic zoom;
+- personal ontology and visual semantics;
+- visual canon and semantic navigation;
 - interaction principles;
 - Daily Operations learnings;
 - continuity requirements discovered while operating RealMe in ChatGPT.
@@ -62,15 +64,27 @@ When evidence conflicts, prefer in this order:
 
 1. explicit current Warden decision;
 2. validated product truth supported by actual RealMe use;
-3. later falsification/discovery over earlier assumption;
+3. later correction or discovery over earlier assumption;
 4. working prototype evidence over speculative implementation theory;
 5. implementation convenience last.
 
 Architecture must solve the native application's actual requirements rather than reproduce historical workarounds.
 
-## 4. ChatGPT operational scaffolding
+## 4. Founding information model
 
-Mechanisms such as LI files, OR reconstruction, WBTD recovery, Freeze archival and explicit Chronicle persistence were partly created to overcome limitations of running RealMe inside a stateless/time-limited conversational environment.
+The constitutional flow is:
+
+> Observation → Candidate Interpretation → Admission → Versioned World Model → Operational and reflective projections + Living World
+
+RealMe preserves lived observations before their future importance is known. Observations retain dates, stable identities, aliases, exact supporting source fragments and provenance.
+
+Interpretation remains distinct from observation. Candidate interpretations may remain non-canonical and invisible. Admitted understanding is maintained separately in a versioned World Model. Later correction supersedes earlier understanding without erasing its history.
+
+Complete conversation preservation is optional rather than constitutionally required. Full conversations may exist as a user-owned archive, while transient or explicitly ephemeral dialogue need not be retained.
+
+## 5. ChatGPT operational scaffolding
+
+Mechanisms such as LI files, OR reconstruction, WBTD recovery, Freeze archival and explicit Chronicle persistence were partly created to overcome limitations of running RealMe inside a stateless or time-limited conversational environment.
 
 Their native-app equivalents are requirements, not necessarily file formats or workflows.
 
@@ -79,16 +93,76 @@ Underlying requirements include:
 - durable memory;
 - reliable chronology and timezone awareness;
 - recoverable state;
-- provenance/history;
-- distinction between observed life events and interpreted state;
+- provenance and non-destructive history;
+- distinction between observed life events, candidate interpretation and admitted state;
 - commitment continuity;
-- periodic reflection/synthesis;
+- periodic reflection and synthesis;
 - user-visible history where valuable;
 - no dependency on conversational context reconstruction for correctness.
 
 A database, event/history model and native scheduler may satisfy these requirements more naturally than reproducing LI → OR → WBTD → Freeze files.
 
-## 5. 1.1 salvage classification
+RealMe must not require a daily Freeze or other manual closing ritual.
+
+## 6. Personal ontology
+
+Realm is the only universally named tier. A personal World may contain `0..N` Realms.
+
+Every tier below Realm is personally discoverable and may extend to arbitrary depth. Domain is a useful interpretation for a major structure within a Realm, but it is not a mandatory second tier. Locus is not a compulsory rank; in Sergey’s World it may remain a personal node role for a meaningful spatial, mnemonic or experiential anchor.
+
+Reclassification, movement, merging or retirement must preserve stable identity, history and provenance.
+
+The current Household / Career / Third World is the first deeply authored user instance, not a universal schema. Frozen visual and interaction work in `fpserg/RealMe` remains authoritative evidence for that personal World unless explicitly revised.
+
+## 7. Companion and Realmers
+
+Every new user begins with one companion and no imposed roster of Realmers.
+
+The cognitive functions of continuity, perception, structure, meaning, challenge and curation are universally available. Named Realmers are optional, evidence-driven discoveries. A distinct cognitive office emerges only when actual use reveals a durable need.
+
+Role names, characters and visibility are personal and require user acceptance.
+
+Discovery is RealMe’s native form of progression. It reflects growing truthful understanding, not accumulated usage.
+
+## 8. Temporal continuity
+
+The default operational-day boundary is 04:00 in the user’s local timezone. It is user-configurable and may eventually adapt to stable individual behaviour.
+
+The native time model distinguishes:
+
+- occurred time;
+- recorded time;
+- local calendar date;
+- operational-period membership;
+- validity intervals;
+- reflection periods.
+
+Changing the operational boundary must not silently reassign historical observations. Physical chronology, calendar chronology and personal operational continuity remain distinct.
+
+## 9. Living World
+
+The Living World is a core RealMe capability and destination, but not a compulsory initial interface.
+
+A new user begins with one companion and an unformed World Model. Visual geography emerges progressively from accepted personal ontology and discovered visual language. RealMe must not generate a generic World merely to fill an empty surface.
+
+Visible geography is a viewport onto an evolving World, not its permanent boundary. When accepted ontology expands, affected views may reframe or regenerate to reveal additional territory while preserving identity, topology, provenance and visual history.
+
+Adaptive framing at one structural level remains distinct from semantic zoom between levels. RealMe distinguishes previously latent structure, gradually emerging structure and genuinely new structure.
+
+## 10. Graduated Evidence Law
+
+RealMe remains conservative when declaring personal structure.
+
+- Candidate interpretations may exist without becoming canonical or visible.
+- Higher structural significance requires stronger and more varied evidence.
+- Mention frequency alone is insufficient.
+- Realm-level discoveries carry the highest burden of proof and always require explicit user acceptance.
+- RealMe must not display empty Realm or Domain slots, discovery counts or structural completion percentages.
+- A World with more nodes is not inherently more developed.
+- Merging, moving or retiring structure is not regression.
+- Premature classification is worse than temporary absence.
+
+## 11. 1.1 salvage classification
 
 Every meaningful 1.1 subsystem receives one of four statuses before migration:
 
@@ -98,7 +172,7 @@ Implementation is useful, structurally compatible and can move with limited chan
 
 ### ADAPT
 
-The concept/UX is valuable but the implementation boundary, data model or semantics must change.
+The concept or UX is valuable but the implementation boundary, data model or semantics must change.
 
 ### RETIRE
 
@@ -108,33 +182,27 @@ The implementation or concept is superseded, unsafe, redundant or structurally i
 
 Evidence is insufficient to make a durable 1.2 decision yet.
 
-No large subsystem is copied wholesale merely to save time.
+No large subsystem is copied wholesale merely to save time. Step 93 grants no subsystem unconditional TRANSPLANT status; Step 95 will classify concrete files, modules and components against the accepted architecture.
 
-## 6. Native-app principles
+## 12. Native-app principles
 
 RealMe 1.2 should be:
 
 - persistent by design;
 - time-aware by design;
 - user-scoped by design;
-- secure at server/data boundaries;
+- secure at server and data boundaries;
 - recoverable and auditable;
-- model/provider independent where practical;
+- model and provider independent where practical;
 - mobile-first;
 - deploy-preview friendly;
 - database-backed where persistence matters;
-- capable of evolving personal ontology rather than assuming one fixed World;
-- capable of preserving history without making history the runtime architecture.
+- capable of evolving personal ontology without assuming one fixed World;
+- capable of preserving history without making history the runtime architecture;
+- conservative about declaring personal structure;
+- capable of presenting an evolving Living World without treating its rendering as canonical truth.
 
-## 7. World and ontology
-
-The current Household / Career / Third World is the first deeply authored user instance, not the universal schema.
-
-Product architecture should support evolving 0..N Realms, Domains and Loci without forcing current 3 × 3 structure on future Realmers.
-
-For the current user's visual World, frozen visual/interaction work in `fpserg/RealMe` remains authoritative evidence unless explicitly revised.
-
-## 8. Development discipline
+## 13. Development discipline
 
 Target development workflow:
 
@@ -144,19 +212,21 @@ Production code must not be changed directly merely because an AI agent can writ
 
 `main` should represent approved implementation truth once deployment begins.
 
-## 9. Immediate founding sequence
+## 14. Immediate founding sequence
 
-### Step 93 — Founding synthesis
+### Step 93 — Founding synthesis — ACCEPTED
 
-Create an explicit map of what 1.2 inherits, adapts, retires or redesigns from both source repositories.
+The explicit inheritance map and founding product decisions are recorded in `docs/FOUNDING_SYNTHESIS.md`.
 
-### Step 94 — Native architecture constitution
+### Step 94 — Native architecture constitution — NOT STARTED
 
-Decide frontend/server/database/auth/AI/memory/time/deployment boundaries from requirements rather than predecessor structure.
+Decide frontend, server, database, auth, AI, memory, time and deployment boundaries from the accepted requirements rather than predecessor structure.
+
+Step 94 requires a separate explicit Warden instruction.
 
 ### Step 95 — 1.1 salvage map
 
-Classify concrete files/modules/components as TRANSPLANT / ADAPT / RETIRE / RE-DISCOVER.
+Classify concrete files, modules and components as TRANSPLANT / ADAPT / RETIRE / RE-DISCOVER.
 
 ### Step 96 — Infrastructure bootstrap
 
@@ -164,10 +234,17 @@ Establish clean application skeleton, Git workflow, CI, deploy previews, databas
 
 Only after these steps should substantive product migration begin.
 
-## 10. Founding maxim
+## 15. Acceptance record
+
+The Warden explicitly accepted Step 93 on 2026-08-16 after Product Discovery resolved the founding questions concerning personal ontology, companion and Realmers, memory and evidence, temporal continuity, the Living World and graduated evidence.
+
+Acceptance closes Step 93. It does not itself authorize Step 94 or product implementation.
+
+## 16. Founding maxim
 
 # INHERIT DISCOVERIES, NOT CONSTRAINTS.
 
 # PRESERVE WORK THAT PROVED ITS VALUE, NOT WORK MERELY BECAUSE IT EXISTS.
 
 # DESIGN THE NATIVE APP FOR THE PROBLEM REALME IS NOW KNOWN TO SOLVE.
+
