@@ -12,6 +12,6 @@ test("serves the mobile foundation and health boundary", async ({ page }) => {
   await expect(response.json()).resolves.toMatchObject({
     status: "ok",
     service: "realme-1-2",
-    phase: "step-96-candidate",
+    phase: "step-96-accepted-step-97-not-started",
   });
 });
