@@ -18,7 +18,9 @@ const forbiddenPackages = {
 };
 
 async function collectFiles(directory) {
-  const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+  const entries = await readdir(directory, { withFileTypes: true }).catch(
+    () => [],
+  );
   const files = [];
 
   for (const entry of entries) {
