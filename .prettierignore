@@ -5,3 +5,9 @@ playwright-report
 test-results
 pnpm-lock.yaml
 supabase/.temp
+
+# Accepted constitutional records preserve their reviewed Markdown form.
+docs/FOUNDING_CONSTITUTION.md
+docs/FOUNDING_SYNTHESIS.md
+docs/LEGACY_1_1_SALVAGE_MAP.md
+docs/PRODUCT_DECISIONS/PD-001_MODULAR_LIVING_WORLD_GENERATION.md

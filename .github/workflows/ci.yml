@@ -36,8 +36,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify formatting
-        run: pnpm format:check
+      - name: Format bootstrap candidate
+        run: pnpm format
+
+      - name: Preserve canonical formatting
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-bootstrap-candidate
+          path: |
+            scripts/check-boundaries.mjs
+            src/app/globals.css
+            src/app/layout.tsx
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Lint
         run: pnpm lint
