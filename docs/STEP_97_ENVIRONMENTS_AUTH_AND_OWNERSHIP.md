@@ -1,6 +1,6 @@
 # RealMe 1.2 — Step 97 Environments, Authentication and World Ownership
 
-Version: 0.1
+Version: 0.2
 
 Status: IMPLEMENTATION CANDIDATE — NOT ACCEPTED
 
@@ -49,10 +49,24 @@ The Warden authorized personal/default accounts and a zero-cost boundary.
 - requested site name: `realme-1-2`;
 - globally assigned site name: `realme-1-2-570`;
 - repository: `fpserg/realme-1_2`;
-- production branch: `main`;
-- repository linkage: deferred until the implementation branch and
-  context-specific environment variables are ready;
-- no production deployment occurred during provisioning.
+- production branch: `netlify-production-hold`;
+- `main` is enabled as an explicit branch-deploy base so pull requests into
+  `main` may receive Deploy Previews without making `main` the production
+  branch;
+- repository linkage is active;
+- deploy-preview and branch-deploy Supabase values are scoped in the Netlify
+  platform configuration, with `REALME_ENVIRONMENT` and
+  `REALME_DATA_CLASSIFICATION` available to both builds and server functions;
+- PR 15 has a synthetic deploy preview at
+  `https://deploy-preview-15--realme-1-2-570.netlify.app`.
+
+Repository linkage generated and published one initial production-context
+deploy from `netlify-production-hold` even though its tree-identical bootstrap
+commit carried Netlify's `[skip netlify]` marker. The deployed content is the
+accepted Step 96 foundation shell. It has no Supabase runtime configuration,
+authentication, credentials or personal data. This is a bounded process
+exception, not a product-production release, and requires explicit Warden
+disposition before Step 97 acceptance.
 
 ## 3. Ownership model
 
@@ -97,9 +111,11 @@ configuration rejects:
 - preview or staging contexts not marked synthetic-only;
 - Supabase hosts outside the approved local or managed Supabase boundary.
 
-The expected project reference and publishable configuration are supplied by
-context-specific platform environment variables. Secret or personal values are
-not committed.
+The expected project reference, publishable configuration, environment name and
+data classification are supplied by context-specific platform environment
+variables. Netlify configuration-file environment values are build-only and are
+not relied upon by Next.js server functions; runtime locks are also configured
+through the platform environment. Secret or personal values are not committed.
 
 ## 6. Acceptance evidence required
 
@@ -111,7 +127,8 @@ Before Step 97 can be presented for acceptance:
 4. verify user A cannot read user B's account, World, membership or companion
    through direct Supabase API requests;
 5. verify the UI never accepts a caller-supplied World identity;
-6. verify production remains unmigrated and undeployed;
+6. verify production Supabase remains unmigrated and obtain explicit Warden
+   disposition of the recorded initial Netlify foundation-deploy exception;
 7. pass `pnpm check` and the mobile Playwright smoke test;
 8. obtain exact-head code review and explicit Warden acceptance.
 
@@ -134,8 +151,24 @@ Verified on 2026-08-17 against `RealMe Staging`:
   World, membership and companion, leaving all four tables at zero rows;
 - production still had zero public product tables and zero migrations.
 
-Local formatting, ESLint, strict TypeScript, architecture enforcement, all 13
+Verified on 2026-08-17 against the Netlify deploy preview:
+
+- PR 15 preview status succeeded at exact head
+  `0a04772d0ec144693e9879e0ea3cc116cebd1e8d`;
+- the signed-out World surface rendered with Step 97 candidate status;
+- the `/login` route rendered the email/password sign-in and account-creation
+  controls;
+- the first preview build exposed a server-render failure because
+  `REALME_ENVIRONMENT` and `REALME_DATA_CLASSIFICATION` existed only in
+  `netlify.toml`, whose values are unavailable to Netlify server functions;
+- adding those non-secret context locks to the platform environment for Builds
+  and Functions resolved the runtime failure without weakening validation;
+- the deploy preview remained synthetic and targeted `RealMe Staging`;
+- the production Supabase project remained unconfigured and unmigrated.
+
+Local formatting, ESLint, strict TypeScript, architecture enforcement, all 15
 unit/enforcement tests and the production build passed. The local Playwright
 browser download was blocked because the isolated runner's future-dated clock
-caused the CDN certificate to appear not yet valid. Browser execution therefore
-remains an exact-head GitHub CI requirement; TLS validation was not weakened.
+caused the CDN certificate to appear not yet valid; TLS validation was not
+weakened. Exact-head GitHub Actions run 60 subsequently passed the complete CI
+workflow, including its mobile Chromium smoke test.
