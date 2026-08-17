@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786926070526,
+      "tag": "20260817002110_step_97_identity_and_world_ownership",
+      "breakpoints": true
+    }
+  ]
+}

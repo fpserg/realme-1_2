@@ -4,7 +4,7 @@ Version: 1.0
 Status: ACCEPTED — POST-FOUNDING MVP ROADMAP  
 Accepted by: Warden  
 Accepted on: 2026-08-16  
-Current step: Step 97 — NOT STARTED
+Current step: Step 97 — IN PROGRESS / NOT ACCEPTED
 
 ## 1. Purpose and authority
 
