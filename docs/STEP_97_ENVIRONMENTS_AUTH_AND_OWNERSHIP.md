@@ -1,6 +1,6 @@
 # RealMe 1.2 — Step 97 Environments, Authentication and World Ownership
 
-Version: 0.2
+Version: 0.3
 
 Status: IMPLEMENTATION CANDIDATE — NOT ACCEPTED
 
@@ -66,7 +66,9 @@ commit carried Netlify's `[skip netlify]` marker. The deployed content is the
 accepted Step 96 foundation shell. It has no Supabase runtime configuration,
 authentication, credentials or personal data. This is a bounded process
 exception, not a product-production release, and requires explicit Warden
-disposition before Step 97 acceptance.
+disposition before Step 97 acceptance. The Warden accepted this bounded
+bootstrap exception on 2026-08-17. That disposition does not accept Step 97 or
+authorize a personal-data production release.
 
 ## 3. Ownership model
 
@@ -127,8 +129,8 @@ Before Step 97 can be presented for acceptance:
 4. verify user A cannot read user B's account, World, membership or companion
    through direct Supabase API requests;
 5. verify the UI never accepts a caller-supplied World identity;
-6. verify production Supabase remains unmigrated and obtain explicit Warden
-   disposition of the recorded initial Netlify foundation-deploy exception;
+6. verify production Supabase remains unmigrated and record explicit Warden
+   acceptance of the initial Netlify foundation-deploy exception;
 7. pass `pnpm check` and the mobile Playwright smoke test;
 8. obtain exact-head code review and explicit Warden acceptance.
 
@@ -165,6 +167,12 @@ Verified on 2026-08-17 against the Netlify deploy preview:
   and Functions resolved the runtime failure without weakening validation;
 - the deploy preview remained synthetic and targeted `RealMe Staging`;
 - the production Supabase project remained unconfigured and unmigrated.
+
+The Warden accepted the bounded Netlify bootstrap exception on 2026-08-17. The
+accepted exception covers only the inert Step 96 foundation shell already
+published by repository linkage. It does not accept Step 97, authorize Step 98,
+permit production Supabase configuration or permit personal data in the
+production context.
 
 Local formatting, ESLint, strict TypeScript, architecture enforcement, all 15
 unit/enforcement tests and the production build passed. The local Playwright
