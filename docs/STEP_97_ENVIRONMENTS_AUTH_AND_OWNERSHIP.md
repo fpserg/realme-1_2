@@ -1,6 +1,6 @@
 # RealMe 1.2 — Step 97 Environments, Authentication and World Ownership
 
-Version: 0.3
+Version: 0.4
 
 Status: IMPLEMENTATION CANDIDATE — NOT ACCEPTED
 
@@ -39,7 +39,8 @@ The Warden authorized personal/default accounts and a zero-cost boundary.
 - production project: `RealMe`, preserved blank during Step 97 validation;
 - staging project: `RealMe Staging`, synthetic-only;
 - staging migration target: Step 97 migration only;
-- staging migration recorded by Supabase as `20260817002310`;
+- committed, Drizzle-journal and staging migration identity:
+  `20260817002310_step_97_identity_and_world_ownership`;
 - production migration target: none before Step 97 acceptance.
 
 ### Netlify
@@ -113,6 +114,9 @@ configuration rejects:
 - preview or staging contexts not marked synthetic-only;
 - Supabase hosts outside the approved local or managed Supabase boundary.
 
+Managed `*.supabase.co` project URLs must use HTTPS. Local Supabase may use its
+local HTTP endpoint.
+
 The expected project reference, publishable configuration, environment name and
 data classification are supplied by context-specific platform environment
 variables. Netlify configuration-file environment values are build-only and are
@@ -153,7 +157,7 @@ Verified on 2026-08-17 against `RealMe Staging`:
   World, membership and companion, leaving all four tables at zero rows;
 - production still had zero public product tables and zero migrations.
 
-Verified on 2026-08-17 against the Netlify deploy preview:
+Initial preview verification on 2026-08-17, before final review remediation:
 
 - PR 15 preview status succeeded at exact head
   `0a04772d0ec144693e9879e0ea3cc116cebd1e8d`;
@@ -174,9 +178,31 @@ published by repository linkage. It does not accept Step 97, authorize Step 98,
 permit production Supabase configuration or permit personal data in the
 production context.
 
-Local formatting, ESLint, strict TypeScript, architecture enforcement, all 15
-unit/enforcement tests and the production build passed. The local Playwright
-browser download was blocked because the isolated runner's future-dated clock
-caused the CDN certificate to appear not yet valid; TLS validation was not
-weakened. Exact-head GitHub Actions run 60 subsequently passed the complete CI
-workflow, including its mobile Chromium smoke test.
+For that historical candidate, local formatting, ESLint, strict TypeScript,
+architecture enforcement, all 15 unit/enforcement tests and the production
+build passed. The local Playwright browser download was blocked because the
+isolated runner's future-dated clock caused the CDN certificate to appear not
+yet valid; TLS validation was not weakened. GitHub Actions run 60 subsequently
+passed the complete workflow, including its mobile Chromium smoke test, for
+the historical preview head recorded above.
+
+## 8. Review remediation
+
+Exact-head review of the later PR candidate found two release blockers. The
+candidate now resolves them without changing the deployed staging schema:
+
+- the Supabase SSR cookie adapter copies every cache-control header supplied by
+  `@supabase/ssr` onto the recreated Next.js response as well as propagating
+  request and response cookies;
+- a regression test covers the request-cookie, response-cookie,
+  `Cache-Control`, `Expires` and `Pragma` propagation contract;
+- the committed migration filename, Drizzle snapshot and journal now use the
+  already-applied staging timestamp `20260817002310`, eliminating the prior
+  local `20260817002110` history mismatch;
+- managed Supabase project URLs now fail closed unless they use HTTPS.
+
+The migration reconciliation is metadata and repository-history alignment to
+the existing staging record. It does not reapply or alter the staging schema.
+Production remains unmigrated. Fresh exact-head CI and deploy-preview evidence
+is required before this candidate returns to code review; Step 97 remains not
+accepted and Step 98 remains closed.

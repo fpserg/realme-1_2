@@ -50,6 +50,18 @@ describe("validateSupabaseEnvironment", () => {
     ).toThrow("explicit context lock");
   });
 
+  it("requires HTTPS for managed Supabase projects", () => {
+    expect(() =>
+      validateSupabaseEnvironment({
+        dataClassification: "synthetic",
+        environment: "preview",
+        expectedProjectRef: "staging-ref",
+        publishableKey: "sb_publishable_test",
+        url: "http://staging-ref.supabase.co",
+      }),
+    ).toThrow("require HTTPS");
+  });
+
   it("requires an explicit personal-data boundary in production", () => {
     expect(() =>
       validateSupabaseEnvironment({

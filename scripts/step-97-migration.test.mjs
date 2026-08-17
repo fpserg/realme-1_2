@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 const migrationPath =
-  "supabase/migrations/20260817002110_step_97_identity_and_world_ownership.sql";
+  "supabase/migrations/20260817002310_step_97_identity_and_world_ownership.sql";
 
 describe("Step 97 ownership migration", () => {
   it("enables RLS and denies anonymous table access", async () => {

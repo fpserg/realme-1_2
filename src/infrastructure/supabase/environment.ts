@@ -12,8 +12,13 @@ export interface SupabasePublicConfig {
 }
 
 function projectRefFromUrl(url: string) {
-  const hostname = new URL(url).hostname;
+  const parsedUrl = new URL(url);
+  const hostname = parsedUrl.hostname;
   const suffix = ".supabase.co";
+
+  if (hostname.endsWith(suffix) && parsedUrl.protocol !== "https:") {
+    throw new Error("Managed Supabase projects require HTTPS.");
+  }
 
   return hostname.endsWith(suffix)
     ? hostname.slice(0, -suffix.length)
