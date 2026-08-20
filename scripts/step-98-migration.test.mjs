@@ -161,9 +161,15 @@ describe("Step 98 canonical truth migration", () => {
     );
 
     expect(schemaEntry?.tag).toBe(migrationTag);
-    expect(journal.entries.at(-3)?.tag).toBe(denialMigrationTag);
-    expect(journal.entries.at(-2)?.tag).toBe(admissionMigrationTag);
-    expect(journal.entries.at(-1)?.tag).toBe(correctionMigrationTag);
+    expect(
+      journal.entries.some((entry) => entry.tag === denialMigrationTag),
+    ).toBe(true);
+    expect(
+      journal.entries.some((entry) => entry.tag === admissionMigrationTag),
+    ).toBe(true);
+    expect(
+      journal.entries.some((entry) => entry.tag === correctionMigrationTag),
+    ).toBe(true);
     expect(snapshot.prevId).toBe("5d5bbab0-36f3-4a3f-b2c9-24ef4a4493af");
     expect(denialSnapshot.prevId).toBe(snapshot.id);
     expect(admissionSnapshot.prevId).toBe(denialSnapshot.id);

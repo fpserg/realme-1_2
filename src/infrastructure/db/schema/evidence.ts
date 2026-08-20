@@ -12,7 +12,6 @@ import {
   unique,
   uniqueIndex,
   uuid,
-  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 import { accounts, worldMemberships, worlds } from "./ownership";
@@ -34,6 +33,7 @@ export const observations = pgTable(
     occurredAt: timestamp("occurred_at", { withTimezone: true }),
     occurredPrecision: text("occurred_precision").default("unknown").notNull(),
     localCalendarDate: date("local_calendar_date"),
+    captureIdempotencyKey: uuid("capture_idempotency_key"),
     recordedAt: timestamp("recorded_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -47,6 +47,9 @@ export const observations = pgTable(
     index("observations_recorded_by_account_id_index").on(
       table.recordedByAccountId,
     ),
+    uniqueIndex("observations_world_capture_idempotency_unique")
+      .on(table.worldId, table.captureIdempotencyKey)
+      .where(sql`${table.captureIdempotencyKey} is not null`),
     foreignKey({
       name: "observations_recorded_by_world_membership_fk",
       columns: [table.worldId, table.recordedByAccountId],
@@ -124,10 +127,7 @@ export const observationCorrections = pgTable(
       () => accounts.id,
       { onDelete: "restrict" },
     ),
-    supersedesCorrectionId: uuid("supersedes_correction_id").references(
-      (): AnyPgColumn => observationCorrections.id,
-      { onDelete: "restrict" },
-    ),
+    supersedesCorrectionId: uuid("supersedes_correction_id"),
     recordedAt: timestamp("recorded_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -137,9 +137,20 @@ export const observationCorrections = pgTable(
       table.worldId,
       table.id,
     ),
+    unique("observation_corrections_world_observation_id_unique").on(
+      table.worldId,
+      table.observationId,
+      table.id,
+    ),
     index("observation_corrections_observation_id_index").on(
       table.observationId,
     ),
+    uniqueIndex("observation_corrections_root_unique")
+      .on(table.worldId, table.observationId)
+      .where(sql`${table.supersedesCorrectionId} is null`),
+    uniqueIndex("observation_corrections_successor_unique")
+      .on(table.supersedesCorrectionId)
+      .where(sql`${table.supersedesCorrectionId} is not null`),
     foreignKey({
       name: "observation_corrections_observation_world_fk",
       columns: [table.worldId, table.observationId],
@@ -149,6 +160,15 @@ export const observationCorrections = pgTable(
       name: "observation_corrections_recorded_by_world_membership_fk",
       columns: [table.worldId, table.recordedByAccountId],
       foreignColumns: [worldMemberships.worldId, worldMemberships.userId],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "observation_corrections_supersedes_observation_world_fk",
+      columns: [
+        table.worldId,
+        table.observationId,
+        table.supersedesCorrectionId,
+      ],
+      foreignColumns: [table.worldId, table.observationId, table.id],
     }).onDelete("restrict"),
     check(
       "observation_corrections_precision_check",

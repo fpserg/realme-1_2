@@ -393,5 +393,6 @@ be remediated before the first RealMe production migration. Strict metadata
 allow-list enforcement remains deferred until an audit writer exists.
 
 Step 98 acceptance does not authorize Step 99, AI processing, a production
-migration, personal-data import or Living World generation. Step 99 has not
-started and requires separate explicit Warden authorization.
+migration, personal-data import or Living World generation. The Warden later
+opened Step 99 through a separate bounded instruction on 2026-08-20; that action
+does not reopen or broaden accepted Step 98.
