@@ -9,9 +9,10 @@ import type {
 
 import styles from "./observation-capture.module.css";
 
-const recoveryKey = "realme.observation.capture.v1";
+const recoveryKeyPrefix = "realme.observation.capture.v2";
 
 interface LocalDraft {
+  accountId: string;
   attempted: boolean;
   exactText: string;
   idempotencyKey: string;
@@ -20,8 +21,17 @@ interface LocalDraft {
 
 type DraftState = "failed" | "idle" | "saved" | "saving" | "unsynced";
 
-function freshDraft(exactText = "", occurredLocal = ""): LocalDraft {
+export function observationRecoveryKey(accountId: string) {
+  return `${recoveryKeyPrefix}:${accountId}`;
+}
+
+function freshDraft(
+  accountId: string,
+  exactText = "",
+  occurredLocal = "",
+): LocalDraft {
   return {
+    accountId,
     attempted: false,
     exactText,
     idempotencyKey: crypto.randomUUID(),
@@ -29,27 +39,32 @@ function freshDraft(exactText = "", occurredLocal = ""): LocalDraft {
   };
 }
 
-function readRecoveredDraft() {
+function readRecoveredDraft(accountId: string) {
+  const recoveryKey = observationRecoveryKey(accountId);
   const raw = window.localStorage.getItem(recoveryKey);
   if (!raw) return null;
 
   try {
     const value = JSON.parse(raw) as Partial<LocalDraft>;
     if (
+      value.accountId !== accountId ||
       typeof value.exactText !== "string" ||
       typeof value.idempotencyKey !== "string" ||
       typeof value.occurredLocal !== "string"
     ) {
+      window.localStorage.removeItem(recoveryKey);
       return null;
     }
 
     return {
+      accountId,
       attempted: value.attempted === true,
       exactText: value.exactText,
       idempotencyKey: value.idempotencyKey,
       occurredLocal: value.occurredLocal,
     };
   } catch {
+    window.localStorage.removeItem(recoveryKey);
     return null;
   }
 }
@@ -161,10 +176,12 @@ function OccurrenceEditor({
 }
 
 export function ObservationCapture({
+  authenticatedAccountId,
   captureEndpoint = "/api/observations",
   historyEndpoint,
   initialObservations,
 }: {
+  authenticatedAccountId: string;
   captureEndpoint?: string;
   historyEndpoint?: string;
   initialObservations: ObservationHistoryItem[];
@@ -172,10 +189,15 @@ export function ObservationCapture({
   const [draft, setDraft] = useState<LocalDraft | null>(null);
   const [draftState, setDraftState] = useState<DraftState>("idle");
   const [observations, setObservations] = useState(initialObservations);
+  const activeDraft =
+    draft?.accountId === authenticatedAccountId ? draft : null;
+  const activeDraftState = draft === null || activeDraft ? draftState : "idle";
 
   useEffect(() => {
     const recoveryTimer = window.setTimeout(() => {
-      const recovered = readRecoveredDraft();
+      setDraft(null);
+      setDraftState("idle");
+      const recovered = readRecoveredDraft(authenticatedAccountId);
       if (recovered?.exactText) {
         setDraft(recovered);
         setDraftState("unsynced");
@@ -183,7 +205,7 @@ export function ObservationCapture({
     }, 0);
 
     return () => window.clearTimeout(recoveryTimer);
-  }, []);
+  }, [authenticatedAccountId]);
 
   useEffect(() => {
     if (!historyEndpoint) return;
@@ -200,7 +222,10 @@ export function ObservationCapture({
   }, [historyEndpoint]);
 
   function persistDraft(next: LocalDraft) {
+    if (next.accountId !== authenticatedAccountId) return;
+
     setDraft(next);
+    const recoveryKey = observationRecoveryKey(authenticatedAccountId);
     if (next.exactText.length === 0) {
       window.localStorage.removeItem(recoveryKey);
       setDraftState("idle");
@@ -212,24 +237,35 @@ export function ObservationCapture({
   }
 
   function updateText(exactText: string) {
-    persistDraft({ ...(draft ?? freshDraft()), exactText });
+    persistDraft({
+      ...(activeDraft ?? freshDraft(authenticatedAccountId)),
+      exactText,
+    });
   }
 
   function updateOccurredLocal(occurredLocal: string) {
-    persistDraft({ ...(draft ?? freshDraft()), occurredLocal });
+    persistDraft({
+      ...(activeDraft ?? freshDraft(authenticatedAccountId)),
+      occurredLocal,
+    });
   }
 
   function editAsNewCapture() {
-    const next = freshDraft(draft?.exactText, draft?.occurredLocal);
+    const next = freshDraft(
+      authenticatedAccountId,
+      activeDraft?.exactText,
+      activeDraft?.occurredLocal,
+    );
     persistDraft(next);
   }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft?.exactText.trim()) return;
+    if (!activeDraft?.exactText.trim()) return;
 
-    const attemptedDraft = { ...draft, attempted: true };
+    const attemptedDraft = { ...activeDraft, attempted: true };
     setDraft(attemptedDraft);
+    const recoveryKey = observationRecoveryKey(authenticatedAccountId);
     window.localStorage.setItem(recoveryKey, JSON.stringify(attemptedDraft));
     setDraftState("saving");
 
@@ -240,7 +276,10 @@ export function ObservationCapture({
           idempotencyKey: attemptedDraft.idempotencyKey,
           occurrence: occurrenceFromLocal(attemptedDraft.occurredLocal),
         }),
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-RealMe-Recovery-Account-Id": attemptedDraft.accountId,
+        },
         method: "POST",
       });
       if (!response.ok) throw new Error("Capture was not confirmed.");
@@ -265,11 +304,11 @@ export function ObservationCapture({
             <span>Observation</span>
             <h1 id="capture-title">What should be remembered?</h1>
           </div>
-          {draftState === "unsynced" || draftState === "saving" ? (
+          {activeDraftState === "unsynced" || activeDraftState === "saving" ? (
             <PersistenceState state="unsynced" />
-          ) : draftState === "failed" ? (
+          ) : activeDraftState === "failed" ? (
             <PersistenceState state="failed" />
-          ) : draftState === "saved" ? (
+          ) : activeDraftState === "saved" ? (
             <PersistenceState state="saved" />
           ) : null}
         </div>
@@ -284,20 +323,20 @@ export function ObservationCapture({
             maxLength={10000}
             onChange={(event) => updateText(event.target.value)}
             placeholder="Write what happened, exactly as you want it kept."
-            readOnly={draft?.attempted === true}
+            readOnly={activeDraft?.attempted === true}
             rows={5}
-            value={draft?.exactText ?? ""}
+            value={activeDraft?.exactText ?? ""}
           />
 
           <details className={styles.occurredTime}>
             <summary>Add occurred time</summary>
             <label htmlFor="occurred-at">When it happened</label>
             <input
-              disabled={draft?.attempted === true}
+              disabled={activeDraft?.attempted === true}
               id="occurred-at"
               onChange={(event) => updateOccurredLocal(event.target.value)}
               type="datetime-local"
-              value={draft?.occurredLocal ?? ""}
+              value={activeDraft?.occurredLocal ?? ""}
             />
           </details>
 
@@ -305,17 +344,18 @@ export function ObservationCapture({
             <button
               className={styles.saveButton}
               disabled={
-                draftState === "saving" || !draft?.exactText.trim().length
+                activeDraftState === "saving" ||
+                !activeDraft?.exactText.trim().length
               }
               type="submit"
             >
-              {draftState === "saving"
+              {activeDraftState === "saving"
                 ? "Saving..."
-                : draft?.attempted
+                : activeDraft?.attempted
                   ? "Retry save"
                   : "Save observation"}
             </button>
-            {draft?.attempted ? (
+            {activeDraft?.attempted ? (
               <button
                 className={styles.textButton}
                 onClick={editAsNewCapture}
@@ -327,7 +367,7 @@ export function ObservationCapture({
           </div>
         </form>
 
-        {draftState === "failed" ? (
+        {activeDraftState === "failed" ? (
           <p className={styles.failure} role="alert">
             Save was not confirmed. Your exact text and retry identity remain on
             this device.

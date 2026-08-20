@@ -25,6 +25,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (request.headers.get("X-RealMe-Recovery-Account-Id") !== userId) {
+    return Response.json(
+      { error: "The signed-in account changed. Reload before retrying." },
+      { headers: privateHeaders, status: 409 },
+    );
+  }
+
   try {
     const input = parseCaptureObservationInput(await request.json());
     const repository = new SupabaseObservationRepository(supabase);

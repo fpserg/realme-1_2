@@ -18,7 +18,15 @@ describe("HomeView", () => {
   });
 
   it("shows the bounded provisioned state without inventing ontology", () => {
-    render(<HomeView state={{ kind: "ready", observations: [] }} />);
+    render(
+      <HomeView
+        state={{
+          accountId: "123e4567-e89b-42d3-a456-426614174000",
+          kind: "ready",
+          observations: [],
+        }}
+      />,
+    );
 
     expect(
       screen.getByRole("heading", { name: "What should be remembered?" }),

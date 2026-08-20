@@ -12,6 +12,125 @@ import type {
 
 import type { RealMeDatabase } from "./database.types";
 
+type ObservationHistoryRow = Pick<
+  RealMeDatabase["public"]["Tables"]["observations"]["Row"],
+  | "id"
+  | "recorded_at"
+  | "occurred_at"
+  | "occurred_precision"
+  | "source_timezone"
+  | "local_calendar_date"
+>;
+
+type SourceFragmentHistoryRow = Pick<
+  RealMeDatabase["public"]["Tables"]["source_fragments"]["Row"],
+  "observation_id" | "exact_text" | "ordinal"
+>;
+
+type CorrectionHistoryRow = Pick<
+  RealMeDatabase["public"]["Tables"]["observation_corrections"]["Row"],
+  | "id"
+  | "observation_id"
+  | "corrected_occurred_at"
+  | "corrected_occurred_precision"
+  | "corrected_source_timezone"
+  | "corrected_local_calendar_date"
+  | "recorded_at"
+  | "supersedes_correction_id"
+>;
+
+function uniqueCorrectionLeaf(corrections: CorrectionHistoryRow[]) {
+  if (corrections.length === 0) return undefined;
+
+  const byId = new Map(
+    corrections.map((correction) => [correction.id, correction]),
+  );
+  if (byId.size !== corrections.length) {
+    throw new Error("Malformed observation correction chain.");
+  }
+
+  const supersededIds = new Set<string>();
+  for (const correction of corrections) {
+    if (!correction.supersedes_correction_id) continue;
+    if (!byId.has(correction.supersedes_correction_id)) {
+      throw new Error("Malformed observation correction chain.");
+    }
+    supersededIds.add(correction.supersedes_correction_id);
+  }
+
+  const leaves = corrections.filter(
+    (correction) => !supersededIds.has(correction.id),
+  );
+  if (leaves.length !== 1) {
+    throw new Error("Malformed observation correction chain.");
+  }
+
+  const leaf = leaves[0];
+  const visited = new Set<string>();
+  let current: CorrectionHistoryRow | undefined = leaf;
+  while (current) {
+    if (visited.has(current.id)) {
+      throw new Error("Malformed observation correction chain.");
+    }
+    visited.add(current.id);
+    current = current.supersedes_correction_id
+      ? byId.get(current.supersedes_correction_id)
+      : undefined;
+  }
+
+  if (visited.size !== corrections.length) {
+    throw new Error("Malformed observation correction chain.");
+  }
+
+  return leaf;
+}
+
+export function reconstructObservationHistory(
+  observations: ObservationHistoryRow[],
+  fragments: SourceFragmentHistoryRow[],
+  corrections: CorrectionHistoryRow[],
+) {
+  const textByObservation = new Map(
+    fragments.map((fragment) => [fragment.observation_id, fragment.exact_text]),
+  );
+  const correctionsByObservation = new Map<string, CorrectionHistoryRow[]>();
+
+  for (const correction of corrections) {
+    const current = correctionsByObservation.get(correction.observation_id);
+    if (current) current.push(correction);
+    else correctionsByObservation.set(correction.observation_id, [correction]);
+  }
+
+  return observations.flatMap<ObservationHistoryItem>((observation) => {
+    const exactText = textByObservation.get(observation.id);
+    if (exactText === undefined) return [];
+
+    const observationCorrections =
+      correctionsByObservation.get(observation.id) ?? [];
+    const effectiveCorrection = uniqueCorrectionLeaf(observationCorrections);
+
+    return [
+      {
+        correctionCount: observationCorrections.length,
+        exactText,
+        id: observation.id,
+        localCalendarDate:
+          effectiveCorrection?.corrected_local_calendar_date ??
+          observation.local_calendar_date,
+        occurredAt:
+          effectiveCorrection?.corrected_occurred_at ?? observation.occurred_at,
+        occurredPrecision: (effectiveCorrection?.corrected_occurred_precision ??
+          observation.occurred_precision) as "exact" | "unknown",
+        persistenceState: "saved",
+        recordedAt: observation.recorded_at,
+        sourceTimezone:
+          effectiveCorrection?.corrected_source_timezone ??
+          observation.source_timezone,
+      },
+    ];
+  });
+}
+
 export class SupabaseObservationRepository implements ObservationRepository {
   constructor(private readonly client: SupabaseClient<RealMeDatabase>) {}
 
@@ -101,59 +220,18 @@ export class SupabaseObservationRepository implements ObservationRepository {
       this.client
         .from("observation_corrections")
         .select(
-          "id, observation_id, corrected_occurred_at, corrected_occurred_precision, corrected_source_timezone, corrected_local_calendar_date, recorded_at",
+          "id, observation_id, corrected_occurred_at, corrected_occurred_precision, corrected_source_timezone, corrected_local_calendar_date, recorded_at, supersedes_correction_id",
         )
-        .in("observation_id", observationIds)
-        .order("recorded_at", { ascending: true }),
+        .in("observation_id", observationIds),
     ]);
 
     if (fragmentsResult.error) throw fragmentsResult.error;
     if (correctionsResult.error) throw correctionsResult.error;
 
-    const textByObservation = new Map(
-      fragmentsResult.data.map((fragment) => [
-        fragment.observation_id,
-        fragment.exact_text,
-      ]),
+    return reconstructObservationHistory(
+      observations,
+      fragmentsResult.data,
+      correctionsResult.data,
     );
-    const correctionsByObservation = new Map<
-      string,
-      (typeof correctionsResult.data)[number][]
-    >();
-
-    for (const correction of correctionsResult.data) {
-      const current = correctionsByObservation.get(correction.observation_id);
-      if (current) current.push(correction);
-      else
-        correctionsByObservation.set(correction.observation_id, [correction]);
-    }
-
-    return observations.flatMap<ObservationHistoryItem>((observation) => {
-      const exactText = textByObservation.get(observation.id);
-      if (exactText === undefined) return [];
-
-      const corrections = correctionsByObservation.get(observation.id) ?? [];
-      const latestCorrection = corrections.at(-1);
-
-      return [
-        {
-          correctionCount: corrections.length,
-          exactText,
-          id: observation.id,
-          localCalendarDate:
-            latestCorrection?.corrected_local_calendar_date ??
-            observation.local_calendar_date,
-          occurredAt:
-            latestCorrection?.corrected_occurred_at ?? observation.occurred_at,
-          occurredPrecision: (latestCorrection?.corrected_occurred_precision ??
-            observation.occurred_precision) as "exact" | "unknown",
-          persistenceState: "saved",
-          recordedAt: observation.recorded_at,
-          sourceTimezone:
-            latestCorrection?.corrected_source_timezone ??
-            observation.source_timezone,
-        },
-      ];
-    });
   }
 }

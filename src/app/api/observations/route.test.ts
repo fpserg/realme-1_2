@@ -21,10 +21,13 @@ vi.mock("@/infrastructure/supabase/observation-repository", () => ({
 
 import { POST } from "./route";
 
-function request(body: Record<string, unknown>) {
+function request(body: Record<string, unknown>, accountId = "account-a") {
   return new Request("http://localhost/api/observations", {
     body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-RealMe-Recovery-Account-Id": accountId,
+    },
     method: "POST",
   });
 }
@@ -69,4 +72,24 @@ describe("POST /api/observations", () => {
       expect(mocks.capture).not.toHaveBeenCalled();
     },
   );
+
+  it("rejects a draft bound to a different authenticated account", async () => {
+    mocks.getClaims.mockResolvedValue({
+      data: { claims: { sub: "account-b" } },
+      error: null,
+    });
+
+    const response = await POST(
+      request(
+        {
+          exactText: "User A evidence",
+          idempotencyKey: "123e4567-e89b-42d3-a456-426614174000",
+        },
+        "account-a",
+      ),
+    );
+
+    expect(response.status).toBe(409);
+    expect(mocks.capture).not.toHaveBeenCalled();
+  });
 });

@@ -17,7 +17,11 @@ export const dynamic = "force-dynamic";
 type HomeState =
   | { kind: "configuration-needed" }
   | { kind: "provisioning-error" }
-  | { kind: "ready"; observations: ObservationHistoryItem[] }
+  | {
+      accountId: string;
+      kind: "ready";
+      observations: ObservationHistoryItem[];
+    }
   | { kind: "signed-out" };
 
 export function HomeView({ state }: { state: HomeState }) {
@@ -35,7 +39,11 @@ export function HomeView({ state }: { state: HomeState }) {
             </button>
           </form>
         </header>
-        <ObservationCapture initialObservations={state.observations} />
+        <ObservationCapture
+          authenticatedAccountId={state.accountId}
+          initialObservations={state.observations}
+          key={state.accountId}
+        />
       </main>
     );
   }
@@ -108,7 +116,7 @@ export default async function HomePage() {
       userId,
       observationRepository,
     );
-    state = { kind: "ready", observations };
+    state = { accountId: userId, kind: "ready", observations };
   } catch {
     state = { kind: "provisioning-error" };
   }

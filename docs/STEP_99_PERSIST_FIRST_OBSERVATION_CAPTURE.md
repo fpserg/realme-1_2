@@ -97,7 +97,24 @@ job, assertion or ontology record is created by capture.
 ## 5. Idempotency
 
 The client creates a UUID when a draft begins and stores it with the exact text
-in the minimum local recovery record. An uncertain retry reuses both values.
+in the minimum local recovery record. The record is namespaced by and contains
+the authenticated account identifier supplied by the verified server session.
+An uncertain retry by that same account reuses the text and UUID.
+
+Recovery validates the stored account identifier again when the component
+loads. A different authenticated account cannot display, populate, retry or
+submit the prior account's draft. Each account receives a distinct storage
+namespace and a new capture identity for its own draft. A mismatched envelope
+found inside the current account's namespace is discarded; the original
+account's correctly namespaced envelope remains available when that account
+returns.
+
+Capture also sends the envelope owner as a non-authoritative consistency
+claim. The server compares it with the subject from fresh `getClaims()` output
+and rejects a mismatch before persistence. The claim cannot nominate authority:
+the verified session still exclusively determines the actor and World. This
+prevents a stale page from submitting Account A's envelope after another auth
+flow has replaced the session with Account B.
 
 The database uniqueness boundary ensures repeated delivery returns the same
 observation and original recorded time. Reusing a key with different text or
@@ -119,7 +136,10 @@ Neither API parsing nor the database command accepts a recorded timestamp.
 Post-save correction appends an `observation_corrections` row and links it to
 the previous correction. It never changes the original observation, exact
 source fragment, recorded time or prior corrections. The history reader
-projects the latest correction for display while retaining correction count.
+reconstructs effective occurred time from the unique leaf of the durable
+correction supersession chain while retaining correction count. It does not
+infer semantic order from `recorded_at`. Zero, multiple, disconnected or
+cyclic leaves fail safely rather than selecting an arbitrary correction.
 
 ## 7. Client state law
 
@@ -133,7 +153,10 @@ projects the latest correction for display while retaining correction count.
 After an uncertain attempt, the draft is held with the same retry identity.
 The user can retry it unchanged. Editing after uncertainty explicitly creates a
 new capture identity. This is a bounded local outbox for one text capture, not a
-general offline synchronization subsystem.
+general offline synchronization subsystem. The local record is recoverable
+input only; it is not canonical evidence until the server confirms durable
+persistence. Plaintext is removed from the current account's local namespace
+after confirmation or explicit clearing.
 
 ## 8. Reload-safe history
 
@@ -142,6 +165,12 @@ and append-only occurrence corrections through ownership-scoped RLS.
 Reconstruction does not depend on in-memory state, a runtime seed or browser
 storage. It exposes evidence-level fields only and does not read or reveal
 hidden candidates.
+
+Account-scoped local recovery is separate from server history. Account
+switching cannot surface or submit another account's unsynced draft, while
+returning to the originating account restores its still-unsynced envelope.
+Effective occurred time after reload comes from the correction supersession
+leaf, independent of correction timestamps or query order.
 
 ## 9. Verification gate
 
@@ -171,8 +200,11 @@ Step 100 is not started.
 ## 11. Candidate verification record
 
 Local verification on 2026-08-20 passed formatting, ESLint, strict TypeScript,
-architecture-boundary enforcement, Drizzle consistency, 14 test files with 50
-tests and the production build. The local runner did not contain the required
+architecture-boundary enforcement, Drizzle consistency, 15 test files with 55
+tests and the production build. The regression suite includes account-switch
+isolation at recovery and request boundaries plus supersession-leaf history
+reconstruction with tied timestamps and malformed-chain rejection. The local
+runner did not contain the required
 Playwright Chromium binary; the mobile test remains part of CI, where Chromium
 is installed explicitly.
 

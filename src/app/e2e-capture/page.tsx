@@ -11,6 +11,7 @@ export default function Step99CaptureFixturePage() {
   return (
     <main className={styles.appMain}>
       <ObservationCapture
+        authenticatedAccountId="00000000-0000-4000-8000-000000000099"
         captureEndpoint="/api/e2e-observations"
         historyEndpoint="/api/e2e-observations"
         initialObservations={[]}
