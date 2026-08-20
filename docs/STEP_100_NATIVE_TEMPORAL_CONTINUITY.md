@@ -1,12 +1,16 @@
 # RealMe 1.2 — Step 100 Native Temporal Continuity
 
-Version: 0.1
+Version: 1.0
 
-Status: OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED
+Status: ACCEPTED — STEP 100 COMPLETE
 
 Opened by: Warden
 
 Opened on: 2026-08-21
+
+Accepted by: Warden
+
+Accepted on: 2026-08-21
 
 Risk: Tier H — temporal interpretation, historical assignment and Today semantics
 
@@ -15,7 +19,7 @@ Risk: Tier H — temporal interpretation, historical assignment and Today semant
 Step 100 activates the temporal structures accepted in Step 98 without
 weakening Step 99 persist-first evidence.
 
-The candidate provides:
+The accepted implementation provides:
 
 - an explicitly accepted, durable IANA timezone;
 - the constitutional default 04:00 local operational boundary;
@@ -226,9 +230,9 @@ Generic authenticated insert, update and delete privileges remain denied on
 time settings, periods, memberships, observations and audit events. RLS
 continues to isolate temporal reads by World.
 
-## 10. Verification gate
+## 10. Acceptance verification gate
 
-Before Warden consideration, the candidate must:
+Before acceptance, the candidate had to:
 
 1. pass formatting, ESLint, strict TypeScript, architecture boundaries,
    Drizzle consistency, unit/enforcement tests and production build;
@@ -249,7 +253,46 @@ Before Warden consideration, the candidate must:
 9. obtain exact-head GitHub Actions and Netlify preview success;
 10. obtain independent Inspector review and explicit Warden acceptance.
 
-## 11. Preserved deferred boundaries
+Exact-head GitHub Actions run 95 and the Netlify Deploy Preview succeeded after
+the DST correction was committed and published. Local verification passed
+formatting, ESLint, strict TypeScript, architecture-boundary enforcement,
+Drizzle consistency, 19 test files with 78 tests and a production build.
+
+Synthetic staging contained the exact ten-migration history ending with
+`20260820223440_step_100_dst_civil_boundary_correction`. Rollback-only temporal
+verification passed, all 24 product tables retained RLS, generic authenticated
+temporal writes remained denied and staging was restored to zero Auth users
+and zero product rows. Production remained unchanged with zero migrations,
+zero public tables and zero Auth users.
+
+## 11. Acceptance record and preserved boundaries
+
+Independent Inspector review returned `APPROVE` for exact implementation head
+`6c8ef13c3775d28e963cd0010b57cc17e6e32155`, tree
+`3a350fa316433d5be45e68afc847e8423b46ae21`, against base/main
+`c340d4680fe05b4a7b1f4c0191271345d688b249`. GitHub Actions run 95 and the
+Netlify Deploy Preview passed at that exact head.
+
+The Warden explicitly accepted Step 100 at that reviewed head and tree on
+2026-08-21. Acceptance preserves these laws:
+
+- time settings are append-only versions carrying prospective IANA timezone
+  and local-boundary rules;
+- the default operational boundary is 04:00 local;
+- nonexistent DST boundaries resolve forward by the gap and repeated
+  boundaries select the earlier physical occurrence;
+- every effective operational membership obeys
+  `starts_at <= temporal_anchor < ends_at`;
+- setting changes never silently rewrite historical memberships;
+- late observations select the setting version effective at their event
+  instant;
+- temporal assignment remains subordinate to persist-first evidence and its
+  failure cannot erase a saved observation;
+- historical membership correction is explicit, append-only and audited in
+  the same transaction with bounded metadata;
+- Today is derived from persisted evidence and effective membership rather
+  than stored as separate mutable truth;
+- no manual Freeze or Close Day ritual exists.
 
 Production remains unmigrated. The pre-existing production
 `public.rls_auto_enable()` execution-grant warnings remain mandatory remediation
@@ -258,5 +301,6 @@ before the first RealMe production migration.
 The Step 100 historical-correction writer activates an action-specific strict
 audit metadata allow-list. This does not create a generic audit-writing API.
 
-Step 100 remains open and unaccepted. The draft PR must remain unmerged. Step
-101 is not started and requires separate Warden authorization.
+Step 100 is accepted and complete. PR #18 remains draft and unmerged pending
+narrow acceptance-delta verification. Step 101 is not started and requires
+separate Warden authorization.
