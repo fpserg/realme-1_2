@@ -4,7 +4,7 @@ Version: 1.0
 Status: ACCEPTED — STEP 96 COMPLETE  
 Accepted by: Warden  
 Accepted on: 2026-08-16  
-Next phase: Step 98 — ACCEPTED / Step 99 — NOT STARTED
+Next phase: Step 98 — ACCEPTED / Step 99 — OPEN, IMPLEMENTATION CANDIDATE, NOT ACCEPTED
 
 ## 1. Scope
 

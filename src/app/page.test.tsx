@@ -11,19 +11,20 @@ describe("HomeView", () => {
       screen.getByRole("heading", { name: "A private World begins here." }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("97 accepted · 98 implementation candidate"),
+      screen.getByText("98 accepted · 99 implementation candidate"),
     ).toBeInTheDocument();
     expect(screen.getByText("Build not configured")).toBeInTheDocument();
     expect(screen.getByText("Unformed by design")).toBeInTheDocument();
   });
 
   it("shows the bounded provisioned state without inventing ontology", () => {
-    render(<HomeView state={{ kind: "ready" }} />);
+    render(<HomeView state={{ kind: "ready", observations: [] }} />);
 
     expect(
-      screen.getByRole("heading", { name: "Your private World is ready." }),
+      screen.getByRole("heading", { name: "What should be remembered?" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Private · owner")).toBeInTheDocument();
-    expect(screen.getByText("Present · unnamed")).toBeInTheDocument();
+    expect(
+      screen.getByText("No observations have been saved yet."),
+    ).toBeInTheDocument();
   });
 });

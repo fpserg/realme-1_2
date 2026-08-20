@@ -13,7 +13,8 @@ export default defineConfig({
   },
   projects: [{ name: "mobile-chromium", use: { browserName: "chromium" } }],
   webServer: {
-    command: "pnpm start --hostname 127.0.0.1",
+    command:
+      "REALME_E2E_FIXTURE=1 node_modules/.bin/next start --hostname 127.0.0.1",
     url: "http://127.0.0.1:3000/api/health",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

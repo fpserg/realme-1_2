@@ -10,34 +10,31 @@
 
 .panel {
   width: min(100%, 34rem);
-  padding: clamp(1.5rem, 6vw, 3rem);
+  padding: clamp(1.5rem, 6vw, 2.5rem);
   border: 1px solid var(--color-line);
-  border-radius: 1.5rem;
+  border-radius: 8px;
   background: var(--color-surface);
-  box-shadow: 0 2rem 5rem rgb(0 0 0 / 28%);
+  box-shadow: 0 1rem 3rem rgb(23 32 31 / 10%);
 }
 
 .eyebrow {
   color: var(--color-accent);
   font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-weight: 750;
   text-transform: uppercase;
 }
 
 .panel h1 {
   margin: 0.75rem 0 1rem;
-  font-size: clamp(2rem, 10vw, 3.75rem);
-  font-weight: 580;
-  letter-spacing: -0.05em;
-  line-height: 0.98;
+  font-size: 2.4rem;
+  font-weight: 650;
+  line-height: 1.05;
 }
 
 .panel > p {
   margin: 0;
   color: var(--color-muted);
-  font-size: 1rem;
-  line-height: 1.65;
+  line-height: 1.6;
 }
 
 .primaryAction,
@@ -46,24 +43,24 @@
   min-height: 2.75rem;
   align-items: center;
   justify-content: center;
-  margin-top: 1.5rem;
-  padding: 0.7rem 1rem;
+  padding: 0.65rem 0.9rem;
   border: 1px solid var(--color-accent);
-  border-radius: 999px;
+  border-radius: 6px;
   font: inherit;
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 750;
   text-decoration: none;
 }
 
 .primaryAction {
-  color: #171209;
+  margin-top: 1.5rem;
+  color: white;
   background: var(--color-accent);
 }
 
 .secondaryAction {
-  color: var(--color-text);
-  background: transparent;
+  color: var(--color-accent);
+  background: var(--color-surface);
   cursor: pointer;
 }
 
@@ -92,4 +89,34 @@
   font-size: 0.85rem;
   font-weight: 650;
   text-align: right;
+}
+
+.appMain {
+  width: min(100%, 52rem);
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(0.85rem, env(safe-area-inset-right))
+    max(2rem, env(safe-area-inset-bottom))
+    max(0.85rem, env(safe-area-inset-left));
+}
+
+.appHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.appHeader p {
+  margin: 0.25rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+@media (min-width: 48rem) {
+  .appMain {
+    padding-top: 2rem;
+  }
 }

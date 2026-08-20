@@ -1,11 +1,18 @@
 :root {
-  --color-background: #090c14;
-  --color-surface: #111723;
-  --color-line: #293144;
-  --color-text: #f8f4e8;
-  --color-muted: #aeb6c8;
-  --color-accent: #e4bd54;
-  color-scheme: dark;
+  --color-background: #f4f7f6;
+  --color-surface: #ffffff;
+  --color-input: #fbfdfc;
+  --color-line: #d8e0de;
+  --color-line-strong: #aebcba;
+  --color-text: #17201f;
+  --color-muted: #5f6c6a;
+  --color-accent: #08776f;
+  --color-accent-soft: rgb(8 119 111 / 16%);
+  --color-success: #16724c;
+  --color-warning: #956d05;
+  --color-processing: #315fb5;
+  --color-danger: #b33b4a;
+  color-scheme: light;
 }
 
 * {
@@ -20,9 +27,7 @@ html {
 body {
   margin: 0;
   color: var(--color-text);
-  background:
-    radial-gradient(circle at 50% 15%, rgb(228 189 84 / 9%), transparent 34rem),
-    var(--color-background);
+  background: var(--color-background);
   font-family:
     Inter,
     ui-sans-serif,
