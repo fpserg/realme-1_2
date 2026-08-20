@@ -14,10 +14,14 @@
 [context.deploy-preview.environment]
   REALME_ENVIRONMENT = "preview"
   REALME_DATA_CLASSIFICATION = "synthetic"
+  REALME_DIALOGUE_PROVIDER = "openai"
+  REALME_DIALOGUE_MODEL = "gpt-5.4-mini-2026-03-17"
 
 [context.branch-deploy.environment]
   REALME_ENVIRONMENT = "staging"
   REALME_DATA_CLASSIFICATION = "synthetic"
+  REALME_DIALOGUE_PROVIDER = "openai"
+  REALME_DIALOGUE_MODEL = "gpt-5.4-mini-2026-03-17"
 
 [context.production.environment]
   REALME_ENVIRONMENT = "production"

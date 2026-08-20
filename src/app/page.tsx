@@ -14,6 +14,7 @@ import { SupabaseWorldAccessRepository } from "@/infrastructure/supabase/world-a
 
 import { createSupabaseServerClient } from "./_supabase/server";
 import { logout } from "./auth/actions";
+import { CompanionDialogue } from "./companion-dialogue";
 import { ObservationCapture } from "./observation-capture";
 import styles from "./page.module.css";
 
@@ -36,8 +37,8 @@ export function HomeView({ state }: { state: HomeState }) {
       <main className={styles.appMain}>
         <header className={styles.appHeader}>
           <div>
-            <span className={styles.eyebrow}>RealMe 1.2 · Step 100</span>
-            <p>Native temporal continuity</p>
+            <span className={styles.eyebrow}>RealMe 1.2 · Step 101</span>
+            <p>One-companion dialogue candidate</p>
           </div>
           <form action={logout}>
             <button className={styles.secondaryAction} type="submit">
@@ -45,12 +46,18 @@ export function HomeView({ state }: { state: HomeState }) {
             </button>
           </form>
         </header>
-        <ObservationCapture
-          authenticatedAccountId={state.accountId}
-          initialTemporalContext={state.temporal}
-          initialObservations={state.observations}
-          key={state.accountId}
-        />
+        <div className={styles.appSections}>
+          <CompanionDialogue
+            authenticatedAccountId={state.accountId}
+            key={`dialogue-${state.accountId}`}
+          />
+          <ObservationCapture
+            authenticatedAccountId={state.accountId}
+            initialTemporalContext={state.temporal}
+            initialObservations={state.observations}
+            key={`capture-${state.accountId}`}
+          />
+        </div>
       </main>
     );
   }
@@ -58,7 +65,7 @@ export function HomeView({ state }: { state: HomeState }) {
   return (
     <main className={styles.main}>
       <section className={styles.panel} aria-labelledby="world-title">
-        <span className={styles.eyebrow}>RealMe 1.2 · Step 100</span>
+        <span className={styles.eyebrow}>RealMe 1.2 · Step 101</span>
         <h1 id="world-title">A private World begins here.</h1>
         <p>
           Sign in to receive one private World and one companion. Your World
@@ -74,7 +81,7 @@ export function HomeView({ state }: { state: HomeState }) {
         <dl className={styles.status}>
           <div>
             <dt>Current step</dt>
-            <dd>99 accepted · 100 implementation candidate</dd>
+            <dd>100 accepted · 101 implementation candidate</dd>
           </div>
           <div>
             <dt>World access</dt>
