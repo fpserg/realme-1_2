@@ -1,6 +1,6 @@
 # RealMe 1.2 — Step 98 Canonical Truth Schema
 
-Version: 0.1
+Version: 0.2
 
 Status: IMPLEMENTATION CANDIDATE — NOT ACCEPTED
 
@@ -53,6 +53,15 @@ Its explicit internal-access hardening migration is:
 Its canonical admission-invariant migration is:
 
 `20260820100146_step_98_admission_invariants`
+
+Its forward-only Code Review correction migration is:
+
+`20260820143800_step_98_correction_invariants`
+
+The three earlier Step 98 migration identities remain unchanged because they
+were already recorded in synthetic staging. The correction migration narrows
+admission authority, canonical JSON values, temporal correction chains and job
+states without rewriting deployed history.
 
 The SQL migration, Drizzle journal and Drizzle snapshot carry the same
 timestamp identity. Drizzle reads the single schema entry point
@@ -119,6 +128,9 @@ Candidate claims belong to one interpretation run. Their payload is
 non-canonical structured JSON. A candidate may remain hidden, unresolved or
 rejected indefinitely; its existence never changes the World Model.
 
+When a candidate proposes an existing subject node, a World-matching foreign
+key prevents it from naming a node in another World.
+
 ### `candidate_claim_evidence`
 
 Candidate claims link explicitly to exact source fragments within the same
@@ -129,8 +141,13 @@ World. Mention frequency is not modeled as structural truth.
 ### `admission_decisions`
 
 Admission decisions are append-only accept, reject, correct or defer records.
-They identify either a user or a separately governed policy as the authority.
-A user decision must name an account that is a member of the same World.
+Step 98 permits user authority only, and every decision must name an account
+that is a member of the same World. Policy-backed admission is deferred until
+durable policy identity, version, provenance and governance exist.
+
+A correcting decision requires a JSON-object correction payload. Accept,
+reject and defer decisions prohibit correction payloads. A superseding decision
+must concern the same World and candidate as its predecessor.
 
 AI is not an admission authority. Step 98 creates no path by which provider
 output can insert or mutate admitted state.
@@ -169,8 +186,10 @@ new relationship version and preserve the superseded record.
 
 Assertions represent admitted versioned understanding. An assertion may apply
 to the World as a whole or to a stable node, and has exactly one object: either
-another stable node or a structured value. It records validity separately from
-record creation and may supersede an earlier assertion inside the same World.
+another stable node or a literal string, number or boolean value. JSON objects
+and arrays are not canonical assertion values. It records validity separately
+from record creation and may supersede an earlier assertion inside the same
+World.
 
 ### `assertion_evidence`
 
@@ -196,6 +215,11 @@ Operational membership is an explicit append-only assignment. A correction
 supersedes a prior membership rather than rewriting it, so changing the
 boundary cannot silently move historical observations.
 
+Each observation has at most one initial membership. Corrections require a
+predecessor for the same World and observation, and one predecessor may have at
+most one direct successor. These constraints preserve a single append-only
+correction chain rather than a forked or detached history.
+
 ### Reflection periods
 
 `reflection_periods` and
@@ -209,11 +233,15 @@ state. Step 98 supplies only the durable identities and constraints.
 
 `jobs` defines durable status, idempotency, retry and failure fields, but no
 worker or AI task is implemented. Step 102 remains responsible for job
-execution and delivery semantics.
+execution and delivery semantics. Attempts remain between zero and the retry
+limit; queued jobs are unlocked and retain retry capacity; running jobs are
+locked and have begun an attempt; every non-running state is unlocked.
 
 `audit_events` is an append-only metadata record for security-sensitive and
 canonical commands. A user actor must be a member of the same World. Audit
 metadata must not contain secrets or unnecessary personal content.
+Future writers must validate metadata through a strict action-specific
+allow-list; arbitrary caller-provided metadata is not permitted.
 
 ## 9. Authorization law
 
@@ -304,6 +332,34 @@ the isolated workspace lacked Chromium and its CDN returned a zero-byte archive
 when installation was attempted. TLS or download validation was not weakened;
 the exact-head GitHub Actions mobile Chromium result remains required before
 acceptance.
+
+### Code Review correction verification
+
+Independent Code Review requested correction of the candidate at head
+`20302213d1f5e36e37285b0ca3551295bca9ba6c`. The correction was applied
+forward-only to RealMe Staging as
+`20260820143800_step_98_correction_invariants`; the three earlier Step 98
+migration identities were not rewritten.
+
+The repository carries a reusable rollback-only regression script covering 18
+malformed states. Staging rejected actorless and policy admissions, incoherent
+decision payloads, cross-candidate decision supersession, a cross-World
+candidate-node reference, canonical object and array JSON, detached, duplicate,
+forked and cross-observation operational memberships, attempts beyond the retry
+limit and inconsistent job lock/status combinations.
+
+After rollback-only verification:
+
+- all 11 correction constraints and five supporting indexes were present;
+- all 24 product tables remained RLS-enabled;
+- anonymous and authenticated client-write grants remained absent;
+- staging contained zero Auth users and zero product rows;
+- Supabase security advisors reported zero findings;
+- production still contained zero RealMe migrations, zero public product tables
+  and zero Auth users.
+
+Exact-head GitHub Actions and Netlify preview evidence remain required after
+the correction is committed and pushed.
 
 ## 13. Known external production finding
 

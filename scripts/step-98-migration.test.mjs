@@ -11,6 +11,10 @@ const denialSnapshotPath =
 const admissionMigrationTag = "20260820100146_step_98_admission_invariants";
 const admissionSnapshotPath =
   "supabase/migrations/meta/20260820100146_snapshot.json";
+const correctionMigrationTag = "20260820143800_step_98_correction_invariants";
+const correctionMigrationPath = `supabase/migrations/${correctionMigrationTag}.sql`;
+const correctionSnapshotPath =
+  "supabase/migrations/meta/20260820143800_snapshot.json";
 
 const truthTables = [
   "observations",
@@ -139,26 +143,31 @@ describe("Step 98 canonical truth migration", () => {
       snapshotText,
       denialSnapshotText,
       admissionSnapshotText,
+      correctionSnapshotText,
     ] = await Promise.all([
       readFile("supabase/migrations/meta/_journal.json", "utf8"),
       readFile(snapshotPath, "utf8"),
       readFile(denialSnapshotPath, "utf8"),
       readFile(admissionSnapshotPath, "utf8"),
+      readFile(correctionSnapshotPath, "utf8"),
     ]);
     const journal = JSON.parse(journalText);
     const snapshot = JSON.parse(snapshotText);
     const denialSnapshot = JSON.parse(denialSnapshotText);
     const admissionSnapshot = JSON.parse(admissionSnapshotText);
+    const correctionSnapshot = JSON.parse(correctionSnapshotText);
     const schemaEntry = journal.entries.find(
       (entry) => entry.tag === migrationTag,
     );
 
     expect(schemaEntry?.tag).toBe(migrationTag);
-    expect(journal.entries.at(-2)?.tag).toBe(denialMigrationTag);
-    expect(journal.entries.at(-1)?.tag).toBe(admissionMigrationTag);
+    expect(journal.entries.at(-3)?.tag).toBe(denialMigrationTag);
+    expect(journal.entries.at(-2)?.tag).toBe(admissionMigrationTag);
+    expect(journal.entries.at(-1)?.tag).toBe(correctionMigrationTag);
     expect(snapshot.prevId).toBe("5d5bbab0-36f3-4a3f-b2c9-24ef4a4493af");
     expect(denialSnapshot.prevId).toBe(snapshot.id);
     expect(admissionSnapshot.prevId).toBe(denialSnapshot.id);
+    expect(correctionSnapshot.prevId).toBe(admissionSnapshot.id);
     expect(Object.keys(snapshot.tables)).toHaveLength(24);
     for (const table of truthTables) {
       expect(snapshot.tables).toHaveProperty(`public.${table}`);
@@ -210,6 +219,79 @@ describe("Step 98 canonical truth migration", () => {
           "i",
         ),
       );
+    }
+  });
+
+  it("rejects malformed admission, canonical JSON, temporal chains and job states", async () => {
+    const [sql, rollbackVerification] = await Promise.all([
+      readFile(correctionMigrationPath, "utf8"),
+      readFile("scripts/verify-step-98-correction.sql", "utf8"),
+    ]);
+
+    expect(sql).toMatch(/ALTER COLUMN "decided_by_account_id" SET NOT NULL/i);
+    expect(sql).toMatch(
+      /admission_decisions_authority_check[\s\S]*authority_kind" = 'user'/i,
+    );
+    expect(sql).toMatch(
+      /admission_decisions_payload_coherence_check[\s\S]*decision_kind" = 'correct'[\s\S]*correction_payload" is not null[\s\S]*jsonb_typeof\("admission_decisions"\."correction_payload"\) = 'object'[\s\S]*decision_kind" in \('accept', 'reject', 'defer'\)[\s\S]*correction_payload" is null/i,
+    );
+    expect(sql).toMatch(
+      /admission_decisions_supersedes_candidate_world_fk[\s\S]*FOREIGN KEY \(world_id, candidate_claim_id, supersedes_decision_id\)[\s\S]*REFERENCES public\.admission_decisions \(world_id, candidate_claim_id, id\)/i,
+    );
+    expect(sql).toMatch(
+      /candidate_claims_proposed_subject_node_world_fk[\s\S]*FOREIGN KEY \(world_id, proposed_subject_node_id\)[\s\S]*REFERENCES public\.ontology_nodes \(world_id, id\)/i,
+    );
+    expect(sql).toMatch(
+      /assertions_scalar_value_check[\s\S]*jsonb_typeof\("assertions"\."value"\) in \('string', 'number', 'boolean'\)/i,
+    );
+    expect(sql).toMatch(
+      /observation_operational_memberships_correction_chain_check[\s\S]*assignment_kind" = 'initial'[\s\S]*supersedes_membership_id" is null[\s\S]*assignment_kind" = 'correction'[\s\S]*supersedes_membership_id" is not null/i,
+    );
+    expect(sql).toMatch(
+      /observation_operational_membership_supersedes_observation_world_fk[\s\S]*FOREIGN KEY \(world_id, observation_id, supersedes_membership_id\)[\s\S]*\(world_id, observation_id, id\)/i,
+    );
+    expect(sql).toMatch(
+      /CREATE UNIQUE INDEX "observation_operational_membership_successor_unique"[\s\S]*\("supersedes_membership_id"\)[\s\S]*WHERE[\s\S]*supersedes_membership_id" is not null/i,
+    );
+    expect(sql).toMatch(
+      /CREATE UNIQUE INDEX "observation_operational_membership_initial_unique"[\s\S]*\("world_id","observation_id"\)[\s\S]*WHERE[\s\S]*assignment_kind" = 'initial'/i,
+    );
+    expect(sql).toMatch(
+      /jobs_attempts_within_max_check[\s\S]*"attempts" <= "jobs"\."max_attempts"/i,
+    );
+    expect(sql).toMatch(
+      /jobs_queued_state_check[\s\S]*status" <> 'queued'[\s\S]*attempts" < "jobs"\."max_attempts"[\s\S]*locked_at" is null/i,
+    );
+    expect(sql).toMatch(
+      /jobs_running_state_check[\s\S]*status" <> 'running'[\s\S]*locked_at" is not null[\s\S]*attempts" >= 1/i,
+    );
+    expect(sql).toMatch(
+      /jobs_non_running_unlocked_check[\s\S]*status" = 'running'[\s\S]*locked_at" is null/i,
+    );
+
+    expect(rollbackVerification).toMatch(/^begin;/i);
+    expect(rollbackVerification).toMatch(/rollback;\s*$/i);
+    for (const malformedCase of [
+      "actorless admission",
+      "policy admission",
+      "correct without payload",
+      "accept with payload",
+      "cross-candidate decision supersession",
+      "cross-world candidate node",
+      "canonical object JSON",
+      "canonical array JSON",
+      "correction without predecessor",
+      "second initial membership",
+      "forked operational correction",
+      "cross-observation correction",
+      "attempts above maximum",
+      "locked queued job",
+      "exhausted queued job",
+      "unlocked running job",
+      "zero-attempt running job",
+      "locked non-running job",
+    ]) {
+      expect(rollbackVerification).toContain(`'${malformedCase}'`);
     }
   });
 });

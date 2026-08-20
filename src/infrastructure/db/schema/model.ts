@@ -202,6 +202,10 @@ export const assertions = pgTable(
       sql`num_nonnulls(${table.objectNodeId}, ${table.value}) = 1`,
     ),
     check(
+      "assertions_scalar_value_check",
+      sql`${table.value} is null or jsonb_typeof(${table.value}) in ('string', 'number', 'boolean')`,
+    ),
+    check(
       "assertions_valid_interval_check",
       sql`${table.validTo} is null or ${table.validTo} > ${table.validFrom}`,
     ),

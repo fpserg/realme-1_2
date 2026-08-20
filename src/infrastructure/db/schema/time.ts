@@ -133,9 +133,21 @@ export const observationOperationalPeriodMemberships = pgTable(
       table.worldId,
       table.id,
     ),
+    unique(
+      "observation_operational_memberships_world_observation_id_unique",
+    ).on(table.worldId, table.observationId, table.id),
     index("observation_operational_period_memberships_observation_index").on(
       table.observationId,
     ),
+    index("observation_operational_membership_supersedes_path_index")
+      .on(table.worldId, table.observationId, table.supersedesMembershipId)
+      .where(sql`${table.supersedesMembershipId} is not null`),
+    uniqueIndex("observation_operational_membership_successor_unique")
+      .on(table.supersedesMembershipId)
+      .where(sql`${table.supersedesMembershipId} is not null`),
+    uniqueIndex("observation_operational_membership_initial_unique")
+      .on(table.worldId, table.observationId)
+      .where(sql`${table.assignmentKind} = 'initial'`),
     foreignKey({
       name: "observation_operational_membership_observation_world_fk",
       columns: [table.worldId, table.observationId],
@@ -154,6 +166,10 @@ export const observationOperationalPeriodMemberships = pgTable(
     check(
       "observation_operational_memberships_assignment_kind_check",
       sql`${table.assignmentKind} in ('initial', 'correction')`,
+    ),
+    check(
+      "observation_operational_memberships_correction_chain_check",
+      sql`(${table.assignmentKind} = 'initial' and ${table.supersedesMembershipId} is null) or (${table.assignmentKind} = 'correction' and ${table.supersedesMembershipId} is not null)`,
     ),
   ],
 );

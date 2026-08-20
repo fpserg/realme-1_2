@@ -90,6 +90,9 @@ export const candidateClaims = pgTable(
     index("candidate_claims_interpretation_run_id_index").on(
       table.interpretationRunId,
     ),
+    index("candidate_claims_proposed_subject_node_index")
+      .on(table.worldId, table.proposedSubjectNodeId)
+      .where(sql`${table.proposedSubjectNodeId} is not null`),
     foreignKey({
       name: "candidate_claims_interpretation_run_world_fk",
       columns: [table.worldId, table.interpretationRunId],
@@ -147,10 +150,9 @@ export const admissionDecisions = pgTable(
     candidateClaimId: uuid("candidate_claim_id").notNull(),
     decisionKind: text("decision_kind").notNull(),
     authorityKind: text("authority_kind").notNull(),
-    decidedByAccountId: uuid("decided_by_account_id").references(
-      () => accounts.id,
-      { onDelete: "restrict" },
-    ),
+    decidedByAccountId: uuid("decided_by_account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "restrict" }),
     rationale: text("rationale"),
     correctionPayload: jsonb("correction_payload"),
     supersedesDecisionId: uuid("supersedes_decision_id").references(
@@ -166,9 +168,17 @@ export const admissionDecisions = pgTable(
       table.worldId,
       table.id,
     ),
+    unique("admission_decisions_world_candidate_id_unique").on(
+      table.worldId,
+      table.candidateClaimId,
+      table.id,
+    ),
     index("admission_decisions_candidate_claim_id_index").on(
       table.candidateClaimId,
     ),
+    index("admission_decisions_supersedes_candidate_index")
+      .on(table.worldId, table.candidateClaimId, table.supersedesDecisionId)
+      .where(sql`${table.supersedesDecisionId} is not null`),
     foreignKey({
       name: "admission_decisions_candidate_claim_world_fk",
       columns: [table.worldId, table.candidateClaimId],
@@ -185,15 +195,11 @@ export const admissionDecisions = pgTable(
     ),
     check(
       "admission_decisions_authority_check",
-      sql`${table.authorityKind} in ('user', 'policy')`,
+      sql`${table.authorityKind} = 'user'`,
     ),
     check(
-      "admission_decisions_user_authority_actor_check",
-      sql`${table.authorityKind} <> 'user' or ${table.decidedByAccountId} is not null`,
-    ),
-    check(
-      "admission_decisions_correction_payload_check",
-      sql`${table.correctionPayload} is null or jsonb_typeof(${table.correctionPayload}) = 'object'`,
+      "admission_decisions_payload_coherence_check",
+      sql`(${table.decisionKind} = 'correct' and ${table.correctionPayload} is not null and jsonb_typeof(${table.correctionPayload}) = 'object') or (${table.decisionKind} in ('accept', 'reject', 'defer') and ${table.correctionPayload} is null)`,
     ),
   ],
 );

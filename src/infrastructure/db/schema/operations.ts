@@ -60,6 +60,22 @@ export const jobs = pgTable(
     check("jobs_attempts_check", sql`${table.attempts} >= 0`),
     check("jobs_max_attempts_check", sql`${table.maxAttempts} > 0`),
     check(
+      "jobs_attempts_within_max_check",
+      sql`${table.attempts} <= ${table.maxAttempts}`,
+    ),
+    check(
+      "jobs_queued_state_check",
+      sql`${table.status} <> 'queued' or (${table.attempts} < ${table.maxAttempts} and ${table.lockedAt} is null)`,
+    ),
+    check(
+      "jobs_running_state_check",
+      sql`${table.status} <> 'running' or (${table.lockedAt} is not null and ${table.attempts} >= 1)`,
+    ),
+    check(
+      "jobs_non_running_unlocked_check",
+      sql`${table.status} = 'running' or ${table.lockedAt} is null`,
+    ),
+    check(
       "jobs_payload_object_check",
       sql`jsonb_typeof(${table.payload}) = 'object'`,
     ),
