@@ -1,8 +1,8 @@
 # RealMe 1.2 — Step 98 Canonical Truth Schema
 
-Version: 0.2
+Version: 1.0
 
-Status: IMPLEMENTATION CANDIDATE — NOT ACCEPTED
+Status: ACCEPTED — STEP 98 COMPLETE
 
 Opened by: Warden
 
@@ -12,12 +12,16 @@ Defaults accepted by: Warden
 
 Defaults accepted on: 2026-08-20
 
+Accepted by: Warden
+
+Accepted on: 2026-08-20
+
 ## 1. Bounded outcome
 
 Step 98 introduces the first constitutional truth schema beneath the accepted
 Step 97 identity and World-ownership foundation.
 
-The candidate makes these durable layers structurally different:
+The accepted schema makes these durable layers structurally different:
 
 ```text
 observation and exact source evidence
@@ -42,7 +46,7 @@ Step 98 does not provide:
 
 ## 2. Migration identity
 
-The candidate migration is:
+The accepted schema migration is:
 
 `20260820095459_step_98_canonical_truth_schema`
 
@@ -274,9 +278,9 @@ must design and verify an explicit whole-World export/deletion procedure; Step
 98 does not expose deletion privileges or claim that incidental cascading is a
 complete sovereignty workflow.
 
-## 11. Required candidate verification
+## 11. Required acceptance verification
 
-Before the candidate may be presented for acceptance:
+Before acceptance, the candidate had to:
 
 1. pass formatting, ESLint, strict TypeScript, architecture checks,
    `pnpm db:check`, all unit/enforcement tests and a production build;
@@ -293,7 +297,7 @@ Before the candidate may be presented for acceptance:
 11. run Supabase security advisors;
 12. obtain exact-head independent Code Review and explicit Warden acceptance.
 
-## 12. Candidate verification record
+## 12. Acceptance verification record
 
 Verified on 2026-08-20 against `RealMe Staging`:
 
@@ -358,8 +362,8 @@ After rollback-only verification:
 - production still contained zero RealMe migrations, zero public product tables
   and zero Auth users.
 
-Exact-head GitHub Actions and Netlify preview evidence remain required after
-the correction is committed and pushed.
+Exact-head GitHub Actions run 75 and the Netlify Deploy Preview both succeeded
+after the correction was committed and published.
 
 ## 13. Known external production finding
 
@@ -369,15 +373,25 @@ trigger function with `EXECUTE` still granted to `anon` and `authenticated`.
 Current Supabase advisors report two warnings for those grants.
 
 This function predates RealMe migrations, production has no product tables or
-users, and Step 98 does not modify it. It does not reopen Step 97 or block the
-staging candidate. It must be revoked or explicitly reassessed before the first
-production migration.
+users, and Step 98 does not modify it. It did not reopen Step 97 or block Step
+98 acceptance. Its unsafe execution grants must be remediated before the first
+RealMe production migration.
 
-## 14. Acceptance boundary
+## 14. Acceptance record and boundary
 
-Step 98 remains unaccepted until the Warden explicitly accepts the verified,
-independently reviewed exact head.
+Independent Code Review returned `APPROVE` for exact head
+`b1d9a179656e9dd365c200ab505b6e862aadf785`, tree
+`02d61198130a07f87416b59a76c86083b66f1252`, against base/main
+`e64464c52b30c75495fa5894a08c6f92825ae4fe`. GitHub Actions run 75 passed,
+including Drizzle verification, the production build and mobile Chromium.
 
-Acceptance will freeze the schema boundary, not authorize Step 99, AI
-processing, a production migration, personal-data import or Living World
-generation.
+The Warden explicitly accepted Step 98 at that exact reviewed head and tree on
+2026-08-20. Acceptance freezes the schema boundary described in this record.
+
+The pre-existing production `public.rls_auto_enable()` execution warnings must
+be remediated before the first RealMe production migration. Strict metadata
+allow-list enforcement remains deferred until an audit writer exists.
+
+Step 98 acceptance does not authorize Step 99, AI processing, a production
+migration, personal-data import or Living World generation. Step 99 has not
+started and requires separate explicit Warden authorization.
