@@ -22,7 +22,7 @@ export function HomeView({ state }: { state: HomeState }) {
   return (
     <main className={styles.main}>
       <section className={styles.panel} aria-labelledby="world-title">
-        <span className={styles.eyebrow}>RealMe 1.2 · Step 97</span>
+        <span className={styles.eyebrow}>RealMe 1.2 · Step 98</span>
         <h1 id="world-title">
           {isReady
             ? "Your private World is ready."
@@ -51,7 +51,7 @@ export function HomeView({ state }: { state: HomeState }) {
         <dl className={styles.status}>
           <div>
             <dt>Current step</dt>
-            <dd>97 accepted · 98 not started</dd>
+            <dd>97 accepted · 98 implementation candidate</dd>
           </div>
           <div>
             <dt>World access</dt>

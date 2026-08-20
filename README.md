@@ -80,5 +80,12 @@ The Warden accepted Step 97 on 2026-08-17 after independent exact-head Code
 Review and complete CI/preview validation. The accepted boundary provides
 cookie-backed Supabase authentication, one private stable World and one
 initially unnamed companion per user, ownership-scoped RLS and a synthetic-only
-staging/preview environment. Production remains unmigrated. Step 98 has not
-started and requires a separate explicit Warden instruction.
+staging/preview environment. Production remains unmigrated.
+
+**Step 98 — Canonical truth schema: IMPLEMENTATION CANDIDATE.**
+
+The Warden opened Step 98 and accepted its defaults on 2026-08-20. The current
+candidate introduces separate evidence, interpretation, admission and admitted
+World Model records, plus versioned temporal, job and audit foundations. It
+does not implement capture, AI processing or canonical commands, and it has
+not been accepted. Production remains unmigrated.
