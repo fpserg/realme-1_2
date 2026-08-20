@@ -3,7 +3,8 @@ begin;
 insert into auth.users (id)
 values
   ('11111111-1111-4111-8111-111111111111'),
-  ('22222222-2222-4222-8222-222222222222');
+  ('22222222-2222-4222-8222-222222222222'),
+  ('33333333-3333-4333-8333-333333333333');
 
 create or replace function pg_temp.expect_rejection(
   case_name text,
@@ -132,6 +133,175 @@ begin
   ) = 25;
 end;
 $$;
+
+-- spring-gap civil boundary: 02:30 normalizes to 03:30 local / 01:30Z
+select set_config(
+  'request.jwt.claim.sub',
+  '33333333-3333-4333-8333-333333333333',
+  true
+);
+create temporary table dst_boundary_setting as
+select * from public.save_time_setting('Europe/Amsterdam', '02:30');
+
+do $$
+begin
+  assert private.resolve_civil_boundary(
+    date '2026-03-29',
+    'Europe/Amsterdam',
+    time '02:30'
+  ) = timestamptz '2026-03-29 01:30:00+00';
+  assert private.resolve_civil_boundary(
+    date '2026-03-29',
+    'Europe/Amsterdam',
+    time '02:30'
+  ) at time zone 'Europe/Amsterdam' = timestamp '2026-03-29 03:30:00';
+end;
+$$;
+
+create temporary table gap_before_capture as
+select * from public.capture_text_observation(
+  'cccccccc-0000-4000-8000-000000000100',
+  'Gap anchor before resolved boundary',
+  timestamptz '2026-03-29 01:15:00+00',
+  'Europe/Amsterdam'
+);
+create temporary table gap_before_assignment as
+select * from public.assign_observation_operational_period(
+  (select observation_id from gap_before_capture)
+);
+create temporary table gap_at_capture as
+select * from public.capture_text_observation(
+  'cccccccc-0000-4000-8000-000000000101',
+  'Gap anchor at resolved boundary',
+  timestamptz '2026-03-29 01:30:00+00',
+  'Europe/Amsterdam'
+);
+create temporary table gap_at_assignment as
+select * from public.assign_observation_operational_period(
+  (select observation_id from gap_at_capture)
+);
+create temporary table gap_after_capture as
+select * from public.capture_text_observation(
+  'cccccccc-0000-4000-8000-000000000102',
+  'Gap anchor after resolved boundary',
+  timestamptz '2026-03-29 01:45:00+00',
+  'Europe/Amsterdam'
+);
+create temporary table gap_after_assignment as
+select * from public.assign_observation_operational_period(
+  (select observation_id from gap_after_capture)
+);
+
+do $$
+begin
+  assert (select local_date from gap_before_assignment) = date '2026-03-28';
+  assert (select local_date from gap_at_assignment) = date '2026-03-29';
+  assert (select local_date from gap_after_assignment) = date '2026-03-29';
+  assert (
+    select starts_at
+    from public.operational_periods
+    where id = (select operational_period_id from gap_at_assignment)
+  ) = timestamptz '2026-03-29 01:30:00+00';
+end;
+$$;
+
+-- fall-fold civil boundary: two candidates exist and the earlier one wins
+do $$
+begin
+  assert timestamptz '2026-10-25 00:30:00+00'
+    at time zone 'Europe/Amsterdam' = timestamp '2026-10-25 02:30:00';
+  assert timestamptz '2026-10-25 01:30:00+00'
+    at time zone 'Europe/Amsterdam' = timestamp '2026-10-25 02:30:00';
+  assert private.resolve_civil_boundary(
+    date '2026-10-25',
+    'Europe/Amsterdam',
+    time '02:30'
+  ) = timestamptz '2026-10-25 00:30:00+00';
+end;
+$$;
+
+create temporary table fold_before_capture as
+select * from public.capture_text_observation(
+  'cccccccc-0000-4000-8000-000000000103',
+  'Fold anchor before earlier boundary',
+  timestamptz '2026-10-25 00:15:00+00',
+  'Europe/Amsterdam'
+);
+create temporary table fold_before_assignment as
+select * from public.assign_observation_operational_period(
+  (select observation_id from fold_before_capture)
+);
+create temporary table fold_at_capture as
+select * from public.capture_text_observation(
+  'cccccccc-0000-4000-8000-000000000104',
+  'Fold anchor at earlier boundary',
+  timestamptz '2026-10-25 00:30:00+00',
+  'Europe/Amsterdam'
+);
+create temporary table fold_at_assignment as
+select * from public.assign_observation_operational_period(
+  (select observation_id from fold_at_capture)
+);
+create temporary table fold_after_capture as
+select * from public.capture_text_observation(
+  'cccccccc-0000-4000-8000-000000000105',
+  'Fold anchor after earlier boundary',
+  timestamptz '2026-10-25 01:30:00+00',
+  'Europe/Amsterdam'
+);
+create temporary table fold_after_assignment as
+select * from public.assign_observation_operational_period(
+  (select observation_id from fold_after_capture)
+);
+
+do $$
+begin
+  assert (select local_date from fold_before_assignment) = date '2026-10-24';
+  assert (select local_date from fold_at_assignment) = date '2026-10-25';
+  assert (select local_date from fold_after_assignment) = date '2026-10-25';
+  assert (
+    select starts_at
+    from public.operational_periods
+    where id = (select operational_period_id from fold_at_assignment)
+  ) = timestamptz '2026-10-25 00:30:00+00';
+end;
+$$;
+
+-- membership containment and retry remain authoritative and idempotent
+create temporary table repeated_gap_assignment as
+select * from public.assign_observation_operational_period(
+  (select observation_id from gap_at_capture)
+);
+do $$
+begin
+  assert (select operational_period_id from repeated_gap_assignment) =
+    (select operational_period_id from gap_at_assignment);
+  assert not exists (
+    select 1
+    from public.observations as observation
+    join public.observation_operational_period_memberships as membership
+      on membership.world_id = observation.world_id
+     and membership.observation_id = observation.id
+    join public.operational_periods as period
+      on period.world_id = membership.world_id
+     and period.id = membership.operational_period_id
+    where observation.world_id = (
+      select id from public.worlds
+      where initial_owner_id = '33333333-3333-4333-8333-333333333333'
+    )
+      and not (
+        period.starts_at <= coalesce(observation.occurred_at, observation.recorded_at)
+        and coalesce(observation.occurred_at, observation.recorded_at) < period.ends_at
+      )
+  );
+end;
+$$;
+
+select set_config(
+  'request.jwt.claim.sub',
+  '11111111-1111-4111-8111-111111111111',
+  true
+);
 
 -- period creation is deterministic and idempotent
 create temporary table repeated_assignment as

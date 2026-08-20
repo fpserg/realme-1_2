@@ -39,7 +39,8 @@ The forward Step 100 migrations are:
 
 1. `20260820213941_step_100_native_temporal_continuity`;
 2. `20260820214041_step_100_period_conflict_correction`;
-3. `20260820214147_step_100_setting_monotonic_clock_correction`.
+3. `20260820214147_step_100_setting_monotonic_clock_correction`;
+4. `20260820223440_step_100_dst_civil_boundary_correction`.
 
 The first migration introduced the durable constraints, internal helpers and
 four narrow authenticated commands. Synthetic staging then exposed a
@@ -53,7 +54,13 @@ forward-only migration changed the setting command to database wall-clock time
 with a one-microsecond monotonic floor relative to its predecessor. No accepted
 Step 97–99 migration was rewritten.
 
-The SQL migrations, Drizzle journal and Drizzle snapshots preserve all three
+Independent Inspector review then identified a disagreement for configurable
+boundaries inside a daylight-saving gap or fold. The fourth forward-only
+migration makes the civil-boundary policy explicit and replaces nominal
+wall-clock subtraction with physical period containment. It does not change
+the four reviewed public command signatures.
+
+The SQL migrations, Drizzle journal and Drizzle snapshots preserve all four
 identities.
 
 ## 3. Time-setting versions
@@ -90,10 +97,22 @@ Operational periods are constructed from:
 - its local wall-clock boundary;
 - its local operational date.
 
-The database converts each local boundary independently with `AT TIME ZONE`.
-It does not add a fixed 24-hour interval. A 04:00-to-04:00 period can therefore
-last 23, 24 or 25 physical hours across DST transitions while retaining an
-unambiguous UTC start and end.
+Each configured boundary is resolved as local civil time under one explicit
+database-authoritative policy:
+
+- an ordinary local time maps to its sole physical instant;
+- a nonexistent spring-gap time moves forward by the size of the gap while
+  preserving its wall-clock position within the gap;
+- a repeated fall-fold time chooses the earlier physical occurrence.
+
+For example, Amsterdam `2026-03-29 02:30` resolves forward to `03:30` local,
+or `2026-03-29T01:30:00Z`. Amsterdam `2026-10-25 02:30` selects the earlier
+occurrence, `2026-10-25T00:30:00Z`.
+
+An operational period is exactly the half-open interval between independently
+resolved boundaries on its local date and the following local date. The engine
+does not add a fixed 24-hour interval. A period can therefore last 23, 24 or 25
+physical hours across DST transitions while retaining unambiguous UTC endpoints.
 
 `(time_setting_id, local_date)` is unique. The internal constructor inserts
 with conflict-safe reuse, so repeated requests return one stable period
@@ -114,6 +133,19 @@ The setting version is selected by the event anchor's effective interval.
 Late evidence therefore enters its historical period under the historical
 setting even after newer settings and periods exist. No day is reopened or
 unfrozen.
+
+Operational membership is selected from the actual resolved period boundaries,
+not by subtracting the nominal boundary from the anchor's local wall-clock
+value. The database constructs the adjacent candidate periods and requires
+exactly one to satisfy:
+
+`period.starts_at <= temporal_anchor < period.ends_at`
+
+Zero or multiple matches fail safely. The period constructor and membership
+resolver use the same civil-boundary primitive, so a membership whose period
+does not physically contain its anchor is never written by a Step 100 command.
+The TypeScript helper implements the same gap, fold and containment semantics,
+while PostgreSQL remains authoritative for persisted assignment.
 
 ## 6. Persist-first automatic assignment
 
@@ -204,9 +236,11 @@ Before Warden consideration, the candidate must:
 3. retain exact Step 97–99 migration history and apply all Step 100 migrations
    only to synthetic staging;
 4. pass the rollback-only temporal regression covering IANA validation, 04:00
-   date behavior, both DST transitions, interval non-overlap, idempotent
-   periods and membership, late evidence, prospective changes, explicit
-   correction, strict audit metadata, failure survival and cross-World denial;
+   date behavior, spring-gap forward normalization, earlier fall-fold
+   selection, physical membership containment, interval non-overlap,
+   idempotent periods and membership, late evidence, prospective changes,
+   explicit correction, strict audit metadata, failure survival and
+   cross-World denial;
 5. leave staging with zero Auth users and zero product rows;
 6. verify all product tables retain RLS and inspect every exact privileged
    function signature and grant;

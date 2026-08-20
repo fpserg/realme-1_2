@@ -7,6 +7,8 @@ const migrationPath = `supabase/migrations/${tag}.sql`;
 const correctionTag = "20260820214041_step_100_period_conflict_correction";
 const clockCorrectionTag =
   "20260820214147_step_100_setting_monotonic_clock_correction";
+const dstCorrectionTag =
+  "20260820223440_step_100_dst_civil_boundary_correction";
 
 describe("Step 100 native temporal continuity migration", () => {
   it("keeps migration, journal and snapshot identities aligned", async () => {
@@ -22,8 +24,19 @@ describe("Step 100 native temporal continuity migration", () => {
     expect(
       entries.some((entry) => entry.tag === correctionTag && entry.idx === 7),
     ).toBe(true);
-    expect(entries.at(-1)?.tag).toBe(clockCorrectionTag);
+    expect(entries.some((entry) => entry.tag === clockCorrectionTag)).toBe(
+      true,
+    );
+    expect(entries.at(-1)?.tag).toBe(dstCorrectionTag);
     expect(JSON.parse(snapshot).id).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(
+      JSON.parse(
+        await readFile(
+          "supabase/migrations/meta/20260820223440_snapshot.json",
+          "utf8",
+        ),
+      ).id,
+    ).toMatch(/^[0-9a-f-]{36}$/i);
   });
 
   it("keeps successive prospective changes monotonic under one transaction", async () => {
@@ -65,6 +78,54 @@ describe("Step 100 native temporal continuity migration", () => {
     expect(sql).toMatch(/pg_catalog\.pg_timezone_names/i);
     expect(sql).toMatch(
       /\(p_local_date \+ v_boundary\) AT TIME ZONE v_timezone/i,
+    );
+  });
+
+  it("corrects configurable DST gap and fold boundaries forward-only", async () => {
+    const correction = await readFile(
+      `supabase/migrations/${dstCorrectionTag}.sql`,
+      "utf8",
+    );
+
+    expect(correction).toMatch(
+      /CREATE OR REPLACE FUNCTION private\.resolve_civil_boundary/i,
+    );
+    expect(correction).toMatch(
+      /least\(v_before_candidate, v_after_candidate\)/i,
+    );
+    expect(correction).toMatch(/v_gap := v_after_offset - v_before_offset/i);
+    expect(correction).toMatch(/v_resolved_local := v_local \+ v_gap/i);
+    expect(correction).toMatch(
+      /CREATE OR REPLACE FUNCTION private\.resolve_operational_period_for_anchor/i,
+    );
+    expect(correction).toMatch(
+      /period\.starts_at <= p_anchor_at[\s\S]*p_anchor_at < period\.ends_at/i,
+    );
+    expect(correction).not.toMatch(
+      /\(v_anchor_at AT TIME ZONE v_timezone\) - v_boundary/i,
+    );
+    expect(correction).not.toMatch(
+      /\(v_now AT TIME ZONE v_timezone\) - v_boundary/i,
+    );
+  });
+
+  it("keeps the reviewed public temporal command signatures unchanged", async () => {
+    const correction = await readFile(
+      `supabase/migrations/${dstCorrectionTag}.sql`,
+      "utf8",
+    );
+
+    expect(correction).toContain(
+      "CREATE OR REPLACE FUNCTION public.get_current_operational_period()",
+    );
+    expect(correction).not.toMatch(
+      /CREATE OR REPLACE FUNCTION public\.(save_time_setting|assign_observation_operational_period|correct_observation_operational_period)/i,
+    );
+    expect(correction).toContain(
+      "REVOKE ALL ON FUNCTION public.get_current_operational_period()",
+    );
+    expect(correction).toContain(
+      "GRANT EXECUTE ON FUNCTION public.get_current_operational_period()",
     );
   });
 
@@ -133,6 +194,9 @@ describe("Step 100 native temporal continuity migration", () => {
       "invalid timezone",
       "spring-forward",
       "fall-back",
+      "spring-gap civil boundary",
+      "fall-fold civil boundary",
+      "membership containment",
       "prospective boundary change",
       "late observation",
       "explicit historical correction",

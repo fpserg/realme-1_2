@@ -64,6 +64,13 @@
       "when": 1787262107000,
       "tag": "20260820214147_step_100_setting_monotonic_clock_correction",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787265280000,
+      "tag": "20260820223440_step_100_dst_civil_boundary_correction",
+      "breakpoints": true
     }
   ]
 }

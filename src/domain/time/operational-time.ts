@@ -160,11 +160,27 @@ export function operationalDateForInstant(
 
   const parts = localParts(instant, timezone);
   const localDate = isoDate(parts.year, parts.month, parts.day);
-  const [boundaryHour, boundaryMinute] = boundary.split(":").map(Number);
-  const beforeBoundary =
-    parts.hour < boundaryHour ||
-    (parts.hour === boundaryHour && parts.minute < boundaryMinute);
-  return beforeBoundary ? shiftIsoDate(localDate, -1) : localDate;
+  const candidates = [shiftIsoDate(localDate, -1), localDate].filter(
+    (candidateDate) => {
+      const period = operationalPeriodForDate(
+        candidateDate,
+        timezone,
+        boundary,
+      );
+      return (
+        new Date(period.startsAt).getTime() <= instant.getTime() &&
+        instant.getTime() < new Date(period.endsAt).getTime()
+      );
+    },
+  );
+
+  if (candidates.length !== 1) {
+    throw new TemporalInputError(
+      "The instant does not belong to exactly one resolved operational period.",
+    );
+  }
+
+  return candidates[0];
 }
 
 function offsetAt(instantMs: number, timezone: string) {
@@ -183,40 +199,67 @@ function offsetAt(instantMs: number, timezone: string) {
   );
 }
 
-function instantForLocalBoundary(
+function partsMatchNaiveInstant(
+  candidate: number,
+  naiveInstant: number,
+  timezone: string,
+) {
+  const actual = localParts(new Date(candidate), timezone);
+  const expected = new Date(naiveInstant);
+  return (
+    actual.year === expected.getUTCFullYear() &&
+    actual.month === expected.getUTCMonth() + 1 &&
+    actual.day === expected.getUTCDate() &&
+    actual.hour === expected.getUTCHours() &&
+    actual.minute === expected.getUTCMinutes() &&
+    actual.second === expected.getUTCSeconds()
+  );
+}
+
+export function resolvedBoundaryForDate(
   localDate: string,
   operationalBoundary: string,
   timezone: string,
 ) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(localDate) || !isIanaTimezone(timezone)) {
+    throw new TemporalInputError();
+  }
+  const boundary = requireOperationalBoundary(operationalBoundary);
   const [year, month, day] = localDate.split("-").map(Number);
-  const [hour, minute] = operationalBoundary.split(":").map(Number);
+  const [hour, minute] = boundary.split(":").map(Number);
   const naive = Date.UTC(year, month - 1, day, hour, minute, 0);
-  const offsets = new Set(
-    [
-      -172_800_000, -86_400_000, -21_600_000, 0, 21_600_000, 86_400_000,
-      172_800_000,
-    ].map((delta) => offsetAt(naive + delta, timezone)),
-  );
+  const probeRange = 259_200_000;
+  const beforeOffset = offsetAt(naive - probeRange, timezone);
+  const afterOffset = offsetAt(naive + probeRange, timezone);
+  const offsets = new Set([beforeOffset, afterOffset]);
   const matches = [...offsets]
     .map((offset) => naive - offset)
-    .filter((candidate) => {
-      const parts = localParts(new Date(candidate), timezone);
-      return (
-        parts.year === year &&
-        parts.month === month &&
-        parts.day === day &&
-        parts.hour === hour &&
-        parts.minute === minute
-      );
-    });
+    .filter((candidate) => partsMatchNaiveInstant(candidate, naive, timezone));
 
-  if (matches.length === 0) {
+  if (matches.length > 0) {
+    // A fold has two matches. Personal chronology uses the earlier physical
+    // occurrence deterministically.
+    return new Date(Math.min(...matches)).toISOString();
+  }
+
+  const gapSize = afterOffset - beforeOffset;
+  if (gapSize <= 0) {
     throw new TemporalInputError(
-      "The operational boundary does not exist on this local date.",
+      "The local civil boundary could not be resolved.",
     );
   }
 
-  return new Date(Math.max(...matches)).toISOString();
+  // A gap has no exact match. Move the wall-clock value forward by the gap,
+  // preserving its position within that gap, then apply the post-gap offset.
+  const resolvedNaive = naive + gapSize;
+  const resolvedCandidate = resolvedNaive - afterOffset;
+  if (!partsMatchNaiveInstant(resolvedCandidate, resolvedNaive, timezone)) {
+    throw new TemporalInputError(
+      "The local civil boundary could not be normalized through its gap.",
+    );
+  }
+
+  return new Date(resolvedCandidate).toISOString();
 }
 
 export function operationalPeriodForDate(
@@ -228,8 +271,8 @@ export function operationalPeriodForDate(
     throw new TemporalInputError();
   }
   const boundary = requireOperationalBoundary(operationalBoundary);
-  const startsAt = instantForLocalBoundary(localDate, boundary, timezone);
-  const endsAt = instantForLocalBoundary(
+  const startsAt = resolvedBoundaryForDate(localDate, boundary, timezone);
+  const endsAt = resolvedBoundaryForDate(
     shiftIsoDate(localDate, 1),
     boundary,
     timezone,

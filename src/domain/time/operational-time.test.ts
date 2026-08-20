@@ -5,6 +5,7 @@ import {
   operationalDateForInstant,
   operationalPeriodForDate,
   parseTimeSettingInput,
+  resolvedBoundaryForDate,
   TemporalInputError,
 } from "./operational-time";
 
@@ -63,5 +64,62 @@ describe("native operational time", () => {
       startsAt: "2026-10-24T02:00:00.000Z",
       endsAt: "2026-10-25T03:00:00.000Z",
     });
+  });
+
+  it("normalizes a spring-gap boundary forward and assigns by containment", () => {
+    expect(
+      resolvedBoundaryForDate("2026-03-29", "02:30", "Europe/Amsterdam"),
+    ).toBe("2026-03-29T01:30:00.000Z");
+
+    const period = operationalPeriodForDate(
+      "2026-03-29",
+      "Europe/Amsterdam",
+      "02:30",
+    );
+    expect(period.startsAt).toBe("2026-03-29T01:30:00.000Z");
+    expect(
+      operationalDateForInstant(
+        "2026-03-29T01:15:00.000Z",
+        "Europe/Amsterdam",
+        "02:30",
+      ),
+    ).toBe("2026-03-28");
+    expect(
+      operationalDateForInstant(period.startsAt, "Europe/Amsterdam", "02:30"),
+    ).toBe("2026-03-29");
+    expect(new Date(period.startsAt).getTime()).toBeLessThan(
+      new Date(period.endsAt).getTime(),
+    );
+  });
+
+  it("chooses the earlier physical occurrence for a fall-fold boundary", () => {
+    const resolved = resolvedBoundaryForDate(
+      "2026-10-25",
+      "02:30",
+      "Europe/Amsterdam",
+    );
+    expect(resolved).toBe("2026-10-25T00:30:00.000Z");
+
+    expect(
+      operationalDateForInstant(
+        "2026-10-25T00:15:00.000Z",
+        "Europe/Amsterdam",
+        "02:30",
+      ),
+    ).toBe("2026-10-24");
+    expect(
+      operationalDateForInstant(
+        "2026-10-25T00:30:00.000Z",
+        "Europe/Amsterdam",
+        "02:30",
+      ),
+    ).toBe("2026-10-25");
+    expect(
+      operationalDateForInstant(
+        "2026-10-25T01:30:00.000Z",
+        "Europe/Amsterdam",
+        "02:30",
+      ),
+    ).toBe("2026-10-25");
   });
 });
