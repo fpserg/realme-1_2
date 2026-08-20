@@ -15,6 +15,6 @@ test("serves the mobile Step 97 boundary without configured secrets", async ({
   await expect(response.json()).resolves.toMatchObject({
     status: "ok",
     service: "realme-1-2",
-    phase: "step-96-accepted-step-97-implementation-candidate",
+    phase: "step-97-accepted-step-98-not-started",
   });
 });

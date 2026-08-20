@@ -1,12 +1,16 @@
 # RealMe 1.2 — Step 97 Environments, Authentication and World Ownership
 
-Version: 0.4
+Version: 1.0
 
-Status: IMPLEMENTATION CANDIDATE — NOT ACCEPTED
+Status: ACCEPTED — STEP 97 COMPLETE
 
 Opened by: Warden
 
 Opened on: 2026-08-17
+
+Accepted by: Warden
+
+Accepted on: 2026-08-17
 
 ## 1. Bounded outcome
 
@@ -41,7 +45,7 @@ The Warden authorized personal/default accounts and a zero-cost boundary.
 - staging migration target: Step 97 migration only;
 - committed, Drizzle-journal and staging migration identity:
   `20260817002310_step_97_identity_and_world_ownership`;
-- production migration target: none before Step 97 acceptance.
+- production migration state at Step 97 acceptance: none.
 
 ### Netlify
 
@@ -202,7 +206,38 @@ candidate now resolves them without changing the deployed staging schema:
 - managed Supabase project URLs now fail closed unless they use HTTPS.
 
 The migration reconciliation is metadata and repository-history alignment to
-the existing staging record. It does not reapply or alter the staging schema.
-Production remains unmigrated. Fresh exact-head CI and deploy-preview evidence
-is required before this candidate returns to code review; Step 97 remains not
-accepted and Step 98 remains closed.
+the existing staging record. It did not reapply or alter the staging schema.
+Production remained unmigrated.
+
+## 9. Acceptance record
+
+Independent Code Review approved the complete Step 97 candidate at exact head
+`f25af53ad6c99a1f3bd98e1730ebf52fe5a9fc71`, tree
+`fb9a51d455f1a7fd250b45e9b736affee0f01bab`, against unchanged base/main
+`7c1be6ae3cd8f00d7cf55ae94b99a7bf4bf2504a`.
+
+At that exact head:
+
+- GitHub Actions run 66 passed the frozen install, complete-lock security gate,
+  secret-exclusion checks, formatting, lint, strict TypeScript, architecture
+  validation, all 17 tests, production build and mobile Chromium smoke test;
+- the Netlify Deploy Preview succeeded and remained synthetic-only;
+- RealMe Staging contained exactly the accepted migration, four empty
+  RLS-enabled product tables and zero security-advisor findings;
+- production contained zero migrations, zero public product tables and zero
+  Auth users;
+- Code Review returned `APPROVE` with no blocking findings.
+
+The Warden explicitly accepted Step 97 after this evidence and review. This
+acceptance freezes the environment isolation, authentication/session boundary,
+private account and World ownership model, one unnamed companion bootstrap,
+RLS posture and staging-only validation described here.
+
+The accepted non-blocking debt is limited to the tracked development-only
+moderate esbuild advisory and a future CI hardening opportunity to run
+`pnpm db:check` and independently assert Drizzle migration-artifact identity.
+Neither is a waiver of the security or migration boundaries.
+
+Step 97 acceptance does not begin Step 98, migrate production, authorize
+personal data, name the companion, introduce ontology or admit any canonical
+understanding. Step 98 requires a separate explicit Warden instruction.

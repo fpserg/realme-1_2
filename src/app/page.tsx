@@ -51,7 +51,7 @@ export function HomeView({ state }: { state: HomeState }) {
         <dl className={styles.status}>
           <div>
             <dt>Current step</dt>
-            <dd>97 implementation candidate</dd>
+            <dd>97 accepted · 98 not started</dd>
           </div>
           <div>
             <dt>World access</dt>
