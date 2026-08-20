@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 99 ACCEPTED / STEP 100 NOT STARTED**
+Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 99 ACCEPTED / STEP 100 IMPLEMENTATION CANDIDATE / NOT ACCEPTED**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -96,4 +96,12 @@ review and exact-head CI/preview validation. The accepted boundary provides
 authenticated atomic text capture, database-controlled recorded time,
 append-only occurred-time correction, durable World-scoped idempotency,
 account-bound local recovery and reload-safe evidence history. Exact evidence
-survives downstream or AI failure. Step 100 has not started.
+survives downstream or AI failure.
+
+**Step 100 — Native temporal continuity: OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED.**
+
+The Warden opened Step 100 on 2026-08-21. The bounded candidate activates
+versioned IANA time settings, the default 04:00 local operational boundary,
+DST-aware operational periods, retry-safe automatic membership, explicit
+audited historical correction and an evidence-level Today timeline. Step 101
+has not started.

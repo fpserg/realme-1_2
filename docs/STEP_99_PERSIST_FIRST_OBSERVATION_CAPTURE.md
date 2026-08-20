@@ -201,7 +201,8 @@ Step 99 is accepted. Acceptance freezes the persist-first observation boundary
 described in this record; it does not authorize production migration, personal
 data import, AI processing or any Step 100 temporal behavior.
 
-Step 100 is not started.
+Step 100 was later opened by the Warden through a separate bounded instruction;
+that does not reopen or broaden accepted Step 99.
 
 ## 11. Acceptance verification record
 
@@ -280,4 +281,5 @@ enforcement remains deferred until an audit writer exists. Cleanup of the
 obsolete unreleased `realme.observation.capture.v1` local-storage entry is
 hygiene only and is not part of Step 99 acceptance.
 
-Step 100 is not started and requires separate explicit Warden authorization.
+The Warden later opened Step 100 through a separate bounded instruction on
+2026-08-21. Step 99 remains accepted and unchanged.

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  assignTemporal: vi.fn(),
   capture: vi.fn(),
   getClaims: vi.fn(),
 }));
@@ -16,6 +17,12 @@ vi.mock("@/infrastructure/supabase/observation-repository", () => ({
     capture = mocks.capture;
     correctOccurrence = vi.fn();
     list = vi.fn();
+  },
+}));
+
+vi.mock("@/infrastructure/supabase/temporal-repository", () => ({
+  SupabaseTemporalRepository: class {
+    assignObservation = mocks.assignTemporal;
   },
 }));
 
@@ -35,6 +42,7 @@ function request(body: Record<string, unknown>, accountId = "account-a") {
 describe("POST /api/observations", () => {
   beforeEach(() => {
     mocks.capture.mockReset();
+    mocks.assignTemporal.mockReset();
     mocks.getClaims.mockReset();
   });
 
@@ -91,5 +99,43 @@ describe("POST /api/observations", () => {
 
     expect(response.status).toBe(409);
     expect(mocks.capture).not.toHaveBeenCalled();
+  });
+
+  it("confirms saved evidence when temporal assignment remains pending", async () => {
+    mocks.getClaims.mockResolvedValue({
+      data: { claims: { sub: "account-a" } },
+      error: null,
+    });
+    mocks.capture.mockResolvedValue({
+      observation: {
+        correctionCount: 0,
+        exactText: "Saved before temporal processing.",
+        id: "223e4567-e89b-42d3-a456-426614174000",
+        localCalendarDate: null,
+        occurredAt: null,
+        occurredPrecision: "unknown",
+        persistenceState: "saved",
+        recordedAt: "2026-08-21T10:00:00.000Z",
+        sourceTimezone: null,
+      },
+      wasCreated: true,
+    });
+    mocks.assignTemporal.mockRejectedValue(new Error("temporal unavailable"));
+
+    const response = await POST(
+      request({
+        exactText: "Saved before temporal processing.",
+        idempotencyKey: "123e4567-e89b-42d3-a456-426614174000",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      observation: {
+        exactText: "Saved before temporal processing.",
+        persistenceState: "saved",
+        temporalPlacement: { state: "pending" },
+      },
+    });
   });
 });

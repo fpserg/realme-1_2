@@ -50,6 +50,20 @@ export const timeSettings = pgTable(
       table.worldId,
       table.effectiveFrom,
     ),
+    uniqueIndex("time_settings_one_open_version_unique")
+      .on(table.worldId)
+      .where(sql`${table.effectiveTo} is null`),
+    uniqueIndex("time_settings_one_successor_unique")
+      .on(table.supersedesTimeSettingId)
+      .where(sql`${table.supersedesTimeSettingId} is not null`),
+    uniqueIndex("time_settings_one_root_unique")
+      .on(table.worldId)
+      .where(sql`${table.supersedesTimeSettingId} is null`),
+    index("time_settings_world_effective_interval_index").on(
+      table.worldId,
+      table.effectiveFrom,
+      table.effectiveTo,
+    ),
     foreignKey({
       name: "time_settings_recorded_by_world_membership_fk",
       columns: [table.worldId, table.recordedByAccountId],
@@ -93,6 +107,15 @@ export const operationalPeriods = pgTable(
     index("operational_periods_world_local_date_index").on(
       table.worldId,
       table.localDate,
+    ),
+    uniqueIndex("operational_periods_setting_local_date_unique").on(
+      table.timeSettingId,
+      table.localDate,
+    ),
+    index("operational_periods_world_interval_index").on(
+      table.worldId,
+      table.startsAt,
+      table.endsAt,
     ),
     foreignKey({
       name: "operational_periods_time_setting_world_fk",

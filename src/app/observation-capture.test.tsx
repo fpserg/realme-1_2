@@ -241,4 +241,85 @@ describe("ObservationCapture", () => {
     expect(screen.getByText(/Recorded Aug 20, 2026/)).toBeInTheDocument();
     await waitFor(() => expect(fetch).not.toHaveBeenCalled());
   });
+
+  it("does not let a later browser timezone overwrite the durable setting", async () => {
+    render(
+      <ObservationCapture
+        authenticatedAccountId={accountA}
+        initialObservations={[]}
+        initialTemporalContext={{
+          currentPeriod: {
+            endsAt: "2026-08-22T02:00:00.000Z",
+            id: "323e4567-e89b-42d3-a456-426614174000",
+            localDate: "2026-08-21",
+            startsAt: "2026-08-21T02:00:00.000Z",
+          },
+          setting: {
+            effectiveFrom: "2026-08-20T10:00:00.000Z",
+            id: "423e4567-e89b-42d3-a456-426614174000",
+            operationalBoundary: "04:00",
+            timezone: "Europe/Amsterdam",
+          },
+        }}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("IANA timezone")).toHaveValue(
+        "Europe/Amsterdam",
+      ),
+    );
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("derives Today from effective current-period membership", () => {
+    const currentPeriodId = "323e4567-e89b-42d3-a456-426614174000";
+    render(
+      <ObservationCapture
+        authenticatedAccountId={accountA}
+        initialObservations={[
+          {
+            ...savedObservation,
+            temporalPlacement: {
+              membershipId: "523e4567-e89b-42d3-a456-426614174000",
+              operationalDate: "2026-08-21",
+              operationalPeriodId: currentPeriodId,
+              state: "assigned",
+              suggestedOperationalDate: null,
+            },
+          },
+          {
+            ...savedObservation,
+            exactText: "Yesterday's evidence.",
+            id: "623e4567-e89b-42d3-a456-426614174000",
+            temporalPlacement: {
+              membershipId: "723e4567-e89b-42d3-a456-426614174000",
+              operationalDate: "2026-08-20",
+              operationalPeriodId: "823e4567-e89b-42d3-a456-426614174000",
+              state: "assigned",
+              suggestedOperationalDate: null,
+            },
+          },
+        ]}
+        initialTemporalContext={{
+          currentPeriod: {
+            endsAt: "2026-08-22T02:00:00.000Z",
+            id: currentPeriodId,
+            localDate: "2026-08-21",
+            startsAt: "2026-08-21T02:00:00.000Z",
+          },
+          setting: {
+            effectiveFrom: "-infinity",
+            id: "423e4567-e89b-42d3-a456-426614174000",
+            operationalBoundary: "04:00",
+            timezone: "Europe/Amsterdam",
+          },
+        }}
+      />,
+    );
+
+    const today = screen.getByRole("region", { name: "Today" });
+    expect(today).toHaveTextContent(savedObservation.exactText);
+    expect(today).not.toHaveTextContent("Yesterday's evidence.");
+  });
 });

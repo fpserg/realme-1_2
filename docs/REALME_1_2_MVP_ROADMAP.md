@@ -4,7 +4,7 @@ Version: 1.3
 Status: ACCEPTED — POST-FOUNDING MVP ROADMAP
 Accepted by: Warden
 Accepted on: 2026-08-16
-Current state: Step 99 — ACCEPTED / Step 100 — NOT STARTED
+Current state: Step 99 — ACCEPTED / Step 100 — OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED
 
 ## 1. Purpose and authority
 
@@ -287,7 +287,8 @@ Acceptance gate: Architect review, Code Review clearance and explicit Warden acc
 ## 6. Continuation law
 
 The roadmap governs sequence, not automatic execution. Steps 97 through 99 are
-accepted. Step 100 has not started and may begin only through a separate
-explicit Warden instruction. Later steps may be refined when opened, but their
+accepted. The Warden opened Step 100 through a bounded Tier H instruction on
+2026-08-21; its implementation candidate remains unaccepted and unmerged.
+Step 101 has not started. Later steps may be refined when opened, but their
 accepted outcome and constitutional acceptance gate must not be weakened
 without an explicit roadmap amendment.
