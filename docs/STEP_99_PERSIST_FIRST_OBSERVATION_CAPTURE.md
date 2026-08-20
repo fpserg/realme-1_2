@@ -1,12 +1,16 @@
 # RealMe 1.2 — Step 99 Persist-First Observation Capture
 
-Version: 0.1
+Version: 1.0
 
-Status: OPEN — IMPLEMENTATION CANDIDATE — NOT ACCEPTED
+Status: ACCEPTED — STEP 99 COMPLETE
 
 Opened by: Warden
 
 Opened on: 2026-08-20
+
+Accepted by: Warden
+
+Accepted on: 2026-08-20
 
 Risk: Tier H — first authenticated write path into constitutional evidence
 
@@ -19,7 +23,7 @@ Capture succeeds when one observation and its exact source fragment are
 durably committed. It does not depend on AI, interpretation, candidates,
 admission, canonical World Model mutation, projections or a worker.
 
-The candidate provides:
+The accepted implementation provides:
 
 - a mobile-first plain-text capture surface;
 - optional explicit occurred-time entry;
@@ -172,9 +176,9 @@ returning to the originating account restores its still-unsynced envelope.
 Effective occurred time after reload comes from the correction supersession
 leaf, independent of correction timestamps or query order.
 
-## 9. Verification gate
+## 9. Acceptance verification gate
 
-Before this candidate returns for independent review it must:
+Before acceptance, the candidate had to:
 
 1. pass `pnpm check` and mobile Chromium coverage;
 2. prove unauthenticated rejection and server-derived World authority;
@@ -188,16 +192,18 @@ Before this candidate returns for independent review it must:
 10. restore staging to zero synthetic users and product rows;
 11. inspect RLS, grants and Supabase security advisors;
 12. confirm production remains unmigrated and untouched;
-13. obtain exact-head independent Code Review and explicit Warden acceptance.
+13. obtain exact-head independent Inspector review and explicit Warden
+    acceptance.
 
-## 10. Candidate boundary
+## 10. Acceptance boundary
 
-This record does not accept Step 99. The branch and draft PR must remain
-unmerged until independent Code Review and explicit Warden acceptance.
+Step 99 is accepted. Acceptance freezes the persist-first observation boundary
+described in this record; it does not authorize production migration, personal
+data import, AI processing or any Step 100 temporal behavior.
 
 Step 100 is not started.
 
-## 11. Candidate verification record
+## 11. Acceptance verification record
 
 Local verification on 2026-08-20 passed formatting, ESLint, strict TypeScript,
 architecture-boundary enforcement, Drizzle consistency, 15 test files with 55
@@ -234,9 +240,44 @@ Step 99 command.
 Supabase security advisors report two expected warnings because the two narrow
 authenticated commands are intentionally `SECURITY DEFINER`. Their complete
 signatures, empty search paths, actor/World derivation, validation and grants
-must receive independent security review; this record does not treat the
-warnings as a general waiver. Existing informational performance-advisor debt
-is outside this bounded step.
+received explicit independent Tier H security review. This acceptance applies
+only to those exact signatures and is not a general waiver. Existing
+informational performance-advisor debt is outside this bounded step.
 
 Production remained unchanged with zero RealMe migrations, zero public product
 tables and zero Auth users.
+
+Exact-head GitHub Actions run 87 and the Netlify Deploy Preview succeeded after
+the correction was committed and published.
+
+## 12. Acceptance record and preserved boundaries
+
+Independent Inspector review returned `APPROVE` for exact head
+`a24069941b1a4b3e8c78423a9496fcebf8cdb119`, tree
+`07843a47405b2f1af8e18989e7936c13be068951`, against base/main
+`ffc055b2908f30f007c57f569aa3d7bf72f339d6`. GitHub Actions run 87 and the
+Netlify Deploy Preview passed at that exact head.
+
+The Warden explicitly accepted Step 99 at that reviewed head and tree on
+2026-08-20. Acceptance preserves these laws:
+
+- observation capture is persist-first and exact evidence survives complete
+  downstream or AI failure;
+- recorded time is controlled by the database/server;
+- occurred-time correction is append-only and effective occurred time is the
+  unique supersession-chain leaf;
+- capture idempotency is durable and World-scoped;
+- actor and World authority are server-derived, while generic authenticated
+  evidence-table writes remain denied;
+- unsynced recovery is account-bound and cannot cross authenticated accounts;
+- local recovery is not canonical evidence before server persistence;
+- the two narrow authenticated `SECURITY DEFINER` RPCs are accepted only after
+  explicit Tier H security review.
+
+The production `public.rls_auto_enable()` execution grants must be remediated
+before the first RealMe production migration. Audit metadata writer allow-list
+enforcement remains deferred until an audit writer exists. Cleanup of the
+obsolete unreleased `realme.observation.capture.v1` local-storage entry is
+hygiene only and is not part of Step 99 acceptance.
+
+Step 100 is not started and requires separate explicit Warden authorization.

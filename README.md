@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 98 ACCEPTED / STEP 99 IMPLEMENTATION CANDIDATE — NOT ACCEPTED**
+Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 99 ACCEPTED / STEP 100 NOT STARTED**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -88,12 +88,12 @@ The Warden accepted Step 98 on 2026-08-20 after independent exact-head Code
 Review and complete CI/preview validation. The accepted boundary separates
 evidence, interpretation, admission and admitted World Model records and adds
 versioned temporal, job and audit foundations. Production remains unmigrated.
-Production remains unmigrated.
 
-**Step 99 — Persist-first observation capture: OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED.**
+**Step 99 — Persist-first observation capture: ACCEPTED.**
 
-The Warden opened Step 99 on 2026-08-20. The candidate adds authenticated,
-atomic text observation capture, optional occurred time, append-only occurred-time
-correction, durable retry identity, local uncertain-delivery recovery and
-reload-safe evidence history. Capture does not depend on AI, interpretation,
-admission, jobs, operational-period assignment or World Model mutation.
+The Warden accepted Step 99 on 2026-08-20 after independent Tier H Inspector
+review and exact-head CI/preview validation. The accepted boundary provides
+authenticated atomic text capture, database-controlled recorded time,
+append-only occurred-time correction, durable World-scoped idempotency,
+account-bound local recovery and reload-safe evidence history. Exact evidence
+survives downstream or AI failure. Step 100 has not started.
