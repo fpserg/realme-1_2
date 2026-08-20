@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 97 ACCEPTED / STEP 98 NOT STARTED**
+Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 98 ACCEPTED / STEP 99 NOT STARTED**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -80,5 +80,12 @@ The Warden accepted Step 97 on 2026-08-17 after independent exact-head Code
 Review and complete CI/preview validation. The accepted boundary provides
 cookie-backed Supabase authentication, one private stable World and one
 initially unnamed companion per user, ownership-scoped RLS and a synthetic-only
-staging/preview environment. Production remains unmigrated. Step 98 has not
-started and requires a separate explicit Warden instruction.
+staging/preview environment. Production remains unmigrated.
+
+**Step 98 — Canonical truth schema: ACCEPTED.**
+
+The Warden accepted Step 98 on 2026-08-20 after independent exact-head Code
+Review and complete CI/preview validation. The accepted boundary separates
+evidence, interpretation, admission and admitted World Model records and adds
+versioned temporal, job and audit foundations. Production remains unmigrated.
+Step 99 has not started and requires separate Warden authorization.

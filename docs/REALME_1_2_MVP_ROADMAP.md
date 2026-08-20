@@ -1,10 +1,10 @@
 # RealMe 1.2 — Roadmap to Perceivable MVP
 
-Version: 1.1
+Version: 1.2
 Status: ACCEPTED — POST-FOUNDING MVP ROADMAP
 Accepted by: Warden
 Accepted on: 2026-08-16
-Current state: Step 97 — ACCEPTED / Step 98 — NOT STARTED
+Current state: Step 98 — ACCEPTED / Step 99 — NOT STARTED
 
 ## 1. Purpose and authority
 
@@ -35,6 +35,7 @@ A chat shell, static dashboard or painted map alone does not qualify.
 - **Step 95 — 1.1 Salvage Map: ACCEPTED**
 - **Step 96 — Infrastructure Bootstrap: ACCEPTED**
 - **Step 97 — Environments, Authentication and World Ownership: ACCEPTED**
+- **Step 98 — Canonical Truth Schema: ACCEPTED**
 
 ## 4. Accepted implementation sequence
 
@@ -284,7 +285,8 @@ Acceptance gate: Architect review, Code Review clearance and explicit Warden acc
 
 ## 6. Continuation law
 
-The roadmap governs sequence, not automatic execution. Step 97 is accepted.
-Step 98 may begin only through a separate explicit Warden instruction. Later
-steps may be refined when opened, but their accepted outcome and constitutional
-acceptance gate must not be weakened without an explicit roadmap amendment.
+The roadmap governs sequence, not automatic execution. Steps 97 and 98 are
+accepted. Step 99 may begin only through a separate explicit Warden instruction.
+Later steps may be refined when opened, but their accepted outcome and
+constitutional acceptance gate must not be weakened without an explicit
+roadmap amendment.

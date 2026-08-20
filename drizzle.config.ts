@@ -5,7 +5,7 @@ const localDatabaseUrl =
   "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
 export default defineConfig({
-  schema: "./src/infrastructure/db/schema/**/*.ts",
+  schema: "./src/infrastructure/db/schema/index.ts",
   out: "./supabase/migrations",
   dialect: "postgresql",
   migrations: {

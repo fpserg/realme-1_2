@@ -1,0 +1,137 @@
+import { sql } from "drizzle-orm";
+import {
+  check,
+  foreignKey,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+import { accounts, worldMemberships, worlds } from "./ownership";
+
+export const jobs = pgTable(
+  "jobs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    worldId: uuid("world_id")
+      .notNull()
+      .references(() => worlds.id, { onDelete: "cascade" }),
+    jobKind: text("job_kind").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    status: text("status").default("queued").notNull(),
+    payload: jsonb("payload")
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
+    availableAt: timestamp("available_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    lockedAt: timestamp("locked_at", { withTimezone: true }),
+    attempts: integer("attempts").default(0).notNull(),
+    maxAttempts: integer("max_attempts").default(5).notNull(),
+    lastFailureCode: text("last_failure_code"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("jobs_world_kind_idempotency_unique").on(
+      table.worldId,
+      table.jobKind,
+      table.idempotencyKey,
+    ),
+    index("jobs_status_available_at_index").on(table.status, table.availableAt),
+    check("jobs_kind_not_blank", sql`length(btrim(${table.jobKind})) > 0`),
+    check(
+      "jobs_idempotency_key_not_blank",
+      sql`length(btrim(${table.idempotencyKey})) > 0`,
+    ),
+    check(
+      "jobs_status_check",
+      sql`${table.status} in ('queued', 'running', 'succeeded', 'failed', 'cancelled')`,
+    ),
+    check("jobs_attempts_check", sql`${table.attempts} >= 0`),
+    check("jobs_max_attempts_check", sql`${table.maxAttempts} > 0`),
+    check(
+      "jobs_attempts_within_max_check",
+      sql`${table.attempts} <= ${table.maxAttempts}`,
+    ),
+    check(
+      "jobs_queued_state_check",
+      sql`${table.status} <> 'queued' or (${table.attempts} < ${table.maxAttempts} and ${table.lockedAt} is null)`,
+    ),
+    check(
+      "jobs_running_state_check",
+      sql`${table.status} <> 'running' or (${table.lockedAt} is not null and ${table.attempts} >= 1)`,
+    ),
+    check(
+      "jobs_non_running_unlocked_check",
+      sql`${table.status} = 'running' or ${table.lockedAt} is null`,
+    ),
+    check(
+      "jobs_payload_object_check",
+      sql`jsonb_typeof(${table.payload}) = 'object'`,
+    ),
+  ],
+);
+
+export const auditEvents = pgTable(
+  "audit_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    worldId: uuid("world_id")
+      .notNull()
+      .references(() => worlds.id, { onDelete: "cascade" }),
+    actorKind: text("actor_kind").notNull(),
+    actorAccountId: uuid("actor_account_id").references(() => accounts.id, {
+      onDelete: "restrict",
+    }),
+    action: text("action").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: uuid("entity_id"),
+    metadata: jsonb("metadata")
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("audit_events_world_occurred_at_index").on(
+      table.worldId,
+      table.occurredAt,
+    ),
+    foreignKey({
+      name: "audit_events_actor_world_membership_fk",
+      columns: [table.worldId, table.actorAccountId],
+      foreignColumns: [worldMemberships.worldId, worldMemberships.userId],
+    }).onDelete("restrict"),
+    check(
+      "audit_events_actor_kind_check",
+      sql`${table.actorKind} in ('user', 'system', 'policy')`,
+    ),
+    check(
+      "audit_events_user_actor_check",
+      sql`${table.actorKind} <> 'user' or ${table.actorAccountId} is not null`,
+    ),
+    check(
+      "audit_events_action_not_blank",
+      sql`length(btrim(${table.action})) > 0`,
+    ),
+    check(
+      "audit_events_entity_type_not_blank",
+      sql`length(btrim(${table.entityType})) > 0`,
+    ),
+    check(
+      "audit_events_metadata_object_check",
+      sql`jsonb_typeof(${table.metadata}) = 'object'`,
+    ),
+  ],
+);

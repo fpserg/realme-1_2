@@ -11,7 +11,7 @@ describe("HomeView", () => {
       screen.getByRole("heading", { name: "A private World begins here." }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("97 accepted · 98 not started"),
+      screen.getByText("97 accepted · 98 implementation candidate"),
     ).toBeInTheDocument();
     expect(screen.getByText("Build not configured")).toBeInTheDocument();
     expect(screen.getByText("Unformed by design")).toBeInTheDocument();

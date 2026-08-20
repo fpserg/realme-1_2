@@ -8,6 +8,34 @@
       "when": 1786926190000,
       "tag": "20260817002310_step_97_identity_and_world_ownership",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787219699000,
+      "tag": "20260820095459_step_98_canonical_truth_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787219794000,
+      "tag": "20260820095634_step_98_internal_table_denials",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787220106000,
+      "tag": "20260820100146_step_98_admission_invariants",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787236680000,
+      "tag": "20260820143800_step_98_correction_invariants",
+      "breakpoints": true
     }
   ]
 }

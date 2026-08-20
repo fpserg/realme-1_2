@@ -62,6 +62,9 @@ jobs:
       - name: Verify architecture boundaries
         run: pnpm check:boundaries
 
+      - name: Verify Drizzle migration artifacts
+        run: pnpm db:check
+
       - name: Run unit and component tests
         run: pnpm test:unit
 

@@ -21,7 +21,7 @@
     "test": "vitest",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm check:boundaries && pnpm test:unit && pnpm build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm check:boundaries && pnpm db:check && pnpm test:unit && pnpm build",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check"
   },

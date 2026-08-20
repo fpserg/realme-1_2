@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("serves the mobile Step 97 boundary without configured secrets", async ({
+test("serves the mobile Step 98 candidate boundary without configured secrets", async ({
   page,
 }) => {
   await page.goto("/");
@@ -15,6 +15,6 @@ test("serves the mobile Step 97 boundary without configured secrets", async ({
   await expect(response.json()).resolves.toMatchObject({
     status: "ok",
     service: "realme-1-2",
-    phase: "step-97-accepted-step-98-not-started",
+    phase: "step-98-implementation-candidate",
   });
 });
