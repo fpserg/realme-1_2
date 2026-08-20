@@ -25,9 +25,15 @@ test("captures, confirms saved evidence and reconstructs history after reload", 
   const exactText = `Mobile evidence ${crypto.randomUUID()}`;
   await page.goto("/e2e-capture");
 
+  const captureForm = page
+    .getByRole("textbox", { name: "Observation text" })
+    .locator("xpath=ancestor::form");
+
   await page.getByLabel("Observation text").fill(exactText);
-  await expect(page.getByText("unsynced", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Save observation" }).click();
+  await expect(
+    captureForm.getByText("unsynced", { exact: true }),
+  ).toBeVisible();
+  await captureForm.getByRole("button", { name: "Save observation" }).click();
 
   const savedObservation = page.getByRole("listitem").filter({
     hasText: exactText,
