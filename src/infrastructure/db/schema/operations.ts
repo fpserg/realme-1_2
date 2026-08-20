@@ -133,5 +133,9 @@ export const auditEvents = pgTable(
       "audit_events_metadata_object_check",
       sql`jsonb_typeof(${table.metadata}) = 'object'`,
     ),
+    check(
+      "audit_events_temporal_correction_metadata_check",
+      sql`${table.action} <> 'observation_operational_period_corrected' or (${table.entityType} = 'observation' and ${table.entityId} is not null and ${table.metadata} ?& array['prior_membership_id', 'prior_operational_period_id', 'successor_membership_id', 'successor_operational_period_id', 'reason_category'] and (${table.metadata} - array['prior_membership_id', 'prior_operational_period_id', 'successor_membership_id', 'successor_operational_period_id', 'reason_category']) = '{}'::jsonb and jsonb_typeof(${table.metadata}->'prior_membership_id') = 'string' and jsonb_typeof(${table.metadata}->'prior_operational_period_id') = 'string' and jsonb_typeof(${table.metadata}->'successor_membership_id') = 'string' and jsonb_typeof(${table.metadata}->'successor_operational_period_id') = 'string' and jsonb_typeof(${table.metadata}->'reason_category') = 'string')`,
+    ),
   ],
 );

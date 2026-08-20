@@ -14,6 +14,20 @@ export default function Step99CaptureFixturePage() {
         authenticatedAccountId="00000000-0000-4000-8000-000000000099"
         captureEndpoint="/api/e2e-observations"
         historyEndpoint="/api/e2e-observations"
+        initialTemporalContext={{
+          currentPeriod: {
+            endsAt: "2026-08-22T01:00:00.000Z",
+            id: "00000000-0000-4000-8000-000000000100",
+            localDate: "2026-08-21",
+            startsAt: "2026-08-21T01:00:00.000Z",
+          },
+          setting: {
+            effectiveFrom: "-infinity",
+            id: "00000000-0000-4000-8000-000000000101",
+            operationalBoundary: "04:00",
+            timezone: "Europe/Helsinki",
+          },
+        }}
         initialObservations={[]}
       />
     </main>

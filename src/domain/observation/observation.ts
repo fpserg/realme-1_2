@@ -1,3 +1,5 @@
+import type { TemporalPlacement } from "@/domain/time/operational-time";
+
 export const observationTextLimit = 10_000;
 
 export interface OccurrenceInput {
@@ -21,6 +23,7 @@ export interface ObservationHistoryItem {
   localCalendarDate: string | null;
   persistenceState: "saved";
   correctionCount: number;
+  temporalPlacement?: TemporalPlacement;
 }
 
 export interface PersistedCapture {

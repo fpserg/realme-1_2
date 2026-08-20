@@ -6,6 +6,9 @@ import type {
   ObservationHistoryItem,
   PersistedCapture,
 } from "@/domain/observation/observation";
+import type { TemporalContextView } from "@/application/time/temporal-continuity";
+import type { TemporalPlacement } from "@/domain/time/operational-time";
+import { defaultOperationalBoundary } from "@/domain/time/operational-time";
 
 import styles from "./observation-capture.module.css";
 
@@ -86,6 +89,13 @@ function formatInstant(value: string) {
   }).format(new Date(value));
 }
 
+function formatOperationalDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T12:00:00.000Z`));
+}
+
 function upsertObservation(
   current: ObservationHistoryItem[],
   observation: ObservationHistoryItem,
@@ -134,6 +144,7 @@ function OccurrenceEditor({
           occurredAt: string;
           sourceTimezone: string | null;
         };
+        temporalPlacement: TemporalPlacement;
       };
       onCorrected({
         ...observation,
@@ -142,6 +153,7 @@ function OccurrenceEditor({
         occurredAt: body.correction.occurredAt,
         occurredPrecision: "exact",
         sourceTimezone: body.correction.sourceTimezone,
+        temporalPlacement: body.temporalPlacement,
       });
       setOccurredLocal("");
       setState("idle");
@@ -175,20 +187,201 @@ function OccurrenceEditor({
   );
 }
 
+function TemporalPlacementInfo({
+  observation,
+  onCorrected,
+}: {
+  observation: ObservationHistoryItem;
+  onCorrected: (next: ObservationHistoryItem) => void;
+}) {
+  const placement = observation.temporalPlacement;
+  const [state, setState] = useState<"idle" | "saving" | "failed">("idle");
+
+  async function correctMembership() {
+    setState("saving");
+    try {
+      const response = await fetch(
+        `/api/observations/${observation.id}/operational-period`,
+        {
+          body: JSON.stringify({
+            reasonCategory: "occurred_time_correction",
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        },
+      );
+      if (!response.ok) throw new Error("Correction was not confirmed.");
+      const body = (await response.json()) as {
+        temporalPlacement: TemporalPlacement;
+      };
+      onCorrected({
+        ...observation,
+        temporalPlacement: body.temporalPlacement,
+      });
+      setState("idle");
+    } catch {
+      setState("failed");
+    }
+  }
+
+  if (!placement || placement.state === "pending") {
+    return (
+      <p className={styles.temporalPending}>
+        Temporal placement pending. Saved evidence remains safe and assignment
+        will retry.
+      </p>
+    );
+  }
+
+  if (placement.state === "correction-required") {
+    return (
+      <div className={styles.temporalCorrection}>
+        <p>
+          Currently in operational day {placement.operationalDate}. The latest
+          occurred-time correction points to{" "}
+          {placement.suggestedOperationalDate}.
+        </p>
+        <button
+          className={styles.textButton}
+          disabled={state === "saving"}
+          onClick={correctMembership}
+          type="button"
+        >
+          {state === "saving" ? "Correcting..." : "Confirm historical move"}
+        </button>
+        {state === "failed" ? (
+          <p role="alert">The prior placement remains intact.</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <p className={styles.temporalAssigned}>
+      Operational day {formatOperationalDate(placement.operationalDate ?? "")}
+    </p>
+  );
+}
+
+function TimeSettingsPanel({ context }: { context: TemporalContextView }) {
+  const [timezone, setTimezone] = useState(context.setting?.timezone ?? "");
+  const [boundary, setBoundary] = useState(
+    context.setting?.operationalBoundary ?? defaultOperationalBoundary,
+  );
+  const [state, setState] = useState<"idle" | "saving" | "failed">("idle");
+
+  useEffect(() => {
+    if (context.setting || timezone) return;
+    const suggestionTimer = window.setTimeout(() => {
+      const suggestion = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (suggestion) setTimezone(suggestion);
+    }, 0);
+    return () => window.clearTimeout(suggestionTimer);
+  }, [context.setting, timezone]);
+
+  async function save(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setState("saving");
+    try {
+      const response = await fetch("/api/time-settings", {
+        body: JSON.stringify({
+          operationalBoundary: boundary,
+          timezone,
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) throw new Error("Time setting was not confirmed.");
+      window.location.reload();
+    } catch {
+      setState("failed");
+    }
+  }
+
+  return (
+    <section
+      className={styles.timeSettings}
+      aria-labelledby="time-settings-title"
+    >
+      <div className={styles.sectionHeading}>
+        <div>
+          <span>Continuity</span>
+          <h2 id="time-settings-title">Your operational time</h2>
+        </div>
+      </div>
+      {context.setting ? (
+        <p className={styles.timeSummary}>
+          {context.setting.timezone} · day begins at{" "}
+          {context.setting.operationalBoundary}
+          {context.currentPeriod
+            ? ` · current day ${context.currentPeriod.localDate}`
+            : ""}
+        </p>
+      ) : (
+        <p>
+          Confirm your IANA timezone. The device value is only a suggestion and
+          is not durable until you accept it.
+        </p>
+      )}
+      <form onSubmit={save}>
+        <label htmlFor="time-zone">IANA timezone</label>
+        <input
+          id="time-zone"
+          onChange={(event) => setTimezone(event.target.value)}
+          required
+          value={timezone}
+        />
+        <label htmlFor="operational-boundary">Operational day begins</label>
+        <input
+          id="operational-boundary"
+          onChange={(event) => setBoundary(event.target.value)}
+          required
+          type="time"
+          value={boundary}
+        />
+        <button disabled={state === "saving"} type="submit">
+          {state === "saving"
+            ? "Saving..."
+            : context.setting
+              ? "Save prospective change"
+              : "Confirm time setting"}
+        </button>
+      </form>
+      <p className={styles.settingLaw}>
+        Changes create a new version for future continuity. Existing historical
+        placements are never rewritten automatically.
+      </p>
+      {state === "failed" ? (
+        <p role="alert">The durable time setting was not changed.</p>
+      ) : null}
+    </section>
+  );
+}
+
 export function ObservationCapture({
   authenticatedAccountId,
   captureEndpoint = "/api/observations",
   historyEndpoint,
+  initialTemporalContext = { currentPeriod: null, setting: null },
   initialObservations,
 }: {
   authenticatedAccountId: string;
   captureEndpoint?: string;
   historyEndpoint?: string;
+  initialTemporalContext?: TemporalContextView;
   initialObservations: ObservationHistoryItem[];
 }) {
   const [draft, setDraft] = useState<LocalDraft | null>(null);
   const [draftState, setDraftState] = useState<DraftState>("idle");
   const [observations, setObservations] = useState(initialObservations);
+  const today = initialTemporalContext.currentPeriod
+    ? observations.filter(
+        (observation) =>
+          observation.temporalPlacement?.state === "assigned" &&
+          observation.temporalPlacement.operationalPeriodId ===
+            initialTemporalContext.currentPeriod?.id,
+      )
+    : [];
   const activeDraft =
     draft?.accountId === authenticatedAccountId ? draft : null;
   const activeDraftState = draft === null || activeDraft ? draftState : "idle";
@@ -298,6 +491,8 @@ export function ObservationCapture({
 
   return (
     <div className={styles.captureShell}>
+      <TimeSettingsPanel context={initialTemporalContext} />
+
       <section className={styles.composer} aria-labelledby="capture-title">
         <div className={styles.sectionHeading}>
           <div>
@@ -375,6 +570,36 @@ export function ObservationCapture({
         ) : null}
       </section>
 
+      <section className={styles.today} aria-labelledby="today-title">
+        <div className={styles.sectionHeading}>
+          <div>
+            <span>Current operational period</span>
+            <h2 id="today-title">Today</h2>
+          </div>
+          <strong>{today.length}</strong>
+        </div>
+        {!initialTemporalContext.setting ? (
+          <p className={styles.empty}>
+            Confirm your time setting to form Today automatically.
+          </p>
+        ) : today.length === 0 ? (
+          <p className={styles.empty}>No observations belong to Today yet.</p>
+        ) : (
+          <ol className={styles.todayList}>
+            {today.map((observation) => (
+              <li key={observation.id}>
+                <p>{observation.exactText}</p>
+                <span>
+                  {observation.occurredAt
+                    ? `Occurred ${formatInstant(observation.occurredAt)} UTC`
+                    : `Recorded ${formatInstant(observation.recordedAt)} UTC`}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
       <section className={styles.history} aria-labelledby="history-title">
         <div className={styles.sectionHeading}>
           <div>
@@ -413,6 +638,16 @@ export function ObservationCapture({
                     </span>
                   ) : null}
                 </div>
+                <TemporalPlacementInfo
+                  observation={observation}
+                  onCorrected={(next) =>
+                    setObservations((current) =>
+                      current.map((item) =>
+                        item.id === next.id ? next : item,
+                      ),
+                    )
+                  }
+                />
                 <OccurrenceEditor
                   observation={observation}
                   onCorrected={(next) =>

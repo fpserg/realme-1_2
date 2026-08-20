@@ -1,10 +1,12 @@
-import { correctObservationOccurrence } from "@/application/observation/observation-capture";
+import { correctObservationMembership } from "@/application/time/temporal-continuity";
 import {
   ObservationInputError,
-  parseOccurrenceCorrectionInput,
   requireObservationId,
 } from "@/domain/observation/observation";
-import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
+import {
+  parseHistoricalCorrectionInput,
+  TemporalInputError,
+} from "@/domain/time/operational-time";
 import { SupabaseTemporalRepository } from "@/infrastructure/supabase/temporal-repository";
 
 import { createSupabaseServerClient } from "../../../../_supabase/server";
@@ -15,7 +17,7 @@ const privateHeaders = {
   Pragma: "no-cache",
 };
 
-export async function PATCH(
+export async function POST(
   request: Request,
   context: { params: Promise<{ observationId: string }> },
 ) {
@@ -32,46 +34,34 @@ export async function PATCH(
 
   try {
     const { observationId } = await context.params;
-    const occurrence = parseOccurrenceCorrectionInput(await request.json());
-    const repository = new SupabaseObservationRepository(supabase);
-    const correction = await correctObservationOccurrence(
+    const { reasonCategory } = parseHistoricalCorrectionInput(
+      await request.json(),
+    );
+    const repository = new SupabaseTemporalRepository(supabase);
+    const temporalPlacement = await correctObservationMembership(
       userId,
       requireObservationId(observationId),
-      occurrence,
+      reasonCategory,
       repository,
     );
-    const temporalRepository = new SupabaseTemporalRepository(supabase);
-    let temporalPlacement;
-    try {
-      temporalPlacement = await temporalRepository.assignObservation(
-        { userId },
-        correction.observationId,
-      );
-    } catch {
-      temporalPlacement = {
-        membershipId: null,
-        operationalDate: null,
-        operationalPeriodId: null,
-        state: "pending" as const,
-        suggestedOperationalDate: null,
-      };
-    }
 
     return Response.json(
-      { correction, temporalPlacement },
+      { temporalPlacement },
       { headers: privateHeaders, status: 201 },
     );
   } catch (caught) {
     const status =
-      caught instanceof ObservationInputError || caught instanceof SyntaxError
+      caught instanceof TemporalInputError ||
+      caught instanceof ObservationInputError ||
+      caught instanceof SyntaxError
         ? 400
         : 503;
     return Response.json(
       {
         error:
           status === 400
-            ? "The occurred time could not be accepted."
-            : "The occurred-time correction could not be confirmed.",
+            ? "The historical correction could not be accepted."
+            : "The historical correction could not be confirmed.",
       },
       { headers: privateHeaders, status },
     );

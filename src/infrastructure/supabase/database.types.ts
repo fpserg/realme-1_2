@@ -49,6 +49,36 @@ export type RealMeDatabase = {
         Update: never;
         Relationships: [];
       };
+      observation_operational_period_memberships: {
+        Row: {
+          assigned_at: string;
+          assigned_by_account_id: string | null;
+          assignment_kind: "correction" | "initial";
+          id: string;
+          observation_id: string;
+          operational_period_id: string;
+          supersedes_membership_id: string | null;
+          world_id: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      operational_periods: {
+        Row: {
+          created_at: string;
+          ends_at: string;
+          id: string;
+          local_date: string;
+          starts_at: string;
+          supersedes_period_id: string | null;
+          time_setting_id: string;
+          world_id: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       source_fragments: {
         Row: {
           captured_at: string;
@@ -57,6 +87,22 @@ export type RealMeDatabase = {
           id: string;
           observation_id: string;
           ordinal: number;
+          world_id: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      time_settings: {
+        Row: {
+          created_at: string;
+          effective_from: string;
+          effective_to: string | null;
+          id: string;
+          operational_day_boundary: string;
+          recorded_by_account_id: string | null;
+          supersedes_time_setting_id: string | null;
+          timezone_name: string;
           world_id: string;
         };
         Insert: never;
@@ -123,6 +169,55 @@ export type RealMeDatabase = {
           occurred_precision: string;
           recorded_at: string;
           source_timezone: string | null;
+        }[];
+      };
+      assign_observation_operational_period: {
+        Args: { p_observation_id: string };
+        Returns: {
+          assignment_state: "assigned" | "correction_required";
+          local_date: string;
+          membership_id: string;
+          operational_period_id: string;
+          suggested_local_date: string | null;
+          suggested_operational_period_id: string | null;
+        }[];
+      };
+      correct_observation_operational_period: {
+        Args: {
+          p_observation_id: string;
+          p_reason_category: "occurred_time_correction" | "user_review";
+        };
+        Returns: {
+          audit_event_id: string;
+          local_date: string;
+          membership_id: string;
+          operational_period_id: string;
+        }[];
+      };
+      get_current_operational_period: {
+        Args: Record<string, never>;
+        Returns: {
+          ends_at: string;
+          local_date: string;
+          operational_day_boundary: string;
+          operational_period_id: string;
+          setting_effective_from: string;
+          starts_at: string;
+          time_setting_id: string;
+          timezone_name: string;
+        }[];
+      };
+      save_time_setting: {
+        Args: {
+          p_operational_day_boundary?: string;
+          p_timezone_name: string;
+        };
+        Returns: {
+          effective_from: string;
+          operational_day_boundary: string;
+          time_setting_id: string;
+          timezone_name: string;
+          was_created: boolean;
         }[];
       };
     };

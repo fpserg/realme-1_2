@@ -1,10 +1,15 @@
 import Link from "next/link";
 
 import { listObservationHistory } from "@/application/observation/observation-capture";
+import {
+  loadTemporalContinuity,
+  type TemporalContextView,
+} from "@/application/time/temporal-continuity";
 import { getCurrentWorld } from "@/application/world/get-current-world";
 import type { ObservationHistoryItem } from "@/domain/observation/observation";
 import { readSupabasePublicConfig } from "@/infrastructure/supabase/environment";
 import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
+import { SupabaseTemporalRepository } from "@/infrastructure/supabase/temporal-repository";
 import { SupabaseWorldAccessRepository } from "@/infrastructure/supabase/world-access-repository";
 
 import { createSupabaseServerClient } from "./_supabase/server";
@@ -21,6 +26,7 @@ type HomeState =
       accountId: string;
       kind: "ready";
       observations: ObservationHistoryItem[];
+      temporal: TemporalContextView;
     }
   | { kind: "signed-out" };
 
@@ -30,8 +36,8 @@ export function HomeView({ state }: { state: HomeState }) {
       <main className={styles.appMain}>
         <header className={styles.appHeader}>
           <div>
-            <span className={styles.eyebrow}>RealMe 1.2 · Step 99</span>
-            <p>Persist-first observation capture</p>
+            <span className={styles.eyebrow}>RealMe 1.2 · Step 100</span>
+            <p>Native temporal continuity</p>
           </div>
           <form action={logout}>
             <button className={styles.secondaryAction} type="submit">
@@ -41,6 +47,7 @@ export function HomeView({ state }: { state: HomeState }) {
         </header>
         <ObservationCapture
           authenticatedAccountId={state.accountId}
+          initialTemporalContext={state.temporal}
           initialObservations={state.observations}
           key={state.accountId}
         />
@@ -51,7 +58,7 @@ export function HomeView({ state }: { state: HomeState }) {
   return (
     <main className={styles.main}>
       <section className={styles.panel} aria-labelledby="world-title">
-        <span className={styles.eyebrow}>RealMe 1.2 · Step 99</span>
+        <span className={styles.eyebrow}>RealMe 1.2 · Step 100</span>
         <h1 id="world-title">A private World begins here.</h1>
         <p>
           Sign in to receive one private World and one companion. Your World
@@ -67,7 +74,7 @@ export function HomeView({ state }: { state: HomeState }) {
         <dl className={styles.status}>
           <div>
             <dt>Current step</dt>
-            <dd>98 accepted · 99 implementation candidate</dd>
+            <dd>99 accepted · 100 implementation candidate</dd>
           </div>
           <div>
             <dt>World access</dt>
@@ -116,7 +123,21 @@ export default async function HomePage() {
       userId,
       observationRepository,
     );
-    state = { accountId: userId, kind: "ready", observations };
+    const temporalRepository = new SupabaseTemporalRepository(supabase);
+    const temporal = await loadTemporalContinuity(
+      userId,
+      observations,
+      temporalRepository,
+    );
+    state = {
+      accountId: userId,
+      kind: "ready",
+      observations: temporal.observations,
+      temporal: {
+        currentPeriod: temporal.currentPeriod,
+        setting: temporal.setting,
+      },
+    };
   } catch {
     state = { kind: "provisioning-error" };
   }

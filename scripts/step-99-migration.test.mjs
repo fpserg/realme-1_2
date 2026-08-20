@@ -12,7 +12,11 @@ describe("Step 99 persist-first migration", () => {
       readFile(`supabase/migrations/meta/20260820185900_snapshot.json`, "utf8"),
     ]);
 
-    expect(JSON.parse(journal).entries.at(-1)?.tag).toBe(tag);
+    expect(
+      JSON.parse(journal).entries.some(
+        (entry) => entry.tag === tag && entry.idx === 5,
+      ),
+    ).toBe(true);
     expect(JSON.parse(snapshot).id).toMatch(/^[0-9a-f-]{36}$/i);
   });
 

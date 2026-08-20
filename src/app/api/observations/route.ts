@@ -4,6 +4,7 @@ import {
   parseCaptureObservationInput,
 } from "@/domain/observation/observation";
 import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
+import { SupabaseTemporalRepository } from "@/infrastructure/supabase/temporal-repository";
 
 import { createSupabaseServerClient } from "../../_supabase/server";
 
@@ -36,6 +37,22 @@ export async function POST(request: Request) {
     const input = parseCaptureObservationInput(await request.json());
     const repository = new SupabaseObservationRepository(supabase);
     const result = await captureTextObservation(userId, input, repository);
+    const temporalRepository = new SupabaseTemporalRepository(supabase);
+    try {
+      result.observation.temporalPlacement =
+        await temporalRepository.assignObservation(
+          { userId },
+          result.observation.id,
+        );
+    } catch {
+      result.observation.temporalPlacement = {
+        membershipId: null,
+        operationalDate: null,
+        operationalPeriodId: null,
+        state: "pending",
+        suggestedOperationalDate: null,
+      };
+    }
 
     return Response.json(result, {
       headers: privateHeaders,
