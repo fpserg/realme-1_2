@@ -24,13 +24,14 @@ describe("Step 101 constitutional boundary", () => {
     expect(factory).toContain('environment.provider !== "openai"');
   });
 
-  it("gives dialogue no Step 102 or canonical-write adapter", async () => {
+  it("gives dialogue no candidate or canonical-write adapter", async () => {
     const route = await source("src/app/api/dialogue/route.ts");
     expect(route).not.toMatch(
       /candidate_claim|admission_decision|ontology_|assertions|interpretation_runs|\bjobs\b/i,
     );
     expect(route).toContain("SupabaseObservationRepository");
     expect(route).toContain("SupabaseTemporalRepository");
+    expect(route).toContain("SupabaseInterpretationEnqueueRepository");
   });
 
   it("adds no conversation archive or Step 101 migration", async () => {
@@ -40,7 +41,7 @@ describe("Step 101 constitutional boundary", () => {
       .filter((entry) => entry.isFile() && entry.name.endsWith(".sql"))
       .map((entry) => entry.name);
     const schema = await source("src/infrastructure/db/schema/index.ts");
-    expect(migrations).toHaveLength(10);
+    expect(migrations.length).toBeGreaterThanOrEqual(10);
     expect(migrations.some((name) => name.includes("step_101"))).toBe(false);
     expect(schema).not.toMatch(/conversation|transcript/i);
   });

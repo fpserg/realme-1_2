@@ -4,7 +4,7 @@ Version: 1.6
 Status: ACCEPTED — POST-FOUNDING MVP ROADMAP
 Accepted by: Warden
 Accepted on: 2026-08-16
-Current state: Step 101 — ACCEPTED / Step 102 — NOT STARTED
+Current state: Step 101 — ACCEPTED / Step 102 — OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED
 
 ## 1. Purpose and authority
 
@@ -39,6 +39,7 @@ A chat shell, static dashboard or painted map alone does not qualify.
 - **Step 99 — Persist-First Observation Capture: ACCEPTED**
 - **Step 100 — Native Temporal Continuity: ACCEPTED**
 - **Step 101 — One-Companion Dialogue: ACCEPTED**
+- **Step 102 — Interpretation and Durable Job Pipeline: OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED**
 
 ## 4. Accepted implementation sequence
 

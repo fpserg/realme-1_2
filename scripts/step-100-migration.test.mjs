@@ -27,7 +27,7 @@ describe("Step 100 native temporal continuity migration", () => {
     expect(entries.some((entry) => entry.tag === clockCorrectionTag)).toBe(
       true,
     );
-    expect(entries.at(-1)?.tag).toBe(dstCorrectionTag);
+    expect(entries.some((entry) => entry.tag === dstCorrectionTag)).toBe(true);
     expect(JSON.parse(snapshot).id).toMatch(/^[0-9a-f-]{36}$/i);
     expect(
       JSON.parse(

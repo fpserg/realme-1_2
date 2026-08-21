@@ -4,6 +4,7 @@ import {
   parseCaptureObservationInput,
 } from "@/domain/observation/observation";
 import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
+import { SupabaseInterpretationEnqueueRepository } from "@/infrastructure/supabase/interpretation-enqueue-repository";
 import { SupabaseTemporalRepository } from "@/infrastructure/supabase/temporal-repository";
 
 import { createSupabaseServerClient } from "../../_supabase/server";
@@ -52,6 +53,14 @@ export async function POST(request: Request) {
         state: "pending",
         suggestedOperationalDate: null,
       };
+    }
+    try {
+      await new SupabaseInterpretationEnqueueRepository(supabase).enqueue(
+        { userId },
+        result.observation.id,
+      );
+    } catch {
+      // Step 99 evidence remains safely persisted; reload reconciliation retries.
     }
 
     return Response.json(result, {

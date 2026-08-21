@@ -8,10 +8,12 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { observations } from "./evidence";
 import { accounts, worldMemberships, worlds } from "./ownership";
 
 export const jobs = pgTable(
@@ -31,6 +33,8 @@ export const jobs = pgTable(
       .defaultNow()
       .notNull(),
     lockedAt: timestamp("locked_at", { withTimezone: true }),
+    lockToken: uuid("lock_token"),
+    observationId: uuid("observation_id").notNull(),
     attempts: integer("attempts").default(0).notNull(),
     maxAttempts: integer("max_attempts").default(5).notNull(),
     lastFailureCode: text("last_failure_code"),
@@ -47,7 +51,19 @@ export const jobs = pgTable(
       table.jobKind,
       table.idempotencyKey,
     ),
+    unique("jobs_world_id_id_unique").on(table.worldId, table.id),
+    unique("jobs_world_id_observation_id_unique").on(
+      table.worldId,
+      table.id,
+      table.observationId,
+    ),
     index("jobs_status_available_at_index").on(table.status, table.availableAt),
+    index("jobs_observation_id_index").on(table.observationId),
+    foreignKey({
+      name: "jobs_observation_world_fk",
+      columns: [table.worldId, table.observationId],
+      foreignColumns: [observations.worldId, observations.id],
+    }).onDelete("restrict"),
     check("jobs_kind_not_blank", sql`length(btrim(${table.jobKind})) > 0`),
     check(
       "jobs_idempotency_key_not_blank",
@@ -57,6 +73,10 @@ export const jobs = pgTable(
       "jobs_status_check",
       sql`${table.status} in ('queued', 'running', 'succeeded', 'failed', 'cancelled')`,
     ),
+    check(
+      "jobs_step_102_kind_check",
+      sql`${table.jobKind} = 'interpret_observation'`,
+    ),
     check("jobs_attempts_check", sql`${table.attempts} >= 0`),
     check("jobs_max_attempts_check", sql`${table.maxAttempts} > 0`),
     check(
@@ -65,19 +85,31 @@ export const jobs = pgTable(
     ),
     check(
       "jobs_queued_state_check",
-      sql`${table.status} <> 'queued' or (${table.attempts} < ${table.maxAttempts} and ${table.lockedAt} is null)`,
+      sql`${table.status} <> 'queued' or (${table.attempts} < ${table.maxAttempts} and ${table.lockedAt} is null and ${table.lockToken} is null)`,
     ),
     check(
       "jobs_running_state_check",
-      sql`${table.status} <> 'running' or (${table.lockedAt} is not null and ${table.attempts} >= 1)`,
+      sql`${table.status} <> 'running' or (${table.lockedAt} is not null and ${table.lockToken} is not null and ${table.attempts} >= 1)`,
     ),
     check(
       "jobs_non_running_unlocked_check",
-      sql`${table.status} = 'running' or ${table.lockedAt} is null`,
+      sql`${table.status} = 'running' or (${table.lockedAt} is null and ${table.lockToken} is null)`,
     ),
     check(
       "jobs_payload_object_check",
       sql`jsonb_typeof(${table.payload}) = 'object'`,
+    ),
+    check(
+      "jobs_interpret_observation_input_check",
+      sql`${table.jobKind} <> 'interpret_observation' or (${table.observationId} is not null and ${table.payload} ?& array['prompt_version', 'schema_version'] and (${table.payload} - array['prompt_version', 'schema_version']) = '{}'::jsonb and jsonb_typeof(${table.payload}->'prompt_version') = 'string' and jsonb_typeof(${table.payload}->'schema_version') = 'string' and ${table.payload}->>'prompt_version' = 'interpret-observation-v1' and ${table.payload}->>'schema_version' = 'candidate-set-v1')`,
+    ),
+    check(
+      "jobs_last_failure_code_check",
+      sql`${table.lastFailureCode} is null or ${table.lastFailureCode} in ('provider_unavailable', 'timeout', 'malformed_output', 'validation_failed', 'persistence_failed', 'configuration_error', 'cancelled', 'exhausted')`,
+    ),
+    check(
+      "jobs_success_has_no_failure_check",
+      sql`${table.status} <> 'succeeded' or ${table.lastFailureCode} is null`,
     ),
   ],
 );

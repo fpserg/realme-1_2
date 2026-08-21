@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { listObservationHistory } from "@/application/observation/observation-capture";
+import { reconcileObservationInterpretations } from "@/application/interpretation/enqueue-interpretation";
 import {
   loadTemporalContinuity,
   type TemporalContextView,
@@ -9,6 +10,7 @@ import { getCurrentWorld } from "@/application/world/get-current-world";
 import type { ObservationHistoryItem } from "@/domain/observation/observation";
 import { readSupabasePublicConfig } from "@/infrastructure/supabase/environment";
 import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
+import { SupabaseInterpretationEnqueueRepository } from "@/infrastructure/supabase/interpretation-enqueue-repository";
 import { SupabaseTemporalRepository } from "@/infrastructure/supabase/temporal-repository";
 import { SupabaseWorldAccessRepository } from "@/infrastructure/supabase/world-access-repository";
 
@@ -37,8 +39,8 @@ export function HomeView({ state }: { state: HomeState }) {
       <main className={styles.appMain}>
         <header className={styles.appHeader}>
           <div>
-            <span className={styles.eyebrow}>RealMe 1.2 · Step 101</span>
-            <p>One-companion dialogue candidate</p>
+            <span className={styles.eyebrow}>RealMe 1.2 · Step 102</span>
+            <p>Durable interpretation pipeline candidate</p>
           </div>
           <form action={logout}>
             <button className={styles.secondaryAction} type="submit">
@@ -65,7 +67,7 @@ export function HomeView({ state }: { state: HomeState }) {
   return (
     <main className={styles.main}>
       <section className={styles.panel} aria-labelledby="world-title">
-        <span className={styles.eyebrow}>RealMe 1.2 · Step 101</span>
+        <span className={styles.eyebrow}>RealMe 1.2 · Step 102</span>
         <h1 id="world-title">A private World begins here.</h1>
         <p>
           Sign in to receive one private World and one companion. Your World
@@ -81,7 +83,7 @@ export function HomeView({ state }: { state: HomeState }) {
         <dl className={styles.status}>
           <div>
             <dt>Current step</dt>
-            <dd>100 accepted · 101 implementation candidate</dd>
+            <dd>101 accepted · 102 implementation candidate</dd>
           </div>
           <div>
             <dt>World access</dt>
@@ -129,6 +131,11 @@ export default async function HomePage() {
     const observations = await listObservationHistory(
       userId,
       observationRepository,
+    );
+    await reconcileObservationInterpretations(
+      userId,
+      observations.map((observation) => observation.id),
+      new SupabaseInterpretationEnqueueRepository(supabase),
     );
     const temporalRepository = new SupabaseTemporalRepository(supabase);
     const temporal = await loadTemporalContinuity(
