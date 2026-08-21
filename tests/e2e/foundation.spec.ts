@@ -71,7 +71,7 @@ test("streams one-companion dialogue after evidence persistence", async ({
   await page.goto("/e2e-dialogue");
 
   const dialogue = page.getByRole("region", { name: "Dialogue" });
-  await dialogue.getByLabel("Message").fill(exactText);
+  await dialogue.getByRole("textbox", { name: "Message" }).fill(exactText);
   await dialogue.getByRole("button", { name: "Send" }).click();
 
   const userMessage = dialogue.getByRole("listitem").filter({
@@ -98,7 +98,7 @@ test("keeps saved evidence through provider failure and retries idempotently", a
   await page.goto("/e2e-dialogue");
 
   const dialogue = page.getByRole("region", { name: "Dialogue" });
-  await dialogue.getByLabel("Message").fill(exactText);
+  await dialogue.getByRole("textbox", { name: "Message" }).fill(exactText);
   await dialogue.getByRole("button", { name: "Send" }).click();
 
   await expect(dialogue.getByText("incomplete", { exact: true })).toBeVisible();
