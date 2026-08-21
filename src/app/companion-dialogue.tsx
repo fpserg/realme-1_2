@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import type {
   DialoguePersistence,
@@ -43,6 +43,20 @@ interface DialogueStreamEvent {
     | "evidence_saved"
     | "provider"
     | "transient_ready";
+}
+
+const companionWelcome =
+  "I’m here. Tell me what is happening, or ask me to think with you.";
+
+function neutralThread(): ThreadMessage[] {
+  return [
+    {
+      id: "companion-welcome",
+      role: "assistant",
+      status: "complete",
+      text: companionWelcome,
+    },
+  ];
 }
 
 export function companionRecoveryKey(accountId: string) {
@@ -133,105 +147,154 @@ export function CompanionDialogue({
 }) {
   const [draft, setDraft] = useState("");
   const [remember, setRemember] = useState(true);
-  const [messages, setMessages] = useState<ThreadMessage[]>([
-    {
-      id: "companion-welcome",
-      role: "assistant",
-      status: "complete",
-      text: "I’m here. Tell me what is happening, or ask me to think with you.",
-    },
-  ]);
+  const [messages, setMessages] = useState<ThreadMessage[]>(neutralThread);
   const [recovery, setRecovery] = useState<RecoveryEnvelope | null>(null);
   const [providerLabel, setProviderLabel] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [sessionAccountId, setSessionAccountId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const activeAccountRef = useRef<string | null>(null);
+  const sessionGenerationRef = useRef(0);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const recovered = readRecovery(authenticatedAccountId);
-      if (!recovered) return;
+  useLayoutEffect(() => {
+    const generation = sessionGenerationRef.current + 1;
+    sessionGenerationRef.current = generation;
+    activeAccountRef.current = authenticatedAccountId;
+    abortRef.current?.abort();
+    abortRef.current = null;
+
+    const recovered = readRecovery(authenticatedAccountId);
+    queueMicrotask(() => {
+      if (
+        activeAccountRef.current !== authenticatedAccountId ||
+        sessionGenerationRef.current !== generation
+      ) {
+        return;
+      }
+      setSessionAccountId(authenticatedAccountId);
+      setMessages(neutralThread());
+      setDraft(recovered?.text ?? "");
+      setRemember(recovered?.persistence !== "transient");
       setRecovery(recovered);
-      setDraft(recovered.text);
-      setRemember(recovered.persistence === "observation");
-    }, 0);
-    return () => window.clearTimeout(timer);
+      setProviderLabel(null);
+      setIsStreaming(false);
+    });
+
+    return () => {
+      if (sessionGenerationRef.current !== generation) return;
+      sessionGenerationRef.current += 1;
+      activeAccountRef.current = null;
+      abortRef.current?.abort();
+      abortRef.current = null;
+    };
   }, [authenticatedAccountId]);
 
-  function saveRecovery(envelope: RecoveryEnvelope) {
-    if (envelope.accountId !== authenticatedAccountId) return;
+  function isCurrentSession(accountId: string, generation: number) {
+    return (
+      activeAccountRef.current === accountId &&
+      sessionGenerationRef.current === generation
+    );
+  }
+
+  function saveRecovery(envelope: RecoveryEnvelope, generation: number) {
+    if (!isCurrentSession(envelope.accountId, generation)) return;
     window.localStorage.setItem(
-      companionRecoveryKey(authenticatedAccountId),
+      companionRecoveryKey(envelope.accountId),
       JSON.stringify(envelope),
     );
-    setRecovery(envelope);
-  }
-
-  function clearRecovery() {
-    window.localStorage.removeItem(
-      companionRecoveryKey(authenticatedAccountId),
+    setRecovery((current) =>
+      isCurrentSession(envelope.accountId, generation) ? envelope : current,
     );
-    setRecovery(null);
   }
 
-  function updateMessage(id: string, update: Partial<ThreadMessage>) {
+  function clearRecovery(accountId: string, generation: number) {
+    if (!isCurrentSession(accountId, generation)) return;
+    window.localStorage.removeItem(companionRecoveryKey(accountId));
+    setRecovery((current) =>
+      isCurrentSession(accountId, generation) ? null : current,
+    );
+  }
+
+  function updateMessage(
+    id: string,
+    update: Partial<ThreadMessage>,
+    accountId: string,
+    generation: number,
+  ) {
+    if (!isCurrentSession(accountId, generation)) return;
     setMessages((current) =>
-      current.map((message) =>
-        message.id === id ? { ...message, ...update } : message,
-      ),
+      isCurrentSession(accountId, generation)
+        ? current.map((message) =>
+            message.id === id ? { ...message, ...update } : message,
+          )
+        : current,
     );
   }
 
   async function send(envelope: RecoveryEnvelope, retry = false) {
-    if (abortRef.current) return;
+    const accountId = envelope.accountId;
+    const generation = sessionGenerationRef.current;
+    if (!isCurrentSession(accountId, generation) || abortRef.current) return;
     const userMessageId = retry ? "retry-user" : crypto.randomUUID();
     const assistantMessageId = retry ? "retry-assistant" : crypto.randomUUID();
 
     if (retry) {
-      setMessages((current) => [
-        ...current.filter(
-          (message) =>
-            message.id !== "retry-user" && message.id !== "retry-assistant",
-        ),
-        {
-          evidenceState:
-            envelope.persistence === "transient"
-              ? "ephemeral"
-              : envelope.evidenceSaved
-                ? "saved"
-                : "unsynced",
-          id: userMessageId,
-          role: "user",
-          status: "complete",
-          text: envelope.text,
-        },
-        {
-          id: assistantMessageId,
-          role: "assistant",
-          status: "streaming",
-          text: "",
-        },
-      ]);
+      setMessages((current) =>
+        isCurrentSession(accountId, generation)
+          ? [
+              ...current.filter(
+                (message) =>
+                  message.id !== "retry-user" &&
+                  message.id !== "retry-assistant",
+              ),
+              {
+                evidenceState:
+                  envelope.persistence === "transient"
+                    ? "ephemeral"
+                    : envelope.evidenceSaved
+                      ? "saved"
+                      : "unsynced",
+                id: userMessageId,
+                role: "user",
+                status: "complete",
+                text: envelope.text,
+              },
+              {
+                id: assistantMessageId,
+                role: "assistant",
+                status: "streaming",
+                text: "",
+              },
+            ]
+          : current,
+      );
     } else {
-      setMessages((current) => [
-        ...current,
-        {
-          evidenceState:
-            envelope.persistence === "transient" ? "ephemeral" : "unsynced",
-          id: userMessageId,
-          role: "user",
-          status: "complete",
-          text: envelope.text,
-        },
-        {
-          id: assistantMessageId,
-          role: "assistant",
-          status: "streaming",
-          text: "",
-        },
-      ]);
+      setMessages((current) =>
+        isCurrentSession(accountId, generation)
+          ? [
+              ...current,
+              {
+                evidenceState:
+                  envelope.persistence === "transient"
+                    ? "ephemeral"
+                    : "unsynced",
+                id: userMessageId,
+                role: "user",
+                status: "complete",
+                text: envelope.text,
+              },
+              {
+                id: assistantMessageId,
+                role: "assistant",
+                status: "streaming",
+                text: "",
+              },
+            ]
+          : current,
+      );
     }
 
-    saveRecovery(envelope);
+    saveRecovery(envelope, generation);
     setDraft("");
     const abortController = new AbortController();
     abortRef.current = abortController;
@@ -258,60 +321,92 @@ export function CompanionDialogue({
       if (!response.ok) throw new Error("Dialogue was not confirmed.");
 
       await consumeNdjson(response, (streamEvent) => {
+        if (!isCurrentSession(accountId, generation)) return;
         if (streamEvent.type === "evidence_saved") {
           currentEnvelope = { ...currentEnvelope, evidenceSaved: true };
-          saveRecovery(currentEnvelope);
-          updateMessage(userMessageId, { evidenceState: "saved" });
+          saveRecovery(currentEnvelope, generation);
+          updateMessage(
+            userMessageId,
+            { evidenceState: "saved" },
+            accountId,
+            generation,
+          );
         } else if (streamEvent.type === "provider") {
           setProviderLabel(`${streamEvent.provider} · ${streamEvent.model}`);
         } else if (streamEvent.type === "delta" && streamEvent.delta) {
           setMessages((current) =>
-            current.map((message) =>
-              message.id === assistantMessageId
-                ? { ...message, text: message.text + streamEvent.delta }
-                : message,
-            ),
+            isCurrentSession(accountId, generation)
+              ? current.map((message) =>
+                  message.id === assistantMessageId
+                    ? { ...message, text: message.text + streamEvent.delta }
+                    : message,
+                )
+              : current,
           );
         } else if (streamEvent.type === "done") {
           completed = true;
-          updateMessage(assistantMessageId, { status: "complete" });
-          clearRecovery();
+          updateMessage(
+            assistantMessageId,
+            { status: "complete" },
+            accountId,
+            generation,
+          );
+          clearRecovery(accountId, generation);
         } else if (streamEvent.type === "error") {
           failed = true;
-          updateMessage(assistantMessageId, {
-            status: "failed",
-            text:
-              streamEvent.message ??
-              "The companion could not respond. Saved evidence remains safe.",
-          });
+          updateMessage(
+            assistantMessageId,
+            {
+              status: "failed",
+              text:
+                streamEvent.message ??
+                "The companion could not respond. Saved evidence remains safe.",
+            },
+            accountId,
+            generation,
+          );
         }
       });
 
-      if (!completed && !failed) {
-        updateMessage(assistantMessageId, {
-          status: "failed",
-          text: "The response ended before completion. Saved evidence remains safe.",
-        });
+      if (isCurrentSession(accountId, generation) && !completed && !failed) {
+        updateMessage(
+          assistantMessageId,
+          {
+            status: "failed",
+            text: "The response ended before completion. Saved evidence remains safe.",
+          },
+          accountId,
+          generation,
+        );
       }
     } catch (error) {
       failed = true;
-      updateMessage(assistantMessageId, {
-        status: "failed",
-        text:
-          error instanceof DOMException && error.name === "AbortError"
-            ? "The response was stopped. Saved evidence remains safe."
-            : "The companion could not respond. Retry with the same message identity.",
-      });
+      if (isCurrentSession(accountId, generation)) {
+        updateMessage(
+          assistantMessageId,
+          {
+            status: "failed",
+            text:
+              error instanceof DOMException && error.name === "AbortError"
+                ? "The response was stopped. Saved evidence remains safe."
+                : "The companion could not respond. Retry with the same message identity.",
+          },
+          accountId,
+          generation,
+        );
+      }
     } finally {
-      abortRef.current = null;
-      setIsStreaming(false);
-      if (!completed) setRecovery(currentEnvelope);
+      if (isCurrentSession(accountId, generation)) {
+        if (abortRef.current === abortController) abortRef.current = null;
+        setIsStreaming(false);
+        if (!completed) setRecovery(currentEnvelope);
+      }
     }
   }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft.trim()) return;
+    if (sessionAccountId !== authenticatedAccountId || !draft.trim()) return;
     void send(
       newEnvelope(
         authenticatedAccountId,
@@ -321,6 +416,11 @@ export function CompanionDialogue({
     );
   }
 
+  const sessionReady = sessionAccountId === authenticatedAccountId;
+  const visibleMessages = sessionReady ? messages : neutralThread();
+  const visibleRecovery = sessionReady ? recovery : null;
+  const visibleStreaming = sessionReady && isStreaming;
+
   return (
     <section className={styles.dialogue} aria-labelledby="companion-title">
       <header className={styles.heading}>
@@ -328,11 +428,11 @@ export function CompanionDialogue({
           <span>One companion</span>
           <h1 id="companion-title">Dialogue</h1>
         </div>
-        {providerLabel ? <small>{providerLabel}</small> : null}
+        {sessionReady && providerLabel ? <small>{providerLabel}</small> : null}
       </header>
 
       <ol className={styles.thread} aria-live="polite">
-        {messages.map((message) => (
+        {visibleMessages.map((message) => (
           <li className={styles[message.role]} key={message.id}>
             <span>{message.role === "assistant" ? "Companion" : "You"}</span>
             <p>{message.text || "…"}</p>
@@ -349,17 +449,18 @@ export function CompanionDialogue({
         <label htmlFor="dialogue-text">Message</label>
         <textarea
           id="dialogue-text"
+          disabled={!sessionReady}
           maxLength={4000}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Tell your companion what is happening…"
-          readOnly={Boolean(recovery)}
+          readOnly={Boolean(visibleRecovery)}
           rows={3}
-          value={draft}
+          value={sessionReady ? draft : ""}
         />
         <label className={styles.remember}>
           <input
             checked={remember}
-            disabled={Boolean(recovery)}
+            disabled={!sessionReady || Boolean(visibleRecovery)}
             onChange={(event) => setRemember(event.target.checked)}
             type="checkbox"
           />
@@ -370,16 +471,19 @@ export function CompanionDialogue({
           conversation archive is created.
         </p>
         <div className={styles.actions}>
-          {recovery && !isStreaming ? (
-            <button onClick={() => void send(recovery, true)} type="button">
+          {visibleRecovery && !visibleStreaming ? (
+            <button
+              onClick={() => void send(visibleRecovery, true)}
+              type="button"
+            >
               Retry companion
             </button>
-          ) : !isStreaming ? (
+          ) : sessionReady && !visibleStreaming ? (
             <button disabled={!draft.trim()} type="submit">
               Send
             </button>
           ) : null}
-          {isStreaming ? (
+          {visibleStreaming ? (
             <button
               className={styles.secondary}
               onClick={() => abortRef.current?.abort()}
@@ -388,11 +492,14 @@ export function CompanionDialogue({
               Stop
             </button>
           ) : null}
-          {recovery && !isStreaming ? (
+          {visibleRecovery && !visibleStreaming ? (
             <button
               className={styles.secondary}
               onClick={() => {
-                clearRecovery();
+                clearRecovery(
+                  authenticatedAccountId,
+                  sessionGenerationRef.current,
+                );
                 setDraft("");
               }}
               type="button"

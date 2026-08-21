@@ -39,6 +39,14 @@ const successfulEvents = [
   { type: "done" },
 ];
 
+async function renderDialogue(accountId: string) {
+  const result = render(
+    <CompanionDialogue authenticatedAccountId={accountId} />,
+  );
+  await waitFor(() => expect(screen.getByLabelText("Message")).toBeEnabled());
+  return result;
+}
+
 describe("CompanionDialogue", () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -52,7 +60,7 @@ describe("CompanionDialogue", () => {
 
   it("streams a response after the exact user message is confirmed saved", async () => {
     vi.mocked(fetch).mockResolvedValue(stream(successfulEvents));
-    render(<CompanionDialogue authenticatedAccountId={accountA} />);
+    await renderDialogue(accountA);
 
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Exact dialogue evidence." },
@@ -87,7 +95,7 @@ describe("CompanionDialogue", () => {
         { status: 200 },
       ),
     );
-    render(<CompanionDialogue authenticatedAccountId={accountA} />);
+    await renderDialogue(accountA);
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Show the stream." },
     });
@@ -130,7 +138,7 @@ describe("CompanionDialogue", () => {
         { type: "done" },
       ]),
     );
-    render(<CompanionDialogue authenticatedAccountId={accountA} />);
+    await renderDialogue(accountA);
     fireEvent.click(
       screen.getByLabelText("Remember my exact message as an observation"),
     );
@@ -143,6 +151,184 @@ describe("CompanionDialogue", () => {
     expect(screen.getByText("ephemeral", { exact: true })).toBeInTheDocument();
     const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body));
     expect(body.persistence).toBe("transient");
+  });
+
+  it("resets a completed ephemeral thread when the authenticated account changes", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        stream([
+          { type: "transient_ready" },
+          { model: "account-a-model", provider: "fixture", type: "provider" },
+          { delta: "Account A assistant text.", type: "delta" },
+          { type: "done" },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        stream([
+          { type: "transient_ready" },
+          { model: "account-b-model", provider: "fixture", type: "provider" },
+          { delta: "Account B assistant text.", type: "delta" },
+          { type: "done" },
+        ]),
+      );
+    const { rerender } = await renderDialogue(accountA);
+
+    fireEvent.click(
+      screen.getByLabelText("Remember my exact message as an observation"),
+    );
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Account A user text." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await screen.findByText("Account A assistant text.");
+    expect(screen.getByText("fixture · account-a-model")).toBeInTheDocument();
+
+    rerender(<CompanionDialogue authenticatedAccountId={accountB} />);
+
+    expect(screen.getByLabelText("Message")).toBeDisabled();
+    expect(screen.queryByText("Account A user text.")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Account A assistant text."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("fixture · account-a-model"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Message")).toHaveValue("");
+    expect(
+      screen.getByText(
+        "I’m here. Tell me what is happening, or ask me to think with you.",
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("Message")).toBeEnabled());
+
+    fireEvent.click(
+      screen.getByLabelText("Remember my exact message as an observation"),
+    );
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Account B user text." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await screen.findByText("Account B assistant text.");
+    const accountBBody = JSON.parse(
+      String(vi.mocked(fetch).mock.calls[1]?.[1]?.body),
+    );
+    expect(accountBBody.persistence).toBe("transient");
+    expect(JSON.stringify(accountBBody)).not.toContain("Account A user text.");
+    expect(JSON.stringify(accountBBody)).not.toContain(
+      "Account A assistant text.",
+    );
+    expect(accountBBody.recentTurns).toEqual([
+      {
+        role: "assistant",
+        text: "I’m here. Tell me what is happening, or ask me to think with you.",
+      },
+    ]);
+  });
+
+  it("aborts and invalidates an in-flight prior-account stream", async () => {
+    const encoder = new TextEncoder();
+    let accountAController:
+      | ReadableStreamDefaultController<Uint8Array>
+      | undefined;
+    let accountASignal: AbortSignal | null | undefined;
+    vi.mocked(fetch)
+      .mockImplementationOnce((_input, init) => {
+        accountASignal = init?.signal;
+        return Promise.resolve(
+          new Response(
+            new ReadableStream<Uint8Array>({
+              start(controller) {
+                accountAController = controller;
+              },
+            }),
+            { status: 200 },
+          ),
+        );
+      })
+      .mockResolvedValueOnce(
+        stream([
+          { type: "transient_ready" },
+          { model: "account-b-model", provider: "fixture", type: "provider" },
+          { delta: "Account B fresh reply.", type: "delta" },
+          { type: "done" },
+        ]),
+      );
+    const { rerender } = await renderDialogue(accountA);
+
+    fireEvent.click(
+      screen.getByLabelText("Remember my exact message as an observation"),
+    );
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Account A in-flight text." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await waitFor(() => expect(accountAController).toBeDefined());
+
+    accountAController!.enqueue(
+      encoder.encode(
+        `${JSON.stringify({ type: "transient_ready" })}\n${JSON.stringify({
+          model: "account-a-model",
+          provider: "fixture",
+          type: "provider",
+        })}\n${JSON.stringify({
+          delta: "Account A partial reply.",
+          type: "delta",
+        })}\n`,
+      ),
+    );
+    await screen.findByText("Account A partial reply.");
+
+    rerender(<CompanionDialogue authenticatedAccountId={accountB} />);
+
+    expect(screen.getByLabelText("Message")).toBeDisabled();
+    await waitFor(() => expect(accountASignal?.aborted).toBe(true));
+    expect(
+      screen.queryByText("Account A in-flight text."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Account A partial reply."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("fixture · account-a-model"),
+    ).not.toBeInTheDocument();
+
+    accountAController!.enqueue(
+      encoder.encode(
+        `${JSON.stringify({
+          delta: "Account A late reply.",
+          type: "delta",
+        })}\n${JSON.stringify({ type: "done" })}\n`,
+      ),
+    );
+    accountAController!.close();
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Account A late reply."),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() => expect(screen.getByLabelText("Message")).toBeEnabled());
+
+    fireEvent.click(
+      screen.getByLabelText("Remember my exact message as an observation"),
+    );
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "Account B fresh text." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await screen.findByText("Account B fresh reply.");
+    const accountBBody = JSON.parse(
+      String(vi.mocked(fetch).mock.calls[1]?.[1]?.body),
+    );
+    expect(JSON.stringify(accountBBody)).not.toContain("Account A");
+    expect(accountBBody.recentTurns).toEqual([
+      {
+        role: "assistant",
+        text: "I’m here. Tell me what is happening, or ask me to think with you.",
+      },
+    ]);
   });
 
   it("preserves saved-evidence retry identity across provider failure", async () => {
@@ -161,7 +347,7 @@ describe("CompanionDialogue", () => {
         ]),
       )
       .mockResolvedValueOnce(stream(successfulEvents));
-    render(<CompanionDialogue authenticatedAccountId={accountA} />);
+    await renderDialogue(accountA);
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Evidence survives failure." },
     });
@@ -192,26 +378,43 @@ describe("CompanionDialogue", () => {
   });
 
   it("never surfaces or submits another account's recovery envelope", async () => {
+    const accountAIdempotencyKey = "123e4567-e89b-42d3-a456-426614174000";
+    const accountBIdempotencyKey = "223e4567-e89b-42d3-a456-426614174000";
     window.localStorage.setItem(
       companionRecoveryKey(accountA),
       JSON.stringify({
         accountId: accountA,
         evidenceSaved: false,
-        idempotencyKey: "123e4567-e89b-42d3-a456-426614174000",
+        idempotencyKey: accountAIdempotencyKey,
         persistence: "observation",
         text: "Account A private draft.",
       }),
     );
-    const { rerender } = render(
-      <CompanionDialogue authenticatedAccountId={accountB} />,
+    window.localStorage.setItem(
+      companionRecoveryKey(accountB),
+      JSON.stringify({
+        accountId: accountB,
+        evidenceSaved: false,
+        idempotencyKey: accountBIdempotencyKey,
+        persistence: "transient",
+        text: "Account B own draft.",
+      }),
     );
+    const { rerender } = await renderDialogue(accountB);
     await waitFor(() =>
-      expect(screen.getByLabelText("Message")).toHaveValue(""),
+      expect(screen.getByLabelText("Message")).toHaveValue(
+        "Account B own draft.",
+      ),
     );
     expect(
       screen.queryByText("Account A private draft."),
     ).not.toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(companionRecoveryKey(accountB)) ?? "{}",
+      ).idempotencyKey,
+    ).toBe(accountBIdempotencyKey);
 
     rerender(<CompanionDialogue authenticatedAccountId={accountA} />);
     await waitFor(() =>
@@ -219,5 +422,10 @@ describe("CompanionDialogue", () => {
         "Account A private draft.",
       ),
     );
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(companionRecoveryKey(accountA)) ?? "{}",
+      ).idempotencyKey,
+    ).toBe(accountAIdempotencyKey);
   });
 });

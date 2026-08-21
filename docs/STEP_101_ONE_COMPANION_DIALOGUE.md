@@ -1,6 +1,6 @@
 # RealMe 1.2 — Step 101 One-Companion Dialogue
 
-Version: 0.1
+Version: 0.2
 
 Status: OPEN — IMPLEMENTATION CANDIDATE — NOT ACCEPTED
 
@@ -38,6 +38,16 @@ account-bound browser envelope may temporarily retain one uncertain or failed
 turn and its idempotency key for retry. It is not canonical evidence and is
 removed after successful completion or explicit clearing. An account switch
 cannot surface or submit another account's envelope.
+
+Authenticated account identity is also a hard boundary for the volatile
+dialogue session. A change resets the completed thread, draft, provider label,
+send/error state and recent-turn context to the neutral companion state before
+the successor account can interact. Any prior-account stream is aborted and
+its session generation is invalidated, so late chunks, completion, errors or
+recovery writes cannot enter the successor account's UI or provider request.
+Only the pending retry envelope may survive under its account-specific browser
+key for later recovery by that same account. Completed turns never cross the
+boundary and are not restored as transcript history; the archive remains off.
 
 Assistant chunks are never persisted as observations, interpretation runs,
 candidates, assertions, ontology, admission or canonical World Model state.
