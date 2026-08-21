@@ -8,6 +8,14 @@ import type {
 
 type SqlClient = ReturnType<typeof postgres>;
 
+interface InterpretationDatabaseEnvironment {
+  [key: string]: string | undefined;
+  REALME_DATA_CLASSIFICATION?: string;
+  REALME_ENVIRONMENT?: string;
+  REALME_EXPECTED_SUPABASE_PROJECT_REF?: string;
+  REALME_INTERPRETATION_DATABASE_URL?: string;
+}
+
 interface ClaimedRow {
   attempts: number;
   id: string;
@@ -23,12 +31,60 @@ interface EvidenceRow {
   ordinal: number;
 }
 
-export function interpretationDatabaseUrl(environment = process.env) {
+export function interpretationDatabaseUrl(
+  environment: InterpretationDatabaseEnvironment = process.env,
+) {
   const value = environment.REALME_INTERPRETATION_DATABASE_URL;
   if (!value) throw new Error("Interpretation database is not configured.");
   const url = new URL(value);
   if (url.protocol !== "postgres:" && url.protocol !== "postgresql:") {
     throw new Error("Interpretation database is not configured.");
+  }
+
+  const hostname = url.hostname.toLowerCase();
+  const username = decodeURIComponent(url.username);
+  const directMatch = hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/);
+  const poolerMatch = hostname.endsWith(".pooler.supabase.com")
+    ? username.match(/^postgres\.([a-z0-9]+)$/)
+    : null;
+  const projectRef =
+    hostname === "127.0.0.1" || hostname === "localhost"
+      ? "local"
+      : (directMatch?.[1] ?? poolerMatch?.[1] ?? null);
+
+  if (!projectRef)
+    throw new Error("Interpretation database host is not approved.");
+  if (projectRef !== "local") {
+    if (
+      !environment.REALME_EXPECTED_SUPABASE_PROJECT_REF ||
+      projectRef !== environment.REALME_EXPECTED_SUPABASE_PROJECT_REF
+    ) {
+      throw new Error("Interpretation database does not match its context.");
+    }
+    if (
+      !["require", "verify-ca", "verify-full"].includes(
+        url.searchParams.get("sslmode") ?? "",
+      )
+    ) {
+      throw new Error("Managed interpretation databases require TLS.");
+    }
+  }
+  if (
+    (environment.REALME_ENVIRONMENT === "preview" ||
+      environment.REALME_ENVIRONMENT === "staging") &&
+    environment.REALME_DATA_CLASSIFICATION !== "synthetic"
+  ) {
+    throw new Error(
+      "Preview and staging interpretation must be synthetic-only.",
+    );
+  }
+  if (
+    environment.REALME_ENVIRONMENT === "production" &&
+    environment.REALME_DATA_CLASSIFICATION !== "personal"
+  ) {
+    throw new Error(
+      "Production interpretation requires its personal-data boundary.",
+    );
   }
   return value;
 }
@@ -40,7 +96,7 @@ export function createInterpretationDatabaseClient(
     idle_timeout: 2,
     max: 1,
     max_lifetime: 60,
-    prepare: true,
+    prepare: false,
   });
 }
 

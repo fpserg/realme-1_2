@@ -87,6 +87,13 @@ OpenAI Responses API adapter. Provider selection, model selection, API key,
 endpoint and direct worker database URL are server-only. Browser input cannot
 activate the deterministic test fixture.
 
+The direct worker connection is fail-closed against the accepted environment
+boundary. Managed direct and Supabase pooler URLs must match
+`REALME_EXPECTED_SUPABASE_PROJECT_REF`, require TLS and preserve the synthetic
+preview/staging or personal production classification. Arbitrary PostgreSQL
+hosts and cross-context project references are rejected. Prepared statements
+are disabled for transaction-pooler compatibility.
+
 The immutable application versions are:
 
 - prompt: `interpret-observation-v1`;
