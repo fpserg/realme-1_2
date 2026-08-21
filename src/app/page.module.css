@@ -115,6 +115,11 @@
   font-size: 0.78rem;
 }
 
+.appSections {
+  display: grid;
+  gap: 1.25rem;
+}
+
 @media (min-width: 48rem) {
   .appMain {
     padding-top: 2rem;

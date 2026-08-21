@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 100 ACCEPTED / STEP 101 NOT STARTED**
+Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 101 ACCEPTED / STEP 102 NOT STARTED**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -106,4 +106,17 @@ versioned prospective IANA time settings, the default 04:00 local operational
 boundary, explicit gap/fold resolution, physical anchor containment,
 retry-safe automatic membership, late-observation continuity, append-only
 audited historical correction and a derived evidence-level Today timeline.
-No manual Freeze is required. Step 101 has not started.
+No manual Freeze is required. The Warden subsequently opened Step 101 through
+a separate bounded instruction.
+
+**Step 101 — One-companion dialogue: ACCEPTED.**
+
+The Warden accepted Step 101 on 2026-08-21 after independent Tier H Inspector
+review and exact-head CI/preview validation. The accepted boundary provides one
+mobile-first companion, persist-first evidence-bearing dialogue, bounded
+server-owned context, a provider-independent streaming boundary, account-safe
+ephemeral sessions and graceful failure. Conversation archiving remains off,
+assistant output remains ephemeral and dialogue cannot mutate canonical
+understanding. A real authenticated provider smoke remains prudent before
+production provider enablement but is not a condition of Step 101 acceptance.
+Step 102 has not started.

@@ -301,6 +301,8 @@ before the first RealMe production migration.
 The Step 100 historical-correction writer activates an action-specific strict
 audit metadata allow-list. This does not create a generic audit-writing API.
 
-Step 100 is accepted and complete. PR #18 remains draft and unmerged pending
-narrow acceptance-delta verification. Step 101 is not started and requires
-separate Warden authorization.
+Step 100 is accepted and complete and was integrated into `main` at merge
+commit `9419e320a1d84194616368c8059443b216b23ce3`, tree
+`1d3bd0458530458a09fff6e7e4f37066dba9f351`. The Warden subsequently opened
+Step 101 through a separate bounded instruction. That later work does not
+reopen or broaden accepted Step 100.
