@@ -1,12 +1,16 @@
 # RealMe 1.2 — Step 101 One-Companion Dialogue
 
-Version: 0.2
+Version: 1.0
 
-Status: OPEN — IMPLEMENTATION CANDIDATE — NOT ACCEPTED
+Status: ACCEPTED — STEP 101 COMPLETE
 
 Opened by: Warden
 
 Opened on: 2026-08-21
+
+Accepted by: Warden
+
+Accepted on: 2026-08-21
 
 Risk: Tier H — first live model-provider boundary and first AI-generated user-facing experience
 
@@ -48,6 +52,10 @@ recovery writes cannot enter the successor account's UI or provider request.
 Only the pending retry envelope may survive under its account-specific browser
 key for later recovery by that same account. Completed turns never cross the
 boundary and are not restored as transcript history; the archive remains off.
+
+Archive-off is a RealMe product-storage guarantee. The `store: false` request
+setting minimizes provider-side response storage but does not guarantee zero
+operational retention by an external provider or gateway.
 
 Assistant chunks are never persisted as observations, interpretation runs,
 candidates, assertions, ontology, admission or canonical World Model state.
@@ -142,9 +150,9 @@ attempt. Model output cannot directly or indirectly invoke a canonical command.
 No interpretation run or Step 102 job is created during normal dialogue. No
 assistant output is presented as already admitted truth.
 
-## 7. Verification gate
+## 7. Acceptance verification gate
 
-Before this candidate can be accepted it must pass:
+Before acceptance, the implementation had to pass:
 
 1. formatting, ESLint, strict TypeScript and architecture boundaries;
 2. Drizzle/migration consistency with no Step 101 migration;
@@ -165,8 +173,73 @@ Production remains unmigrated. The inherited
 `public.rls_auto_enable()` execution-grant remediation remains mandatory before
 the first RealMe production migration and is not part of Step 101.
 
-## 8. Candidate boundary
+Exact-head GitHub Actions run 105 and the Netlify Deploy Preview succeeded at
+the accepted implementation head. Local verification passed formatting,
+ESLint, strict TypeScript, architecture-boundary enforcement, Drizzle
+consistency, 28 test files with 124 tests and a production build. GitHub Actions
+also passed all four mobile Chromium tests. The One-Companion Dialogue
+acceptance gate passed.
 
-Step 101 is open and unaccepted. Its branch and draft PR must remain unmerged
-until independent Inspector clearance and explicit Warden acceptance. Step 102
-is not started and remains unauthorized.
+Synthetic staging retained exactly ten accepted migrations, zero Auth users,
+zero rows across all 24 product tables and RLS on all 24 tables. No schema,
+migration, RPC or grant surface changed. Production remained unchanged with
+zero RealMe migrations, zero RealMe public product tables, zero Auth users and
+no provider rollout.
+
+## 8. Acceptance record and preserved laws
+
+Independent Tier H Inspector review returned `APPROVE` for exact implementation
+head `5b14fef14fc58846d3bc8b7d30b0ff4f3d41c4cd`, tree
+`87e5d253ab74feb5238ec546420d0389cf6577d9`, against base/main
+`9419e320a1d84194616368c8059443b216b23ce3`. The Warden explicitly accepted
+Step 101 at that reviewed head and tree on 2026-08-21.
+
+Acceptance preserves these laws:
+
+- every new World begins with one companion; Step 101 imposes no Realmer roster
+  and adds no multi-companion management;
+- dialogue may respond meaningfully but cannot mutate canonical understanding
+  directly; model output has no write path to candidates, admissions, ontology,
+  assertions, commitments, projections or other canonical World Model state;
+- evidence-bearing user dialogue reuses Step 99 persist-first capture, survives
+  provider failure and retains its original capture idempotency identity on
+  retry, while transient dialogue remains non-evidence;
+- Step 100 temporal placement remains independent of provider success and no
+  dialogue behavior silently rewrites temporal truth;
+- the RealMe conversation archive is off by default: assistant responses,
+  partial chunks and completed transient conversations are not durably
+  archived; only explicit evidence-bearing observations and bounded pending
+  retry recovery may persist;
+- provider configuration and secrets remain server-only behind the
+  application-owned provider abstraction, with normalized errors,
+  cancellation, streaming and production provider configuration absent;
+- server-side context is bounded to 8 persisted evidence fragments, 4,000
+  characters per prior fragment, 12,000 persisted-evidence characters, 6
+  ephemeral recent turns and 6,000 recent-turn characters in total;
+- persisted evidence remains untrusted prompt data, exact fragment provenance
+  remains known internally and provider-facing provenance does not require
+  canonical database UUID disclosure;
+- authenticated account change is a hard ephemeral dialogue-session boundary:
+  completed volatile turns cannot cross accounts, old streams are aborted and
+  generation-invalidated, stale callbacks cannot mutate the successor session
+  and only account-scoped pending retry recovery may survive for that same
+  account;
+- incremental NDJSON output has explicit completion, truthful partial/failure
+  state, cancellation, safe plain-text rendering and no persistence of
+  assistant chunks;
+- Step 101 adds no interpretation/job pipeline, candidate production,
+  admission, canonical AI mutation, commitments/Horizon or Living World
+  generation.
+
+A real authenticated OpenAI / Netlify AI Gateway inference smoke has not yet
+been exercised. Deterministic provider-adapter and streaming tests are the
+accepted Step 101 evidence; a real authenticated smoke remains prudent before
+production provider enablement and does not make Step 101 incomplete.
+
+Production remains unmigrated and unconfigured for dialogue inference. The
+inherited production `public.rls_auto_enable()` execution-grant remediation
+remains mandatory before the first RealMe production migration.
+
+Step 101 is accepted and complete. PR #19 remains draft and unmerged pending
+narrow acceptance-delta verification. Step 102 is not started and remains
+unauthorized.
