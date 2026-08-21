@@ -8,6 +8,7 @@ import {
 } from "@/domain/dialogue/dialogue";
 import { createDialogueProvider } from "@/infrastructure/ai/dialogue-provider-factory";
 import { SupabaseDialogueEvidenceRepository } from "@/infrastructure/supabase/dialogue-evidence-repository";
+import { SupabaseInterpretationEnqueueRepository } from "@/infrastructure/supabase/interpretation-enqueue-repository";
 import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
 import { SupabaseTemporalRepository } from "@/infrastructure/supabase/temporal-repository";
 
@@ -91,6 +92,14 @@ export async function POST(request: Request) {
         );
       } catch {
         // Step 99 evidence remains authoritative when Step 100 placement retries.
+      }
+      try {
+        await new SupabaseInterpretationEnqueueRepository(supabase).enqueue(
+          { userId },
+          prepared.persistedObservation.id,
+        );
+      } catch {
+        // Evidence remains safe; the next authorized reload reconciles the job.
       }
     }
   } catch {

@@ -155,6 +155,14 @@ export type RealMeDatabase = {
           was_created: boolean;
         }[];
       };
+      enqueue_observation_interpretation: {
+        Args: { p_observation_id: string };
+        Returns: {
+          job_id: string;
+          job_status: "failed" | "queued" | "running" | "succeeded";
+          was_created: boolean;
+        }[];
+      };
       correct_observation_occurred_time: {
         Args: {
           p_observation_id: string;

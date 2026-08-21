@@ -5,6 +5,7 @@ import { DialogueProviderError } from "@/application/dialogue/one-companion-dial
 const mocks = vi.hoisted(() => ({
   assignTemporal: vi.fn(),
   capture: vi.fn(),
+  enqueue: vi.fn(),
   getClaims: vi.fn(),
   list: vi.fn(),
   providerFactory: vi.fn(),
@@ -33,6 +34,12 @@ vi.mock("@/infrastructure/supabase/dialogue-evidence-repository", () => ({
 vi.mock("@/infrastructure/supabase/temporal-repository", () => ({
   SupabaseTemporalRepository: class {
     assignObservation = mocks.assignTemporal;
+  },
+}));
+
+vi.mock("@/infrastructure/supabase/interpretation-enqueue-repository", () => ({
+  SupabaseInterpretationEnqueueRepository: class {
+    enqueue = mocks.enqueue;
   },
 }));
 
@@ -139,6 +146,10 @@ describe("POST /api/dialogue", () => {
       { exactText: input.text, idempotencyKey: input.idempotencyKey },
     );
     expect(mocks.list).toHaveBeenCalledWith({ userId: "account-a" });
+    expect(mocks.enqueue).toHaveBeenCalledWith(
+      { userId: "account-a" },
+      persisted.id,
+    );
     expect(streamed.map((item) => item.type)).toEqual([
       "evidence_saved",
       "provider",
@@ -185,6 +196,7 @@ describe("POST /api/dialogue", () => {
     const streamed = events(await response.text());
 
     expect(mocks.capture).not.toHaveBeenCalled();
+    expect(mocks.enqueue).not.toHaveBeenCalled();
     expect(streamed[0]).toEqual({ type: "transient_ready" });
     expect(mocks.list).toHaveBeenCalledWith({ userId: "account-a" });
   });
