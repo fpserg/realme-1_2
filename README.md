@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 101 ACCEPTED / STEP 102 IMPLEMENTATION CANDIDATE**
+Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 102 ACCEPTED / STEP 103 NOT STARTED**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -120,9 +120,18 @@ assistant output remains ephemeral and dialogue cannot mutate canonical
 understanding. A real authenticated provider smoke remains prudent before
 production provider enablement but is not a condition of Step 101 acceptance.
 
-**Step 102 — Interpretation and durable job pipeline: OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED.**
+**Step 102 — Interpretation and durable job pipeline: ACCEPTED.**
 
-The Warden opened Step 102 on 2026-08-21. The draft candidate connects persisted
-evidence to hidden, versioned, retry-safe non-canonical interpretation work.
-Step 103 has not started. No Step 102 candidate is canonical and no admission
-path has been introduced.
+The Warden accepted Step 102 on 2026-08-27 after independent Tier H Inspector
+review and exact-head CI/preview validation. The accepted boundary connects
+persisted evidence to World-scoped durable, atomically claimed and retry-safe
+interpretation jobs; preserves immutable versioned run provenance; validates
+and deduplicates hidden structured candidates; links them to exact source
+fragments; and repairs missing jobs in bounded oldest-missing batches. Stale
+final attempts terminate truthfully without attempt N+1, and loopback worker
+PostgreSQL is restricted to explicit local development. AI output remains
+non-canonical candidate state with no admission or canonical mutation path.
+No live authenticated interpretation inference has yet been demonstrated; the
+accepted deterministic provider/worker evidence is sufficient for Step 102,
+while a synthetic live-provider smoke remains prudent before provider rollout.
+Step 103 has not started.
