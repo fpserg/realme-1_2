@@ -1,11 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { InterpretationEnqueueRepository } from "@/application/interpretation/enqueue-interpretation";
+import type {
+  InterpretationEnqueueRepository,
+  InterpretationReconciliationRepository,
+} from "@/application/interpretation/enqueue-interpretation";
 
 import type { RealMeDatabase } from "./database.types";
 
 export class SupabaseInterpretationEnqueueRepository
-  implements InterpretationEnqueueRepository
+  implements
+    InterpretationEnqueueRepository,
+    InterpretationReconciliationRepository
 {
   constructor(private readonly client: SupabaseClient<RealMeDatabase>) {}
 
@@ -23,5 +28,17 @@ export class SupabaseInterpretationEnqueueRepository
       status: row.job_status,
       wasCreated: row.was_created,
     };
+  }
+
+  async reconcile(context: { userId: string }) {
+    if (!context.userId) throw new Error("Authentication is required.");
+    const { data, error } = await this.client.rpc(
+      "reconcile_observation_interpretations",
+    );
+    if (error) throw error;
+    if (typeof data !== "number") {
+      throw new Error("Interpretation reconciliation returned no result.");
+    }
+    return { processed: data };
   }
 }

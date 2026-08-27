@@ -11,6 +11,10 @@ export interface InterpretationEnqueueRepository {
   ): Promise<InterpretationEnqueueResult>;
 }
 
+export interface InterpretationReconciliationRepository {
+  reconcile(context: { userId: string }): Promise<{ processed: number }>;
+}
+
 export function enqueueObservationInterpretation(
   userId: string | null | undefined,
   observationId: string,
@@ -22,14 +26,8 @@ export function enqueueObservationInterpretation(
 
 export async function reconcileObservationInterpretations(
   userId: string | null | undefined,
-  observationIds: string[],
-  repository: InterpretationEnqueueRepository,
+  repository: InterpretationReconciliationRepository,
 ) {
   if (!userId) throw new Error("Authentication is required.");
-  const uniqueIds = [...new Set(observationIds)].slice(0, 50);
-  return Promise.allSettled(
-    uniqueIds.map((observationId) =>
-      repository.enqueue({ userId }, observationId),
-    ),
-  );
+  return repository.reconcile({ userId });
 }

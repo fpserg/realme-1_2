@@ -29,4 +29,17 @@ describe("Supabase interpretation enqueue adapter", () => {
     });
     expect(JSON.stringify(rpc.mock.calls[0])).not.toMatch(/worldId|actorId/);
   });
+
+  it("reconciles from authenticated server state without a browser history window", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: 50, error: null });
+    const repository = new SupabaseInterpretationEnqueueRepository({
+      rpc,
+    } as never);
+
+    await expect(
+      repository.reconcile({ userId: "account-a" }),
+    ).resolves.toEqual({ processed: 50 });
+    expect(rpc).toHaveBeenCalledWith("reconcile_observation_interpretations");
+    expect(rpc.mock.calls[0]).toHaveLength(1);
+  });
 });

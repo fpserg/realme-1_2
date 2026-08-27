@@ -290,7 +290,7 @@ Acceptance gate: Architect review, Code Review clearance and explicit Warden acc
 ## 6. Continuation law
 
 The roadmap governs sequence, not automatic execution. Steps 97 through 101
-are accepted. Step 102 has not started and may begin only through a separate
-explicit Warden instruction. Later steps may be refined when opened, but their
+are accepted. Step 102 is OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED.
+Step 103 is NOT STARTED. Later steps may be refined when opened, but their
 accepted outcome and constitutional acceptance gate must not be weakened
 without an explicit roadmap amendment.

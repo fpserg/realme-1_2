@@ -14,22 +14,9 @@ describe("interpretation enqueue", () => {
     expect(enqueue).not.toHaveBeenCalled();
   });
 
-  it("reconciles a bounded unique observation set", async () => {
-    const enqueue = vi.fn().mockResolvedValue({
-      jobId: "job",
-      status: "queued",
-      wasCreated: true,
-    });
-    await reconcileObservationInterpretations(
-      "account-a",
-      ["observation-a", "observation-a", "observation-b"],
-      { enqueue },
-    );
-    expect(enqueue).toHaveBeenCalledTimes(2);
-    expect(enqueue).toHaveBeenNthCalledWith(
-      1,
-      { userId: "account-a" },
-      "observation-a",
-    );
+  it("delegates bounded missing-job reconciliation to authenticated server state", async () => {
+    const reconcile = vi.fn().mockResolvedValue({ processed: 50 });
+    await reconcileObservationInterpretations("account-a", { reconcile });
+    expect(reconcile).toHaveBeenCalledWith({ userId: "account-a" });
   });
 });

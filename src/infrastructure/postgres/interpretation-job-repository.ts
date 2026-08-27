@@ -47,10 +47,17 @@ export function interpretationDatabaseUrl(
   const poolerMatch = hostname.endsWith(".pooler.supabase.com")
     ? username.match(/^postgres\.([a-z0-9]+)$/)
     : null;
-  const projectRef =
-    hostname === "127.0.0.1" || hostname === "localhost"
-      ? "local"
-      : (directMatch?.[1] ?? poolerMatch?.[1] ?? null);
+  const localHost = ["127.0.0.1", "localhost", "[::1]", "::1"].includes(
+    hostname,
+  );
+  if (localHost && environment.REALME_ENVIRONMENT !== "local") {
+    throw new Error(
+      "Local interpretation databases require explicit local development.",
+    );
+  }
+  const projectRef = localHost
+    ? "local"
+    : (directMatch?.[1] ?? poolerMatch?.[1] ?? null);
 
   if (!projectRef)
     throw new Error("Interpretation database host is not approved.");
@@ -107,6 +114,10 @@ export class PostgresInterpretationJobRepository
 
   async claim(workerId: string): Promise<ClaimedInterpretationJob | null> {
     return this.sql.begin(async (transaction) => {
+      await transaction`
+        select public.terminalize_stale_final_interpretation_job()
+      `;
+
       const rows = await transaction<ClaimedRow[]>`
         with claimable as (
           select job.id

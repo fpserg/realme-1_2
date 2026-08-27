@@ -134,7 +134,6 @@ export default async function HomePage() {
     );
     await reconcileObservationInterpretations(
       userId,
-      observations.map((observation) => observation.id),
       new SupabaseInterpretationEnqueueRepository(supabase),
     );
     const temporalRepository = new SupabaseTemporalRepository(supabase);

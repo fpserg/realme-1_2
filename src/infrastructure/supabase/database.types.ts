@@ -163,6 +163,10 @@ export type RealMeDatabase = {
           was_created: boolean;
         }[];
       };
+      reconcile_observation_interpretations: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
       correct_observation_occurred_time: {
         Args: {
           p_observation_id: string;

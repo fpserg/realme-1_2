@@ -1,0 +1,3423 @@
+{
+  "id": "b0704049-b997-40e1-8e7a-5013873ded60",
+  "prevId": "a405c03b-7847-48b2-8d82-93a140c702e8",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.attachments": {
+      "name": "attachments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observation_id": {
+          "name": "observation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storage_bucket": {
+          "name": "storage_bucket",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storage_object_key": {
+          "name": "storage_object_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "media_type": {
+          "name": "media_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "byte_count": {
+          "name": "byte_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "original_filename": {
+          "name": "original_filename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "attachments_world_storage_object_unique": {
+          "name": "attachments_world_storage_object_unique",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "storage_bucket",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "storage_object_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "attachments_world_id_worlds_id_fk": {
+          "name": "attachments_world_id_worlds_id_fk",
+          "tableFrom": "attachments",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "attachments_observation_world_fk": {
+          "name": "attachments_observation_world_fk",
+          "tableFrom": "attachments",
+          "columnsFrom": ["world_id", "observation_id"],
+          "tableTo": "observations",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "attachments_world_id_id_unique": {
+          "name": "attachments_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "attachments_byte_count_check": {
+          "name": "attachments_byte_count_check",
+          "value": "\"attachments\".\"byte_count\" >= 0"
+        },
+        "attachments_storage_bucket_not_blank": {
+          "name": "attachments_storage_bucket_not_blank",
+          "value": "length(btrim(\"attachments\".\"storage_bucket\")) > 0"
+        },
+        "attachments_storage_object_key_not_blank": {
+          "name": "attachments_storage_object_key_not_blank",
+          "value": "length(btrim(\"attachments\".\"storage_object_key\")) > 0"
+        },
+        "attachments_media_type_not_blank": {
+          "name": "attachments_media_type_not_blank",
+          "value": "length(btrim(\"attachments\".\"media_type\")) > 0"
+        },
+        "attachments_content_hash_not_blank": {
+          "name": "attachments_content_hash_not_blank",
+          "value": "length(btrim(\"attachments\".\"content_hash\")) > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.observation_corrections": {
+      "name": "observation_corrections",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observation_id": {
+          "name": "observation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "corrected_occurred_at": {
+          "name": "corrected_occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "corrected_occurred_precision": {
+          "name": "corrected_occurred_precision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "corrected_source_timezone": {
+          "name": "corrected_source_timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "corrected_local_calendar_date": {
+          "name": "corrected_local_calendar_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rationale": {
+          "name": "rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_by_account_id": {
+          "name": "recorded_by_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supersedes_correction_id": {
+          "name": "supersedes_correction_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "observation_corrections_observation_id_index": {
+          "name": "observation_corrections_observation_id_index",
+          "columns": [
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "observation_corrections_root_unique": {
+          "name": "observation_corrections_root_unique",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"observation_corrections\".\"supersedes_correction_id\" is null",
+          "concurrently": false
+        },
+        "observation_corrections_successor_unique": {
+          "name": "observation_corrections_successor_unique",
+          "columns": [
+            {
+              "expression": "supersedes_correction_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"observation_corrections\".\"supersedes_correction_id\" is not null",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "observation_corrections_world_id_worlds_id_fk": {
+          "name": "observation_corrections_world_id_worlds_id_fk",
+          "tableFrom": "observation_corrections",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "observation_corrections_recorded_by_account_id_accounts_id_fk": {
+          "name": "observation_corrections_recorded_by_account_id_accounts_id_fk",
+          "tableFrom": "observation_corrections",
+          "columnsFrom": ["recorded_by_account_id"],
+          "tableTo": "accounts",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "observation_corrections_observation_world_fk": {
+          "name": "observation_corrections_observation_world_fk",
+          "tableFrom": "observation_corrections",
+          "columnsFrom": ["world_id", "observation_id"],
+          "tableTo": "observations",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "observation_corrections_recorded_by_world_membership_fk": {
+          "name": "observation_corrections_recorded_by_world_membership_fk",
+          "tableFrom": "observation_corrections",
+          "columnsFrom": ["world_id", "recorded_by_account_id"],
+          "tableTo": "world_memberships",
+          "columnsTo": ["world_id", "user_id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "observation_corrections_supersedes_observation_world_fk": {
+          "name": "observation_corrections_supersedes_observation_world_fk",
+          "tableFrom": "observation_corrections",
+          "columnsFrom": [
+            "world_id",
+            "observation_id",
+            "supersedes_correction_id"
+          ],
+          "tableTo": "observation_corrections",
+          "columnsTo": ["world_id", "observation_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "observation_corrections_world_id_id_unique": {
+          "name": "observation_corrections_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        },
+        "observation_corrections_world_observation_id_unique": {
+          "name": "observation_corrections_world_observation_id_unique",
+          "columns": ["world_id", "observation_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "observation_corrections_precision_check": {
+          "name": "observation_corrections_precision_check",
+          "value": "\"observation_corrections\".\"corrected_occurred_precision\" is null or \"observation_corrections\".\"corrected_occurred_precision\" in ('exact', 'approximate', 'date', 'unknown')"
+        },
+        "observation_corrections_has_change_check": {
+          "name": "observation_corrections_has_change_check",
+          "value": "\"observation_corrections\".\"corrected_occurred_at\" is not null or \"observation_corrections\".\"corrected_occurred_precision\" is not null or \"observation_corrections\".\"corrected_source_timezone\" is not null or \"observation_corrections\".\"corrected_local_calendar_date\" is not null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.observations": {
+      "name": "observations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recorded_by_account_id": {
+          "name": "recorded_by_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_kind": {
+          "name": "source_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_locator": {
+          "name": "source_locator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_timezone": {
+          "name": "source_timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "occurred_precision": {
+          "name": "occurred_precision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unknown'"
+        },
+        "local_calendar_date": {
+          "name": "local_calendar_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "capture_idempotency_key": {
+          "name": "capture_idempotency_key",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "observations_world_id_recorded_at_index": {
+          "name": "observations_world_id_recorded_at_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recorded_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "observations_recorded_by_account_id_index": {
+          "name": "observations_recorded_by_account_id_index",
+          "columns": [
+            {
+              "expression": "recorded_by_account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "observations_world_capture_idempotency_unique": {
+          "name": "observations_world_capture_idempotency_unique",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "capture_idempotency_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"observations\".\"capture_idempotency_key\" is not null",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "observations_world_id_worlds_id_fk": {
+          "name": "observations_world_id_worlds_id_fk",
+          "tableFrom": "observations",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "observations_recorded_by_account_id_accounts_id_fk": {
+          "name": "observations_recorded_by_account_id_accounts_id_fk",
+          "tableFrom": "observations",
+          "columnsFrom": ["recorded_by_account_id"],
+          "tableTo": "accounts",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "observations_recorded_by_world_membership_fk": {
+          "name": "observations_recorded_by_world_membership_fk",
+          "tableFrom": "observations",
+          "columnsFrom": ["world_id", "recorded_by_account_id"],
+          "tableTo": "world_memberships",
+          "columnsTo": ["world_id", "user_id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "observations_world_id_id_unique": {
+          "name": "observations_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "observations_source_kind_not_blank": {
+          "name": "observations_source_kind_not_blank",
+          "value": "length(btrim(\"observations\".\"source_kind\")) > 0"
+        },
+        "observations_occurred_precision_check": {
+          "name": "observations_occurred_precision_check",
+          "value": "\"observations\".\"occurred_precision\" in ('exact', 'approximate', 'date', 'unknown')"
+        },
+        "observations_exact_occurrence_requires_instant": {
+          "name": "observations_exact_occurrence_requires_instant",
+          "value": "\"observations\".\"occurred_precision\" <> 'exact' or \"observations\".\"occurred_at\" is not null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.source_fragments": {
+      "name": "source_fragments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observation_id": {
+          "name": "observation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exact_text": {
+          "name": "exact_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "captured_at": {
+          "name": "captured_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "source_fragments_observation_ordinal_unique": {
+          "name": "source_fragments_observation_ordinal_unique",
+          "columns": [
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ordinal",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "source_fragments_world_id_worlds_id_fk": {
+          "name": "source_fragments_world_id_worlds_id_fk",
+          "tableFrom": "source_fragments",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "source_fragments_observation_world_fk": {
+          "name": "source_fragments_observation_world_fk",
+          "tableFrom": "source_fragments",
+          "columnsFrom": ["world_id", "observation_id"],
+          "tableTo": "observations",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "source_fragments_world_id_id_unique": {
+          "name": "source_fragments_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "source_fragments_ordinal_check": {
+          "name": "source_fragments_ordinal_check",
+          "value": "\"source_fragments\".\"ordinal\" >= 0"
+        },
+        "source_fragments_exact_text_not_blank": {
+          "name": "source_fragments_exact_text_not_blank",
+          "value": "length(\"source_fragments\".\"exact_text\") > 0"
+        },
+        "source_fragments_content_hash_not_blank": {
+          "name": "source_fragments_content_hash_not_blank",
+          "value": "length(btrim(\"source_fragments\".\"content_hash\")) > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.admission_decisions": {
+      "name": "admission_decisions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "candidate_claim_id": {
+          "name": "candidate_claim_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decision_kind": {
+          "name": "decision_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "authority_kind": {
+          "name": "authority_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decided_by_account_id": {
+          "name": "decided_by_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rationale": {
+          "name": "rationale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correction_payload": {
+          "name": "correction_payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supersedes_decision_id": {
+          "name": "supersedes_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "admission_decisions_candidate_claim_id_index": {
+          "name": "admission_decisions_candidate_claim_id_index",
+          "columns": [
+            {
+              "expression": "candidate_claim_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "admission_decisions_supersedes_candidate_index": {
+          "name": "admission_decisions_supersedes_candidate_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "candidate_claim_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "supersedes_decision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"admission_decisions\".\"supersedes_decision_id\" is not null",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "admission_decisions_world_id_worlds_id_fk": {
+          "name": "admission_decisions_world_id_worlds_id_fk",
+          "tableFrom": "admission_decisions",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "admission_decisions_decided_by_account_id_accounts_id_fk": {
+          "name": "admission_decisions_decided_by_account_id_accounts_id_fk",
+          "tableFrom": "admission_decisions",
+          "columnsFrom": ["decided_by_account_id"],
+          "tableTo": "accounts",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "admission_decisions_supersedes_decision_id_admission_decisions_id_fk": {
+          "name": "admission_decisions_supersedes_decision_id_admission_decisions_id_fk",
+          "tableFrom": "admission_decisions",
+          "columnsFrom": ["supersedes_decision_id"],
+          "tableTo": "admission_decisions",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "admission_decisions_candidate_claim_world_fk": {
+          "name": "admission_decisions_candidate_claim_world_fk",
+          "tableFrom": "admission_decisions",
+          "columnsFrom": ["world_id", "candidate_claim_id"],
+          "tableTo": "candidate_claims",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "admission_decisions_actor_world_membership_fk": {
+          "name": "admission_decisions_actor_world_membership_fk",
+          "tableFrom": "admission_decisions",
+          "columnsFrom": ["world_id", "decided_by_account_id"],
+          "tableTo": "world_memberships",
+          "columnsTo": ["world_id", "user_id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "admission_decisions_world_id_id_unique": {
+          "name": "admission_decisions_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        },
+        "admission_decisions_world_candidate_id_unique": {
+          "name": "admission_decisions_world_candidate_id_unique",
+          "columns": ["world_id", "candidate_claim_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "admission_decisions_kind_check": {
+          "name": "admission_decisions_kind_check",
+          "value": "\"admission_decisions\".\"decision_kind\" in ('accept', 'reject', 'correct', 'defer')"
+        },
+        "admission_decisions_authority_check": {
+          "name": "admission_decisions_authority_check",
+          "value": "\"admission_decisions\".\"authority_kind\" = 'user'"
+        },
+        "admission_decisions_payload_coherence_check": {
+          "name": "admission_decisions_payload_coherence_check",
+          "value": "(\"admission_decisions\".\"decision_kind\" = 'correct' and \"admission_decisions\".\"correction_payload\" is not null and jsonb_typeof(\"admission_decisions\".\"correction_payload\") = 'object') or (\"admission_decisions\".\"decision_kind\" in ('accept', 'reject', 'defer') and \"admission_decisions\".\"correction_payload\" is null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.candidate_claim_evidence": {
+      "name": "candidate_claim_evidence",
+      "schema": "",
+      "columns": {
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "candidate_claim_id": {
+          "name": "candidate_claim_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_fragment_id": {
+          "name": "source_fragment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "candidate_claim_evidence_world_id_index": {
+          "name": "candidate_claim_evidence_world_id_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "candidate_claim_evidence_world_id_worlds_id_fk": {
+          "name": "candidate_claim_evidence_world_id_worlds_id_fk",
+          "tableFrom": "candidate_claim_evidence",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "candidate_claim_evidence_claim_world_fk": {
+          "name": "candidate_claim_evidence_claim_world_fk",
+          "tableFrom": "candidate_claim_evidence",
+          "columnsFrom": ["world_id", "candidate_claim_id"],
+          "tableTo": "candidate_claims",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "candidate_claim_evidence_fragment_world_fk": {
+          "name": "candidate_claim_evidence_fragment_world_fk",
+          "tableFrom": "candidate_claim_evidence",
+          "columnsFrom": ["world_id", "source_fragment_id"],
+          "tableTo": "source_fragments",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "candidate_claim_evidence_primary_key": {
+          "name": "candidate_claim_evidence_primary_key",
+          "columns": ["candidate_claim_id", "source_fragment_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.candidate_claims": {
+      "name": "candidate_claims",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "interpretation_run_id": {
+          "name": "interpretation_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proposed_subject_node_id": {
+          "name": "proposed_subject_node_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claim_kind": {
+          "name": "claim_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "logical_key": {
+          "name": "logical_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "candidate_claims_interpretation_run_id_index": {
+          "name": "candidate_claims_interpretation_run_id_index",
+          "columns": [
+            {
+              "expression": "interpretation_run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "candidate_claims_proposed_subject_node_index": {
+          "name": "candidate_claims_proposed_subject_node_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "proposed_subject_node_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"candidate_claims\".\"proposed_subject_node_id\" is not null",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "candidate_claims_world_id_worlds_id_fk": {
+          "name": "candidate_claims_world_id_worlds_id_fk",
+          "tableFrom": "candidate_claims",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "candidate_claims_interpretation_run_world_fk": {
+          "name": "candidate_claims_interpretation_run_world_fk",
+          "tableFrom": "candidate_claims",
+          "columnsFrom": ["world_id", "interpretation_run_id"],
+          "tableTo": "interpretation_runs",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "candidate_claims_job_world_fk": {
+          "name": "candidate_claims_job_world_fk",
+          "tableFrom": "candidate_claims",
+          "columnsFrom": ["world_id", "job_id"],
+          "tableTo": "jobs",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "candidate_claims_interpretation_run_job_world_fk": {
+          "name": "candidate_claims_interpretation_run_job_world_fk",
+          "tableFrom": "candidate_claims",
+          "columnsFrom": ["world_id", "interpretation_run_id", "job_id"],
+          "tableTo": "interpretation_runs",
+          "columnsTo": ["world_id", "id", "job_id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "candidate_claims_world_id_id_unique": {
+          "name": "candidate_claims_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        },
+        "candidate_claims_job_logical_key_unique": {
+          "name": "candidate_claims_job_logical_key_unique",
+          "columns": ["job_id", "logical_key"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "candidate_claims_kind_not_blank": {
+          "name": "candidate_claims_kind_not_blank",
+          "value": "length(btrim(\"candidate_claims\".\"claim_kind\")) > 0"
+        },
+        "candidate_claims_payload_object_check": {
+          "name": "candidate_claims_payload_object_check",
+          "value": "jsonb_typeof(\"candidate_claims\".\"payload\") = 'object'"
+        },
+        "candidate_claims_step_102_kind_check": {
+          "name": "candidate_claims_step_102_kind_check",
+          "value": "\"candidate_claims\".\"claim_kind\" = 'proposition'"
+        },
+        "candidate_claims_logical_key_not_blank": {
+          "name": "candidate_claims_logical_key_not_blank",
+          "value": "length(btrim(\"candidate_claims\".\"logical_key\")) > 0"
+        },
+        "candidate_claims_step_102_payload_check": {
+          "name": "candidate_claims_step_102_payload_check",
+          "value": "\"candidate_claims\".\"payload\" ?& array['subject', 'predicate', 'object', 'explanation', 'confidence', 'schema_version'] and (\"candidate_claims\".\"payload\" - array['subject', 'predicate', 'object', 'explanation', 'confidence', 'schema_version']) = '{}'::jsonb and jsonb_typeof(\"candidate_claims\".\"payload\"->'subject') = 'string' and length(\"candidate_claims\".\"payload\"->>'subject') between 1 and 160 and jsonb_typeof(\"candidate_claims\".\"payload\"->'predicate') = 'string' and \"candidate_claims\".\"payload\"->>'predicate' ~ '^[a-z][a-z0-9_]*$' and length(\"candidate_claims\".\"payload\"->>'predicate') <= 64 and jsonb_typeof(\"candidate_claims\".\"payload\"->'object') in ('string', 'number', 'boolean') and (jsonb_typeof(\"candidate_claims\".\"payload\"->'object') <> 'string' or length(\"candidate_claims\".\"payload\"->>'object') <= 500) and jsonb_typeof(\"candidate_claims\".\"payload\"->'explanation') = 'string' and length(\"candidate_claims\".\"payload\"->>'explanation') between 1 and 500 and jsonb_typeof(\"candidate_claims\".\"payload\"->'confidence') = 'number' and (\"candidate_claims\".\"payload\"->>'confidence')::numeric between 0 and 1 and \"candidate_claims\".\"payload\"->>'schema_version' = 'candidate-set-v1'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.interpretation_runs": {
+      "name": "interpretation_runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observation_id": {
+          "name": "observation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prompt_version": {
+          "name": "prompt_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_hash": {
+          "name": "input_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_code": {
+          "name": "failure_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempt_number": {
+          "name": "attempt_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "interpretation_runs_observation_id_created_at_index": {
+          "name": "interpretation_runs_observation_id_created_at_index",
+          "columns": [
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "interpretation_runs_one_success_per_job_unique": {
+          "name": "interpretation_runs_one_success_per_job_unique",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"interpretation_runs\".\"status\" = 'succeeded'",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "interpretation_runs_world_id_worlds_id_fk": {
+          "name": "interpretation_runs_world_id_worlds_id_fk",
+          "tableFrom": "interpretation_runs",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "interpretation_runs_observation_world_fk": {
+          "name": "interpretation_runs_observation_world_fk",
+          "tableFrom": "interpretation_runs",
+          "columnsFrom": ["world_id", "observation_id"],
+          "tableTo": "observations",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "interpretation_runs_job_observation_world_fk": {
+          "name": "interpretation_runs_job_observation_world_fk",
+          "tableFrom": "interpretation_runs",
+          "columnsFrom": ["world_id", "job_id", "observation_id"],
+          "tableTo": "jobs",
+          "columnsTo": ["world_id", "id", "observation_id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "interpretation_runs_world_id_id_unique": {
+          "name": "interpretation_runs_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        },
+        "interpretation_runs_job_attempt_unique": {
+          "name": "interpretation_runs_job_attempt_unique",
+          "columns": ["job_id", "attempt_number"],
+          "nullsNotDistinct": false
+        },
+        "interpretation_runs_world_id_job_id_unique": {
+          "name": "interpretation_runs_world_id_job_id_unique",
+          "columns": ["world_id", "id", "job_id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "interpretation_runs_status_check": {
+          "name": "interpretation_runs_status_check",
+          "value": "\"interpretation_runs\".\"status\" in ('pending', 'running', 'succeeded', 'failed', 'cancelled')"
+        },
+        "interpretation_runs_versions_not_blank": {
+          "name": "interpretation_runs_versions_not_blank",
+          "value": "length(btrim(\"interpretation_runs\".\"prompt_version\")) > 0 and length(btrim(\"interpretation_runs\".\"schema_version\")) > 0"
+        },
+        "interpretation_runs_input_hash_not_blank": {
+          "name": "interpretation_runs_input_hash_not_blank",
+          "value": "length(btrim(\"interpretation_runs\".\"input_hash\")) > 0"
+        },
+        "interpretation_runs_completed_after_started_check": {
+          "name": "interpretation_runs_completed_after_started_check",
+          "value": "\"interpretation_runs\".\"completed_at\" is null or \"interpretation_runs\".\"started_at\" is null or \"interpretation_runs\".\"completed_at\" >= \"interpretation_runs\".\"started_at\""
+        },
+        "interpretation_runs_attempt_number_check": {
+          "name": "interpretation_runs_attempt_number_check",
+          "value": "\"interpretation_runs\".\"attempt_number\" > 0"
+        },
+        "interpretation_runs_provider_model_check": {
+          "name": "interpretation_runs_provider_model_check",
+          "value": "length(btrim(\"interpretation_runs\".\"provider\")) > 0 and length(btrim(\"interpretation_runs\".\"model\")) > 0"
+        },
+        "interpretation_runs_failure_code_check": {
+          "name": "interpretation_runs_failure_code_check",
+          "value": "\"interpretation_runs\".\"failure_code\" is null or \"interpretation_runs\".\"failure_code\" in ('provider_unavailable', 'timeout', 'malformed_output', 'validation_failed', 'persistence_failed', 'configuration_error', 'cancelled', 'exhausted')"
+        },
+        "interpretation_runs_state_coherence_check": {
+          "name": "interpretation_runs_state_coherence_check",
+          "value": "(\"interpretation_runs\".\"status\" = 'running' and \"interpretation_runs\".\"started_at\" is not null and \"interpretation_runs\".\"completed_at\" is null and \"interpretation_runs\".\"failure_code\" is null) or (\"interpretation_runs\".\"status\" = 'succeeded' and \"interpretation_runs\".\"started_at\" is not null and \"interpretation_runs\".\"completed_at\" is not null and \"interpretation_runs\".\"failure_code\" is null) or (\"interpretation_runs\".\"status\" = 'failed' and \"interpretation_runs\".\"started_at\" is not null and \"interpretation_runs\".\"completed_at\" is not null and \"interpretation_runs\".\"failure_code\" is not null) or \"interpretation_runs\".\"status\" in ('pending', 'cancelled')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.assertion_evidence": {
+      "name": "assertion_evidence",
+      "schema": "",
+      "columns": {
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assertion_id": {
+          "name": "assertion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_fragment_id": {
+          "name": "source_fragment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "assertion_evidence_world_id_index": {
+          "name": "assertion_evidence_world_id_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "assertion_evidence_world_id_worlds_id_fk": {
+          "name": "assertion_evidence_world_id_worlds_id_fk",
+          "tableFrom": "assertion_evidence",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "assertion_evidence_assertion_world_fk": {
+          "name": "assertion_evidence_assertion_world_fk",
+          "tableFrom": "assertion_evidence",
+          "columnsFrom": ["world_id", "assertion_id"],
+          "tableTo": "assertions",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "assertion_evidence_fragment_world_fk": {
+          "name": "assertion_evidence_fragment_world_fk",
+          "tableFrom": "assertion_evidence",
+          "columnsFrom": ["world_id", "source_fragment_id"],
+          "tableTo": "source_fragments",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "assertion_evidence_primary_key": {
+          "name": "assertion_evidence_primary_key",
+          "columns": ["assertion_id", "source_fragment_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.assertions": {
+      "name": "assertions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_node_id": {
+          "name": "subject_node_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "predicate": {
+          "name": "predicate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "object_node_id": {
+          "name": "object_node_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "name": "value",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "admitted_by_decision_id": {
+          "name": "admitted_by_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supersedes_assertion_id": {
+          "name": "supersedes_assertion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "assertions_world_id_predicate_index": {
+          "name": "assertions_world_id_predicate_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "predicate",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "assertions_world_id_worlds_id_fk": {
+          "name": "assertions_world_id_worlds_id_fk",
+          "tableFrom": "assertions",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "assertions_supersedes_assertion_id_assertions_id_fk": {
+          "name": "assertions_supersedes_assertion_id_assertions_id_fk",
+          "tableFrom": "assertions",
+          "columnsFrom": ["supersedes_assertion_id"],
+          "tableTo": "assertions",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "assertions_subject_node_world_fk": {
+          "name": "assertions_subject_node_world_fk",
+          "tableFrom": "assertions",
+          "columnsFrom": ["world_id", "subject_node_id"],
+          "tableTo": "ontology_nodes",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "assertions_object_node_world_fk": {
+          "name": "assertions_object_node_world_fk",
+          "tableFrom": "assertions",
+          "columnsFrom": ["world_id", "object_node_id"],
+          "tableTo": "ontology_nodes",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "assertions_admission_decision_world_fk": {
+          "name": "assertions_admission_decision_world_fk",
+          "tableFrom": "assertions",
+          "columnsFrom": ["world_id", "admitted_by_decision_id"],
+          "tableTo": "admission_decisions",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "assertions_world_id_id_unique": {
+          "name": "assertions_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "assertions_predicate_not_blank": {
+          "name": "assertions_predicate_not_blank",
+          "value": "length(btrim(\"assertions\".\"predicate\")) > 0"
+        },
+        "assertions_exactly_one_object_check": {
+          "name": "assertions_exactly_one_object_check",
+          "value": "num_nonnulls(\"assertions\".\"object_node_id\", \"assertions\".\"value\") = 1"
+        },
+        "assertions_scalar_value_check": {
+          "name": "assertions_scalar_value_check",
+          "value": "\"assertions\".\"value\" is null or jsonb_typeof(\"assertions\".\"value\") in ('string', 'number', 'boolean')"
+        },
+        "assertions_valid_interval_check": {
+          "name": "assertions_valid_interval_check",
+          "value": "\"assertions\".\"valid_to\" is null or \"assertions\".\"valid_to\" > \"assertions\".\"valid_from\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.ontology_aliases": {
+      "name": "ontology_aliases",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "node_id": {
+          "name": "node_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "alias": {
+          "name": "alias",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locale": {
+          "name": "locale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "admitted_by_decision_id": {
+          "name": "admitted_by_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supersedes_alias_id": {
+          "name": "supersedes_alias_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "ontology_aliases_node_id_index": {
+          "name": "ontology_aliases_node_id_index",
+          "columns": [
+            {
+              "expression": "node_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "ontology_aliases_world_id_worlds_id_fk": {
+          "name": "ontology_aliases_world_id_worlds_id_fk",
+          "tableFrom": "ontology_aliases",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "ontology_aliases_supersedes_alias_id_ontology_aliases_id_fk": {
+          "name": "ontology_aliases_supersedes_alias_id_ontology_aliases_id_fk",
+          "tableFrom": "ontology_aliases",
+          "columnsFrom": ["supersedes_alias_id"],
+          "tableTo": "ontology_aliases",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "ontology_aliases_node_world_fk": {
+          "name": "ontology_aliases_node_world_fk",
+          "tableFrom": "ontology_aliases",
+          "columnsFrom": ["world_id", "node_id"],
+          "tableTo": "ontology_nodes",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "ontology_aliases_admission_decision_world_fk": {
+          "name": "ontology_aliases_admission_decision_world_fk",
+          "tableFrom": "ontology_aliases",
+          "columnsFrom": ["world_id", "admitted_by_decision_id"],
+          "tableTo": "admission_decisions",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ontology_aliases_world_id_id_unique": {
+          "name": "ontology_aliases_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "ontology_aliases_alias_not_blank": {
+          "name": "ontology_aliases_alias_not_blank",
+          "value": "length(btrim(\"ontology_aliases\".\"alias\")) > 0"
+        },
+        "ontology_aliases_valid_interval_check": {
+          "name": "ontology_aliases_valid_interval_check",
+          "value": "\"ontology_aliases\".\"valid_to\" is null or \"ontology_aliases\".\"valid_to\" > \"ontology_aliases\".\"valid_from\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.ontology_nodes": {
+      "name": "ontology_nodes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "admitted_by_decision_id": {
+          "name": "admitted_by_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ontology_nodes_world_id_worlds_id_fk": {
+          "name": "ontology_nodes_world_id_worlds_id_fk",
+          "tableFrom": "ontology_nodes",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "ontology_nodes_admission_decision_world_fk": {
+          "name": "ontology_nodes_admission_decision_world_fk",
+          "tableFrom": "ontology_nodes",
+          "columnsFrom": ["world_id", "admitted_by_decision_id"],
+          "tableTo": "admission_decisions",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ontology_nodes_world_id_id_unique": {
+          "name": "ontology_nodes_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ontology_relationships": {
+      "name": "ontology_relationships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_node_id": {
+          "name": "subject_node_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "object_node_id": {
+          "name": "object_node_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "predicate": {
+          "name": "predicate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "admitted_by_decision_id": {
+          "name": "admitted_by_decision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supersedes_relationship_id": {
+          "name": "supersedes_relationship_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "ontology_relationships_subject_node_id_index": {
+          "name": "ontology_relationships_subject_node_id_index",
+          "columns": [
+            {
+              "expression": "subject_node_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "ontology_relationships_object_node_id_index": {
+          "name": "ontology_relationships_object_node_id_index",
+          "columns": [
+            {
+              "expression": "object_node_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "ontology_relationships_world_id_worlds_id_fk": {
+          "name": "ontology_relationships_world_id_worlds_id_fk",
+          "tableFrom": "ontology_relationships",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "ontology_relationships_supersedes_relationship_id_ontology_relationships_id_fk": {
+          "name": "ontology_relationships_supersedes_relationship_id_ontology_relationships_id_fk",
+          "tableFrom": "ontology_relationships",
+          "columnsFrom": ["supersedes_relationship_id"],
+          "tableTo": "ontology_relationships",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "ontology_relationships_subject_node_world_fk": {
+          "name": "ontology_relationships_subject_node_world_fk",
+          "tableFrom": "ontology_relationships",
+          "columnsFrom": ["world_id", "subject_node_id"],
+          "tableTo": "ontology_nodes",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "ontology_relationships_object_node_world_fk": {
+          "name": "ontology_relationships_object_node_world_fk",
+          "tableFrom": "ontology_relationships",
+          "columnsFrom": ["world_id", "object_node_id"],
+          "tableTo": "ontology_nodes",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "ontology_relationships_admission_decision_world_fk": {
+          "name": "ontology_relationships_admission_decision_world_fk",
+          "tableFrom": "ontology_relationships",
+          "columnsFrom": ["world_id", "admitted_by_decision_id"],
+          "tableTo": "admission_decisions",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ontology_relationships_world_id_id_unique": {
+          "name": "ontology_relationships_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "ontology_relationships_predicate_not_blank": {
+          "name": "ontology_relationships_predicate_not_blank",
+          "value": "length(btrim(\"ontology_relationships\".\"predicate\")) > 0"
+        },
+        "ontology_relationships_distinct_nodes_check": {
+          "name": "ontology_relationships_distinct_nodes_check",
+          "value": "\"ontology_relationships\".\"subject_node_id\" <> \"ontology_relationships\".\"object_node_id\""
+        },
+        "ontology_relationships_valid_interval_check": {
+          "name": "ontology_relationships_valid_interval_check",
+          "value": "\"ontology_relationships\".\"valid_to\" is null or \"ontology_relationships\".\"valid_to\" > \"ontology_relationships\".\"valid_from\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.audit_events": {
+      "name": "audit_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_kind": {
+          "name": "actor_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_account_id": {
+          "name": "actor_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "audit_events_world_occurred_at_index": {
+          "name": "audit_events_world_occurred_at_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "audit_events_world_id_worlds_id_fk": {
+          "name": "audit_events_world_id_worlds_id_fk",
+          "tableFrom": "audit_events",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "audit_events_actor_account_id_accounts_id_fk": {
+          "name": "audit_events_actor_account_id_accounts_id_fk",
+          "tableFrom": "audit_events",
+          "columnsFrom": ["actor_account_id"],
+          "tableTo": "accounts",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "audit_events_actor_world_membership_fk": {
+          "name": "audit_events_actor_world_membership_fk",
+          "tableFrom": "audit_events",
+          "columnsFrom": ["world_id", "actor_account_id"],
+          "tableTo": "world_memberships",
+          "columnsTo": ["world_id", "user_id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "audit_events_actor_kind_check": {
+          "name": "audit_events_actor_kind_check",
+          "value": "\"audit_events\".\"actor_kind\" in ('user', 'system', 'policy')"
+        },
+        "audit_events_user_actor_check": {
+          "name": "audit_events_user_actor_check",
+          "value": "\"audit_events\".\"actor_kind\" <> 'user' or \"audit_events\".\"actor_account_id\" is not null"
+        },
+        "audit_events_action_not_blank": {
+          "name": "audit_events_action_not_blank",
+          "value": "length(btrim(\"audit_events\".\"action\")) > 0"
+        },
+        "audit_events_entity_type_not_blank": {
+          "name": "audit_events_entity_type_not_blank",
+          "value": "length(btrim(\"audit_events\".\"entity_type\")) > 0"
+        },
+        "audit_events_metadata_object_check": {
+          "name": "audit_events_metadata_object_check",
+          "value": "jsonb_typeof(\"audit_events\".\"metadata\") = 'object'"
+        },
+        "audit_events_temporal_correction_metadata_check": {
+          "name": "audit_events_temporal_correction_metadata_check",
+          "value": "\"audit_events\".\"action\" <> 'observation_operational_period_corrected' or (\"audit_events\".\"entity_type\" = 'observation' and \"audit_events\".\"entity_id\" is not null and \"audit_events\".\"metadata\" ?& array['prior_membership_id', 'prior_operational_period_id', 'successor_membership_id', 'successor_operational_period_id', 'reason_category'] and (\"audit_events\".\"metadata\" - array['prior_membership_id', 'prior_operational_period_id', 'successor_membership_id', 'successor_operational_period_id', 'reason_category']) = '{}'::jsonb and jsonb_typeof(\"audit_events\".\"metadata\"->'prior_membership_id') = 'string' and jsonb_typeof(\"audit_events\".\"metadata\"->'prior_operational_period_id') = 'string' and jsonb_typeof(\"audit_events\".\"metadata\"->'successor_membership_id') = 'string' and jsonb_typeof(\"audit_events\".\"metadata\"->'successor_operational_period_id') = 'string' and jsonb_typeof(\"audit_events\".\"metadata\"->'reason_category') = 'string')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.jobs": {
+      "name": "jobs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_kind": {
+          "name": "job_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'queued'"
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "available_at": {
+          "name": "available_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "locked_at": {
+          "name": "locked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "max_attempts": {
+          "name": "max_attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 5
+        },
+        "last_failure_code": {
+          "name": "last_failure_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "lock_token": {
+          "name": "lock_token",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "observation_id": {
+          "name": "observation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "jobs_world_kind_idempotency_unique": {
+          "name": "jobs_world_kind_idempotency_unique",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "job_kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "idempotency_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "jobs_status_available_at_index": {
+          "name": "jobs_status_available_at_index",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "available_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "jobs_observation_id_index": {
+          "name": "jobs_observation_id_index",
+          "columns": [
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "jobs_world_id_worlds_id_fk": {
+          "name": "jobs_world_id_worlds_id_fk",
+          "tableFrom": "jobs",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "jobs_observation_world_fk": {
+          "name": "jobs_observation_world_fk",
+          "tableFrom": "jobs",
+          "columnsFrom": ["world_id", "observation_id"],
+          "tableTo": "observations",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "jobs_world_id_id_unique": {
+          "name": "jobs_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        },
+        "jobs_world_id_observation_id_unique": {
+          "name": "jobs_world_id_observation_id_unique",
+          "columns": ["world_id", "id", "observation_id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "jobs_kind_not_blank": {
+          "name": "jobs_kind_not_blank",
+          "value": "length(btrim(\"jobs\".\"job_kind\")) > 0"
+        },
+        "jobs_idempotency_key_not_blank": {
+          "name": "jobs_idempotency_key_not_blank",
+          "value": "length(btrim(\"jobs\".\"idempotency_key\")) > 0"
+        },
+        "jobs_status_check": {
+          "name": "jobs_status_check",
+          "value": "\"jobs\".\"status\" in ('queued', 'running', 'succeeded', 'failed', 'cancelled')"
+        },
+        "jobs_attempts_check": {
+          "name": "jobs_attempts_check",
+          "value": "\"jobs\".\"attempts\" >= 0"
+        },
+        "jobs_max_attempts_check": {
+          "name": "jobs_max_attempts_check",
+          "value": "\"jobs\".\"max_attempts\" > 0"
+        },
+        "jobs_attempts_within_max_check": {
+          "name": "jobs_attempts_within_max_check",
+          "value": "\"jobs\".\"attempts\" <= \"jobs\".\"max_attempts\""
+        },
+        "jobs_queued_state_check": {
+          "name": "jobs_queued_state_check",
+          "value": "\"jobs\".\"status\" <> 'queued' or (\"jobs\".\"attempts\" < \"jobs\".\"max_attempts\" and \"jobs\".\"locked_at\" is null and \"jobs\".\"lock_token\" is null)"
+        },
+        "jobs_running_state_check": {
+          "name": "jobs_running_state_check",
+          "value": "\"jobs\".\"status\" <> 'running' or (\"jobs\".\"locked_at\" is not null and \"jobs\".\"lock_token\" is not null and \"jobs\".\"attempts\" >= 1)"
+        },
+        "jobs_non_running_unlocked_check": {
+          "name": "jobs_non_running_unlocked_check",
+          "value": "\"jobs\".\"status\" = 'running' or (\"jobs\".\"locked_at\" is null and \"jobs\".\"lock_token\" is null)"
+        },
+        "jobs_payload_object_check": {
+          "name": "jobs_payload_object_check",
+          "value": "jsonb_typeof(\"jobs\".\"payload\") = 'object'"
+        },
+        "jobs_step_102_kind_check": {
+          "name": "jobs_step_102_kind_check",
+          "value": "\"jobs\".\"job_kind\" = 'interpret_observation'"
+        },
+        "jobs_interpret_observation_input_check": {
+          "name": "jobs_interpret_observation_input_check",
+          "value": "\"jobs\".\"job_kind\" <> 'interpret_observation' or (\"jobs\".\"observation_id\" is not null and \"jobs\".\"payload\" ?& array['prompt_version', 'schema_version'] and (\"jobs\".\"payload\" - array['prompt_version', 'schema_version']) = '{}'::jsonb and jsonb_typeof(\"jobs\".\"payload\"->'prompt_version') = 'string' and jsonb_typeof(\"jobs\".\"payload\"->'schema_version') = 'string' and \"jobs\".\"payload\"->>'prompt_version' = 'interpret-observation-v1' and \"jobs\".\"payload\"->>'schema_version' = 'candidate-set-v1')"
+        },
+        "jobs_last_failure_code_check": {
+          "name": "jobs_last_failure_code_check",
+          "value": "\"jobs\".\"last_failure_code\" is null or \"jobs\".\"last_failure_code\" in ('provider_unavailable', 'timeout', 'malformed_output', 'validation_failed', 'persistence_failed', 'configuration_error', 'cancelled', 'exhausted')"
+        },
+        "jobs_success_has_no_failure_check": {
+          "name": "jobs_success_has_no_failure_check",
+          "value": "\"jobs\".\"status\" <> 'succeeded' or \"jobs\".\"last_failure_code\" is null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.accounts": {
+      "name": "accounts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.companions": {
+      "name": "companions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "companions_world_id_unique": {
+          "name": "companions_world_id_unique",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "companions_world_id_worlds_id_fk": {
+          "name": "companions_world_id_worlds_id_fk",
+          "tableFrom": "companions",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.world_memberships": {
+      "name": "world_memberships",
+      "schema": "",
+      "columns": {
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "world_memberships_user_id_index": {
+          "name": "world_memberships_user_id_index",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "world_memberships_world_id_worlds_id_fk": {
+          "name": "world_memberships_world_id_worlds_id_fk",
+          "tableFrom": "world_memberships",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "world_memberships_world_id_user_id_primary_key": {
+          "name": "world_memberships_world_id_user_id_primary_key",
+          "columns": ["world_id", "user_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "world_memberships_role_check": {
+          "name": "world_memberships_role_check",
+          "value": "\"world_memberships\".\"role\" in ('owner', 'member')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.worlds": {
+      "name": "worlds",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "initial_owner_id": {
+          "name": "initial_owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "worlds_initial_owner_id_unique": {
+          "name": "worlds_initial_owner_id_unique",
+          "columns": [
+            {
+              "expression": "initial_owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.observation_operational_period_memberships": {
+      "name": "observation_operational_period_memberships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observation_id": {
+          "name": "observation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operational_period_id": {
+          "name": "operational_period_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assignment_kind": {
+          "name": "assignment_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assigned_by_account_id": {
+          "name": "assigned_by_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supersedes_membership_id": {
+          "name": "supersedes_membership_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assigned_at": {
+          "name": "assigned_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "observation_operational_period_memberships_observation_index": {
+          "name": "observation_operational_period_memberships_observation_index",
+          "columns": [
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "observation_operational_membership_supersedes_path_index": {
+          "name": "observation_operational_membership_supersedes_path_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "supersedes_membership_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"observation_operational_period_memberships\".\"supersedes_membership_id\" is not null",
+          "concurrently": false
+        },
+        "observation_operational_membership_successor_unique": {
+          "name": "observation_operational_membership_successor_unique",
+          "columns": [
+            {
+              "expression": "supersedes_membership_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"observation_operational_period_memberships\".\"supersedes_membership_id\" is not null",
+          "concurrently": false
+        },
+        "observation_operational_membership_initial_unique": {
+          "name": "observation_operational_membership_initial_unique",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"observation_operational_period_memberships\".\"assignment_kind\" = 'initial'",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "observation_operational_period_memberships_world_id_worlds_id_fk": {
+          "name": "observation_operational_period_memberships_world_id_worlds_id_fk",
+          "tableFrom": "observation_operational_period_memberships",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "observation_operational_period_memberships_assigned_by_account_id_accounts_id_fk": {
+          "name": "observation_operational_period_memberships_assigned_by_account_id_accounts_id_fk",
+          "tableFrom": "observation_operational_period_memberships",
+          "columnsFrom": ["assigned_by_account_id"],
+          "tableTo": "accounts",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "observation_operational_period_memberships_supersedes_membership_id_observation_operational_period_memberships_id_fk": {
+          "name": "observation_operational_period_memberships_supersedes_membership_id_observation_operational_period_memberships_id_fk",
+          "tableFrom": "observation_operational_period_memberships",
+          "columnsFrom": ["supersedes_membership_id"],
+          "tableTo": "observation_operational_period_memberships",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "observation_operational_membership_observation_world_fk": {
+          "name": "observation_operational_membership_observation_world_fk",
+          "tableFrom": "observation_operational_period_memberships",
+          "columnsFrom": ["world_id", "observation_id"],
+          "tableTo": "observations",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "observation_operational_membership_period_world_fk": {
+          "name": "observation_operational_membership_period_world_fk",
+          "tableFrom": "observation_operational_period_memberships",
+          "columnsFrom": ["world_id", "operational_period_id"],
+          "tableTo": "operational_periods",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "observation_operational_membership_actor_world_fk": {
+          "name": "observation_operational_membership_actor_world_fk",
+          "tableFrom": "observation_operational_period_memberships",
+          "columnsFrom": ["world_id", "assigned_by_account_id"],
+          "tableTo": "world_memberships",
+          "columnsTo": ["world_id", "user_id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "observation_operational_period_memberships_world_id_id_unique": {
+          "name": "observation_operational_period_memberships_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        },
+        "observation_operational_memberships_world_observation_id_unique": {
+          "name": "observation_operational_memberships_world_observation_id_unique",
+          "columns": ["world_id", "observation_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "observation_operational_memberships_assignment_kind_check": {
+          "name": "observation_operational_memberships_assignment_kind_check",
+          "value": "\"observation_operational_period_memberships\".\"assignment_kind\" in ('initial', 'correction')"
+        },
+        "observation_operational_memberships_correction_chain_check": {
+          "name": "observation_operational_memberships_correction_chain_check",
+          "value": "(\"observation_operational_period_memberships\".\"assignment_kind\" = 'initial' and \"observation_operational_period_memberships\".\"supersedes_membership_id\" is null) or (\"observation_operational_period_memberships\".\"assignment_kind\" = 'correction' and \"observation_operational_period_memberships\".\"supersedes_membership_id\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.observation_reflection_period_memberships": {
+      "name": "observation_reflection_period_memberships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observation_id": {
+          "name": "observation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reflection_period_id": {
+          "name": "reflection_period_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assigned_at": {
+          "name": "assigned_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "observation_reflection_period_membership_unique": {
+          "name": "observation_reflection_period_membership_unique",
+          "columns": [
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "reflection_period_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "observation_reflection_period_memberships_world_id_worlds_id_fk": {
+          "name": "observation_reflection_period_memberships_world_id_worlds_id_fk",
+          "tableFrom": "observation_reflection_period_memberships",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "observation_reflection_membership_observation_world_fk": {
+          "name": "observation_reflection_membership_observation_world_fk",
+          "tableFrom": "observation_reflection_period_memberships",
+          "columnsFrom": ["world_id", "observation_id"],
+          "tableTo": "observations",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "observation_reflection_membership_period_world_fk": {
+          "name": "observation_reflection_membership_period_world_fk",
+          "tableFrom": "observation_reflection_period_memberships",
+          "columnsFrom": ["world_id", "reflection_period_id"],
+          "tableTo": "reflection_periods",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "observation_reflection_period_memberships_world_id_id_unique": {
+          "name": "observation_reflection_period_memberships_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.operational_periods": {
+      "name": "operational_periods",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time_setting_id": {
+          "name": "time_setting_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "local_date": {
+          "name": "local_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supersedes_period_id": {
+          "name": "supersedes_period_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "operational_periods_world_local_date_index": {
+          "name": "operational_periods_world_local_date_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "local_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "operational_periods_setting_local_date_unique": {
+          "name": "operational_periods_setting_local_date_unique",
+          "columns": [
+            {
+              "expression": "time_setting_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "local_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "operational_periods_world_interval_index": {
+          "name": "operational_periods_world_interval_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ends_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "operational_periods_world_id_worlds_id_fk": {
+          "name": "operational_periods_world_id_worlds_id_fk",
+          "tableFrom": "operational_periods",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "operational_periods_supersedes_period_id_operational_periods_id_fk": {
+          "name": "operational_periods_supersedes_period_id_operational_periods_id_fk",
+          "tableFrom": "operational_periods",
+          "columnsFrom": ["supersedes_period_id"],
+          "tableTo": "operational_periods",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "operational_periods_time_setting_world_fk": {
+          "name": "operational_periods_time_setting_world_fk",
+          "tableFrom": "operational_periods",
+          "columnsFrom": ["world_id", "time_setting_id"],
+          "tableTo": "time_settings",
+          "columnsTo": ["world_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "operational_periods_world_id_id_unique": {
+          "name": "operational_periods_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "operational_periods_interval_check": {
+          "name": "operational_periods_interval_check",
+          "value": "\"operational_periods\".\"ends_at\" > \"operational_periods\".\"starts_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.reflection_periods": {
+      "name": "reflection_periods",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_kind": {
+          "name": "period_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "reflection_periods_world_starts_at_index": {
+          "name": "reflection_periods_world_starts_at_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "reflection_periods_world_id_worlds_id_fk": {
+          "name": "reflection_periods_world_id_worlds_id_fk",
+          "tableFrom": "reflection_periods",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "reflection_periods_world_id_id_unique": {
+          "name": "reflection_periods_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "reflection_periods_kind_not_blank": {
+          "name": "reflection_periods_kind_not_blank",
+          "value": "length(btrim(\"reflection_periods\".\"period_kind\")) > 0"
+        },
+        "reflection_periods_interval_check": {
+          "name": "reflection_periods_interval_check",
+          "value": "\"reflection_periods\".\"ends_at\" > \"reflection_periods\".\"starts_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.time_settings": {
+      "name": "time_settings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "world_id": {
+          "name": "world_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timezone_name": {
+          "name": "timezone_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operational_day_boundary": {
+          "name": "operational_day_boundary",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'04:00:00'::time"
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_by_account_id": {
+          "name": "recorded_by_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supersedes_time_setting_id": {
+          "name": "supersedes_time_setting_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "time_settings_world_effective_from_unique": {
+          "name": "time_settings_world_effective_from_unique",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "effective_from",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "time_settings_one_open_version_unique": {
+          "name": "time_settings_one_open_version_unique",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"time_settings\".\"effective_to\" is null",
+          "concurrently": false
+        },
+        "time_settings_one_successor_unique": {
+          "name": "time_settings_one_successor_unique",
+          "columns": [
+            {
+              "expression": "supersedes_time_setting_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"time_settings\".\"supersedes_time_setting_id\" is not null",
+          "concurrently": false
+        },
+        "time_settings_one_root_unique": {
+          "name": "time_settings_one_root_unique",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"time_settings\".\"supersedes_time_setting_id\" is null",
+          "concurrently": false
+        },
+        "time_settings_world_effective_interval_index": {
+          "name": "time_settings_world_effective_interval_index",
+          "columns": [
+            {
+              "expression": "world_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "effective_from",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "effective_to",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "time_settings_world_id_worlds_id_fk": {
+          "name": "time_settings_world_id_worlds_id_fk",
+          "tableFrom": "time_settings",
+          "columnsFrom": ["world_id"],
+          "tableTo": "worlds",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "time_settings_recorded_by_account_id_accounts_id_fk": {
+          "name": "time_settings_recorded_by_account_id_accounts_id_fk",
+          "tableFrom": "time_settings",
+          "columnsFrom": ["recorded_by_account_id"],
+          "tableTo": "accounts",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "time_settings_supersedes_time_setting_id_time_settings_id_fk": {
+          "name": "time_settings_supersedes_time_setting_id_time_settings_id_fk",
+          "tableFrom": "time_settings",
+          "columnsFrom": ["supersedes_time_setting_id"],
+          "tableTo": "time_settings",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "time_settings_recorded_by_world_membership_fk": {
+          "name": "time_settings_recorded_by_world_membership_fk",
+          "tableFrom": "time_settings",
+          "columnsFrom": ["world_id", "recorded_by_account_id"],
+          "tableTo": "world_memberships",
+          "columnsTo": ["world_id", "user_id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "time_settings_world_id_id_unique": {
+          "name": "time_settings_world_id_id_unique",
+          "columns": ["world_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "time_settings_timezone_not_blank": {
+          "name": "time_settings_timezone_not_blank",
+          "value": "length(btrim(\"time_settings\".\"timezone_name\")) > 0"
+        },
+        "time_settings_effective_interval_check": {
+          "name": "time_settings_effective_interval_check",
+          "value": "\"time_settings\".\"effective_to\" is null or \"time_settings\".\"effective_to\" > \"time_settings\".\"effective_from\""
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
