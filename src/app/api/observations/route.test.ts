@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   assignTemporal: vi.fn(),
   capture: vi.fn(),
+  enqueue: vi.fn(),
   getClaims: vi.fn(),
 }));
 
@@ -26,6 +27,12 @@ vi.mock("@/infrastructure/supabase/temporal-repository", () => ({
   },
 }));
 
+vi.mock("@/infrastructure/supabase/interpretation-enqueue-repository", () => ({
+  SupabaseInterpretationEnqueueRepository: class {
+    enqueue = mocks.enqueue;
+  },
+}));
+
 import { POST } from "./route";
 
 function request(body: Record<string, unknown>, accountId = "account-a") {
@@ -42,6 +49,7 @@ function request(body: Record<string, unknown>, accountId = "account-a") {
 describe("POST /api/observations", () => {
   beforeEach(() => {
     mocks.capture.mockReset();
+    mocks.enqueue.mockReset();
     mocks.assignTemporal.mockReset();
     mocks.getClaims.mockReset();
   });
@@ -121,6 +129,7 @@ describe("POST /api/observations", () => {
       wasCreated: true,
     });
     mocks.assignTemporal.mockRejectedValue(new Error("temporal unavailable"));
+    mocks.enqueue.mockRejectedValue(new Error("enqueue unavailable"));
 
     const response = await POST(
       request({
@@ -137,5 +146,9 @@ describe("POST /api/observations", () => {
         temporalPlacement: { state: "pending" },
       },
     });
+    expect(mocks.enqueue).toHaveBeenCalledWith(
+      { userId: "account-a" },
+      "223e4567-e89b-42d3-a456-426614174000",
+    );
   });
 });
