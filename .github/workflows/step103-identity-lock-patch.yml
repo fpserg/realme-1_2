@@ -1,0 +1,80 @@
+name: Step 103 identity lock patch
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/step103-identity-lock-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/step-103-admission-versioned-world-model
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Patch admission serialization and contract tests
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          sql_path = Path('supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql')
+          sql = sql_path.read_text()
+          sql = sql.replace(
+              "  v_object jsonb;\n  v_subject_node_id uuid;",
+              "  v_object jsonb;\n  v_normalized_subject text;\n  v_subject_node_id uuid;",
+              1,
+          )
+          needle = "  v_subject := v_payload->>'subject';\n  v_predicate := v_payload->>'predicate';\n  v_object := v_payload->'object';\n\n  IF v_candidate.proposed_subject_node_id IS NOT NULL THEN"
+          replacement = "  v_subject := v_payload->>'subject';\n  v_predicate := v_payload->>'predicate';\n  v_object := v_payload->'object';\n  v_normalized_subject := lower(regexp_replace(btrim(v_subject), '\\\\s+', ' ', 'g'));\n\n  -- Serialize canonical identity resolution/creation for this World + normalized subject.\n  -- The transaction-scoped advisory lock is derived entirely inside PostgreSQL and\n  -- releases automatically on commit/rollback. Resolution is intentionally performed\n  -- only after this lock so different candidate rows cannot race first discovery.\n  PERFORM pg_catalog.pg_advisory_xact_lock(\n    pg_catalog.hashtextextended(\n      v_world_id::text || E'\\x1f' || v_normalized_subject,\n      0\n    )\n  );\n\n  IF v_candidate.proposed_subject_node_id IS NOT NULL THEN"
+          if needle not in sql:
+              raise SystemExit('admission subject assignment anchor not found')
+          sql = sql.replace(needle, replacement, 1)
+          sql = sql.replace(
+              "        AND lower(regexp_replace(btrim(alias.alias), '\\\\s+', ' ', 'g')) =\n            lower(regexp_replace(btrim(v_subject), '\\\\s+', ' ', 'g'))",
+              "        AND lower(regexp_replace(btrim(alias.alias), '\\\\s+', ' ', 'g')) =\n            v_normalized_subject",
+              1,
+          )
+          sql = sql.replace(
+              "      AND lower(regexp_replace(btrim(alias.alias), '\\\\s+', ' ', 'g')) =\n          lower(regexp_replace(btrim(v_subject), '\\\\s+', ' ', 'g'));",
+              "      AND lower(regexp_replace(btrim(alias.alias), '\\\\s+', ' ', 'g')) =\n          v_normalized_subject;",
+              1,
+          )
+          sql_path.write_text(sql)
+
+          test_path = Path('src/infrastructure/supabase/step-103-admission-contract.test.ts')
+          test = test_path.read_text()
+          marker = '  it("keeps generic canonical writes denied",'
+          addition = '''  it("serializes first identity discovery by World and normalized subject inside PostgreSQL", () => {\n    expect(migration).toContain("v_normalized_subject := lower(regexp_replace(btrim(v_subject)");\n    expect(migration).toContain("pg_catalog.pg_advisory_xact_lock(");\n    expect(migration).toContain("pg_catalog.hashtextextended(");\n    expect(migration).toContain("v_world_id::text || E'\\\\x1f' || v_normalized_subject");\n\n    const lockAt = migration.indexOf("pg_catalog.pg_advisory_xact_lock(");\n    const aliasLookupAt = migration.indexOf("count(DISTINCT alias.node_id)::integer");\n    const createNodeAt = migration.indexOf("INSERT INTO public.ontology_nodes");\n    expect(lockAt).toBeGreaterThan(-1);\n    expect(aliasLookupAt).toBeGreaterThan(lockAt);\n    expect(createNodeAt).toBeGreaterThan(aliasLookupAt);\n  });\n\n'''
+          if marker not in test:
+              raise SystemExit('contract-test insertion anchor not found')
+          test = test.replace(marker, addition + marker, 1)
+          test_path.write_text(test)
+
+          doc_path = Path('docs/STEP_103_ADMISSION_VERSIONED_WORLD_MODEL.md')
+          doc = doc_path.read_text()
+          anchor = "Cross-World nodes and aliases never participate in identity resolution. A null\n`subject_node_id` therefore cannot silently represent failed entity resolution;\nits accepted Step 98 meaning remains reserved for genuinely World-level\npropositions.\n"
+          extra = anchor + "\nFirst discovery is also serialized inside PostgreSQL across different candidate\nrows. Before any proposed-node validation or alias lookup, the command acquires\na transaction-scoped advisory lock derived from the candidate World ID plus the\nnormalized admitted subject. After the lock is acquired it performs the same-World\nactive-alias lookup, so concurrent first classifications of the same normalized\nsubject can create at most one stable identity; the later transaction reuses the\ncommitted identity (or safely retries after a deterministic database failure).\nThe lock key is never exposed outside the admission transaction.\n"
+          if anchor not in doc:
+              raise SystemExit('documentation insertion anchor not found')
+          doc = doc.replace(anchor, extra, 1)
+          doc_path.write_text(doc)
+          PY
+          corepack enable
+          corepack install --global pnpm@11.19.0
+          pnpm install --frozen-lockfile
+          pnpm exec prettier --write supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql src/infrastructure/supabase/step-103-admission-contract.test.ts docs/STEP_103_ADMISSION_VERSIONED_WORLD_MODEL.md
+          rm .github/workflows/step103-identity-lock-patch.yml
+          git config user.name 'fpserg'
+          git config user.email '111433126+fpserg@users.noreply.github.com'
+          git add supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql src/infrastructure/supabase/step-103-admission-contract.test.ts docs/STEP_103_ADMISSION_VERSIONED_WORLD_MODEL.md .github/workflows/step103-identity-lock-patch.yml
+          git commit -m 'Serialize Step 103 first identity discovery'
+          git push origin HEAD:agent/step-103-admission-versioned-world-model
