@@ -6,12 +6,27 @@ import type {
   AdmissionAction,
   CandidateCorrection,
   CandidateReviewItem,
+  CandidateScalar,
 } from "@/application/admission/admission";
 
 import styles from "./candidate-review.module.css";
 
 function displayObject(value: CandidateReviewItem["object"]) {
   return typeof value === "string" ? value : String(value);
+}
+
+type ScalarKind = "boolean" | "number" | "string";
+
+function scalarKind(value: CandidateScalar): ScalarKind {
+  return typeof value;
+}
+
+function parseScalar(kind: ScalarKind, value: string): CandidateScalar {
+  if (kind === "string") return value;
+  if (kind === "boolean") return value === "true";
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) throw new Error("Value must be a finite number.");
+  return parsed;
 }
 
 export function CandidateReview({
@@ -186,14 +201,26 @@ function CorrectionForm({
 }) {
   const [subject, setSubject] = useState(candidate.subject);
   const [predicate, setPredicate] = useState(candidate.predicate);
-  const [object, setObject] = useState(displayObject(candidate.object));
+  const [objectKind, setObjectKind] = useState<ScalarKind>(
+    scalarKind(candidate.object),
+  );
+  const [objectValue, setObjectValue] = useState(displayObject(candidate.object));
+  const [valueError, setValueError] = useState("");
 
   return (
     <form
       className={styles.correction}
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit({ object, predicate, subject });
+        try {
+          const object = parseScalar(objectKind, objectValue);
+          setValueError("");
+          onSubmit({ object, predicate, subject });
+        } catch (error) {
+          setValueError(
+            error instanceof Error ? error.message : "Corrected value is invalid.",
+          );
+        }
       }}
     >
       <label>
@@ -218,15 +245,50 @@ function CorrectionForm({
         />
       </label>
       <label>
-        Value
-        <input
+        Value type
+        <select
           disabled={disabled}
-          maxLength={500}
-          onChange={(event) => setObject(event.target.value)}
-          required
-          value={object}
-        />
+          onChange={(event) => {
+            const nextKind = event.target.value as ScalarKind;
+            setObjectKind(nextKind);
+            if (nextKind === "boolean" && objectValue !== "true" && objectValue !== "false") {
+              setObjectValue("false");
+            }
+            setValueError("");
+          }}
+          value={objectKind}
+        >
+          <option value="string">Text</option>
+          <option value="number">Number</option>
+          <option value="boolean">Boolean</option>
+        </select>
       </label>
+      <label>
+        Value
+        {objectKind === "boolean" ? (
+          <select
+            disabled={disabled}
+            onChange={(event) => setObjectValue(event.target.value)}
+            value={objectValue === "true" ? "true" : "false"}
+          >
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        ) : (
+          <input
+            disabled={disabled}
+            inputMode={objectKind === "number" ? "decimal" : undefined}
+            maxLength={500}
+            onChange={(event) => {
+              setObjectValue(event.target.value);
+              setValueError("");
+            }}
+            required
+            value={objectValue}
+          />
+        )}
+      </label>
+      {valueError ? <p role="alert">{valueError}</p> : null}
       <div className={styles.actions}>
         <button disabled={disabled} type="submit">
           Admit correction
