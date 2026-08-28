@@ -10,7 +10,7 @@ const migrationPath = `supabase/migrations/${pipelineTag}.sql`;
 const correctionPath = `supabase/migrations/${correctionTag}.sql`;
 
 describe("Step 102 interpretation pipeline migration", () => {
-  it("keeps the forward migration, journal and snapshot aligned", async () => {
+  it("keeps the accepted Step 102 migration, journal and snapshot identities aligned", async () => {
     const [journal, snapshot, correctionSnapshot, migrations] =
       await Promise.all([
         readFile("supabase/migrations/meta/_journal.json", "utf8"),
@@ -26,7 +26,8 @@ describe("Step 102 interpretation pipeline migration", () => {
       ]);
     const entries = JSON.parse(journal).entries;
     const pipelineSnapshot = JSON.parse(snapshot);
-    expect(entries.at(-1)).toMatchObject({ idx: 11, tag: correctionTag });
+    expect(entries[10]).toMatchObject({ idx: 10, tag: pipelineTag });
+    expect(entries[11]).toMatchObject({ idx: 11, tag: correctionTag });
     expect(pipelineSnapshot).toMatchObject({
       prevId: "d4cdf3e1-2e53-44b8-8589-257892cda038",
     });
