@@ -91,7 +91,13 @@ export class SupabaseAdmissionRepository implements AdmissionRepository {
     const { data, error } = await this.client.rpc("decide_candidate", {
       p_action: action,
       p_candidate_claim_id: candidateClaimId,
-      p_correction_payload: correction ?? null,
+      p_correction_payload: correction
+        ? {
+            object: correction.object,
+            predicate: correction.predicate,
+            subject: correction.subject,
+          }
+        : null,
     });
     if (error) throw error;
     const row = data[0];
