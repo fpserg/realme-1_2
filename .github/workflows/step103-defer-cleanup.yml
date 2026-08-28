@@ -1,0 +1,39 @@
+name: Step 103 defer cleanup
+
+on:
+  push:
+    branches:
+      - agent/step-103-admission-versioned-world-model
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/step-103-admission-versioned-world-model
+          fetch-depth: 1
+      - name: Restore first-defer replay flag
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql')
+          s = p.read_text()
+          marker = "jsonb_build_object('decision_id', v_decision_id)\n    );\n\n    RETURN QUERY SELECT p_candidate_claim_id, v_decision_id, 'defer'::text,\n      NULL::uuid, NULL::uuid, NULL::uuid, true;"
+          replacement = marker[:-5] + "false;"
+          if s.count(marker) != 1:
+              raise SystemExit(f'expected one new-defer return, found {s.count(marker)}')
+          p.write_text(s.replace(marker, replacement))
+          PY
+      - name: Commit fix and remove helper
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql
+          git rm .github/workflows/step103-defer-cleanup.yml
+          git commit -m "Restore first-defer replay semantics"
+          git push origin HEAD:agent/step-103-admission-versioned-world-model
