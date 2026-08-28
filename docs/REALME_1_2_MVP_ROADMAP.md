@@ -4,7 +4,7 @@ Version: 1.8
 Status: ACCEPTED — POST-FOUNDING MVP ROADMAP
 Accepted by: Warden
 Accepted on: 2026-08-16
-Current state: Step 102 — ACCEPTED + INTEGRATED / Step 103 — IMPLEMENTATION CANDIDATE / Step 104 — NOT STARTED
+Current state: Steps 93–102 — ACCEPTED + INTEGRATED / Step 103 — OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED / Step 104 — NOT STARTED
 
 ## 1. Purpose and authority
 
@@ -161,8 +161,6 @@ Deliver:
 
 Acceptance gate: no AI-generated interpretation becomes canonical without passing admission policy.
 
-**Implementation state:** OPEN — implementation candidate under Tier H independent review. Steps 93–102 remain accepted and integrated. Step 104 is not started.
-
 ### Step 104 — Commitments and Operational Projections
 
 Turn memory into visible continuity.
@@ -292,8 +290,8 @@ Acceptance gate: Architect review, Code Review clearance and explicit Warden acc
 ## 6. Continuation law
 
 The roadmap governs sequence, not automatic execution. Steps 97 through 102
-are accepted and integrated. The Warden explicitly opened Step 103 on
-2026-08-28; it is an implementation candidate and is not accepted. Step 104 is
-NOT STARTED and remains unauthorized. Later steps may be refined when opened,
-but their accepted outcome and constitutional acceptance gate must not be
-weakened without an explicit roadmap amendment.
+are accepted and integrated. Step 103 is OPEN / IMPLEMENTATION CANDIDATE / NOT
+ACCEPTED and remains subject to independent Inspector review and explicit Warden
+acceptance. Step 104 is NOT STARTED and remains unauthorized. Later steps may be
+refined when opened, but their accepted outcome and constitutional acceptance
+gate must not be weakened without an explicit roadmap amendment.
