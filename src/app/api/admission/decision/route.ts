@@ -22,7 +22,10 @@ export async function POST(request: Request) {
   const userId = data?.claims?.sub;
 
   if (error || typeof userId !== "string") {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required." },
+      { status: 401 },
+    );
   }
 
   let body: unknown;
@@ -33,7 +36,10 @@ export async function POST(request: Request) {
   }
 
   if (typeof body !== "object" || body === null) {
-    return NextResponse.json({ error: "Invalid admission request." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid admission request." },
+      { status: 400 },
+    );
   }
 
   const candidateId = "candidateId" in body ? body.candidateId : undefined;
@@ -45,7 +51,10 @@ export async function POST(request: Request) {
     typeof action !== "string" ||
     !allowedActions.has(action as AdmissionAction)
   ) {
-    return NextResponse.json({ error: "Invalid admission request." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid admission request." },
+      { status: 400 },
+    );
   }
 
   try {
