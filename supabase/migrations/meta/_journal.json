@@ -85,6 +85,13 @@
       "when": 1787836156000,
       "tag": "20260827130916_step_102_worker_recovery_and_reconciliation",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1787913900000,
+      "tag": "20260828104500_step_103_admission_versioned_world_model",
+      "breakpoints": true
     }
   ]
 }
