@@ -54,18 +54,20 @@ jobs:
           test = test_path.read_text()
           marker = '  it("keeps generic canonical writes denied",'
           addition = '''  it("serializes first identity discovery by World and normalized subject inside PostgreSQL", () => {\n    expect(migration).toContain("v_normalized_subject := lower(regexp_replace(btrim(v_subject)");\n    expect(migration).toContain("pg_catalog.pg_advisory_xact_lock(");\n    expect(migration).toContain("pg_catalog.hashtextextended(");\n    expect(migration).toContain("v_world_id::text || E'\\\\x1f' || v_normalized_subject");\n\n    const lockAt = migration.indexOf("pg_catalog.pg_advisory_xact_lock(");\n    const aliasLookupAt = migration.indexOf("count(DISTINCT alias.node_id)::integer");\n    const createNodeAt = migration.indexOf("INSERT INTO public.ontology_nodes");\n    expect(lockAt).toBeGreaterThan(-1);\n    expect(aliasLookupAt).toBeGreaterThan(lockAt);\n    expect(createNodeAt).toBeGreaterThan(aliasLookupAt);\n  });\n\n'''
-          if marker not in test:
-              raise SystemExit('contract-test insertion anchor not found')
-          test = test.replace(marker, addition + marker, 1)
+          if addition not in test:
+              if marker not in test:
+                  raise SystemExit('contract-test insertion anchor not found')
+              test = test.replace(marker, addition + marker, 1)
           test_path.write_text(test)
 
           doc_path = Path('docs/STEP_103_ADMISSION_VERSIONED_WORLD_MODEL.md')
           doc = doc_path.read_text()
           anchor = "Cross-World nodes and aliases never participate in identity resolution. A null\n`subject_node_id` therefore cannot silently represent failed entity resolution;\nits accepted Step 98 meaning remains reserved for genuinely World-level\npropositions.\n"
-          extra = anchor + "\nFirst discovery is also serialized inside PostgreSQL across different candidate\nrows. Before any proposed-node validation or alias lookup, the command acquires\na transaction-scoped advisory lock derived from the candidate World ID plus the\nnormalized admitted subject. After the lock is acquired it performs the same-World\nactive-alias lookup, so concurrent first classifications of the same normalized\nsubject can create at most one stable identity; the later transaction reuses the\ncommitted identity (or safely retries after a deterministic database failure).\nThe lock key is never exposed outside the admission transaction.\n"
-          if anchor not in doc:
-              raise SystemExit('documentation insertion anchor not found')
-          doc = doc.replace(anchor, extra, 1)
+          paragraph = "\nFirst discovery is also serialized inside PostgreSQL across different candidate\nrows. Before any proposed-node validation or alias lookup, the command acquires\na transaction-scoped advisory lock derived from the candidate World ID plus the\nnormalized admitted subject. After the lock is acquired it performs the same-World\nactive-alias lookup, so concurrent first classifications of the same normalized\nsubject can create at most one stable identity; the later transaction reuses the\ncommitted identity (or safely retries after a deterministic database failure).\nThe lock key is never exposed outside the admission transaction.\n"
+          if paragraph not in doc:
+              if anchor not in doc:
+                  raise SystemExit('documentation insertion anchor not found')
+              doc = doc.replace(anchor, anchor + paragraph, 1)
           doc_path.write_text(doc)
           PY
           corepack enable
@@ -78,3 +80,5 @@ jobs:
           git add supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql src/infrastructure/supabase/step-103-admission-contract.test.ts docs/STEP_103_ADMISSION_VERSIONED_WORLD_MODEL.md .github/workflows/step103-identity-lock-patch.yml
           git commit -m 'Serialize Step 103 first identity discovery'
           git push origin HEAD:agent/step-103-admission-versioned-world-model
+
+# retrigger
