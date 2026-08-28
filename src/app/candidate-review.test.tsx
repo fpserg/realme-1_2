@@ -31,11 +31,12 @@ describe("CandidateReview", () => {
   beforeEach(() => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        new Response(JSON.stringify({ decisionId: "decision-1" }), {
-          headers: { "content-type": "application/json" },
-          status: 200,
-        }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ decisionId: "decision-1" }), {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          }),
       ),
     );
   });
@@ -48,7 +49,9 @@ describe("CandidateReview", () => {
   it("shows exact evidence and all four conceptually distinct decisions", () => {
     render(<CandidateReview initialCandidates={[candidate]} />);
 
-    expect(screen.getByText(candidate.evidence[0]!.exactText)).toBeInTheDocument();
+    expect(
+      screen.getByText(candidate.evidence[0]!.exactText),
+    ).toBeInTheDocument();
     for (const action of ["Accept", "Correct", "Defer", "Reject"]) {
       expect(screen.getByRole("button", { name: action })).toBeInTheDocument();
     }
@@ -60,7 +63,9 @@ describe("CandidateReview", () => {
 
     await screen.findByText("Deferred. This candidate remains reviewable.");
     expect(screen.getByText("Football")).toBeInTheDocument();
-    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toEqual({
+    expect(
+      JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body)),
+    ).toEqual({
       action: "defer",
       candidateId: "candidate-1",
     });
@@ -89,7 +94,9 @@ describe("CandidateReview", () => {
     fireEvent.click(screen.getByRole("button", { name: "Admit correction" }));
 
     await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
-    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toEqual({
+    expect(
+      JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body)),
+    ).toEqual({
       action: "correct",
       candidateId: "candidate-1",
       correction: {
