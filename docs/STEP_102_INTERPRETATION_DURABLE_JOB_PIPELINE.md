@@ -12,7 +12,7 @@ Accepted by: Warden
 
 Accepted on: 2026-08-27
 
-Step 103: NOT STARTED
+Step 103: OPEN — IMPLEMENTATION CANDIDATE / NOT ACCEPTED
 
 Risk: Tier H
 
@@ -245,6 +245,7 @@ Production `public.rls_auto_enable()` execution-grant remediation remains
 mandatory before the first RealMe production migration and was not performed by
 Step 102.
 
-Step 102 is accepted and complete. PR #20 remains draft and unmerged pending
-narrow acceptance-delta verification. Step 103 is not started and remains
-unauthorized.
+Step 102 is accepted, complete and integrated into `main`. The historical
+pre-merge PR #20 status is no longer an active project constraint. Step 103 was
+explicitly opened by the Warden on 2026-08-28 and is now an implementation
+candidate; it is not accepted. Step 104 is NOT STARTED.
