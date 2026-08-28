@@ -179,8 +179,7 @@ Step 103 does not implement:
 - Step 102 candidate-generation changes.
 
 Production `public.rls_auto_enable()` execution-grant remediation remains
-mandatory before the first RealMe production migration and is not part of Step
-103.
+mandatory before the first RealMe production migration and is not part of Step 103.
 
 ## Verification target
 
