@@ -75,7 +75,7 @@ jobs:
           corepack enable
           corepack install --global pnpm@11.19.0
           pnpm install --frozen-lockfile
-          pnpm exec prettier --write supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql src/infrastructure/supabase/step-103-admission-contract.test.ts docs/STEP_103_ADMISSION_VERSIONED_WORLD_MODEL.md
+          pnpm exec prettier --write src/infrastructure/supabase/step-103-admission-contract.test.ts docs/STEP_103_ADMISSION_VERSIONED_WORLD_MODEL.md
           rm .github/workflows/step103-identity-lock-patch.yml
           git config user.name 'fpserg'
           git config user.email '111433126+fpserg@users.noreply.github.com'
@@ -83,4 +83,4 @@ jobs:
           git commit -m 'Serialize Step 103 first identity discovery'
           git push origin HEAD:agent/step-103-admission-versioned-world-model
 
-# retrigger-2
+# retrigger-3
