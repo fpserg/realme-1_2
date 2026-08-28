@@ -54,7 +54,8 @@ export function CandidateReview({
     } catch (error) {
       setNotice((current) => ({
         ...current,
-        [candidate.id]: error instanceof Error ? error.message : "Admission failed.",
+        [candidate.id]:
+          error instanceof Error ? error.message : "Admission failed.",
       }));
     } finally {
       setPending(null);
@@ -63,7 +64,10 @@ export function CandidateReview({
 
   if (candidates.length === 0) {
     return (
-      <section className={styles.section} aria-labelledby="candidate-review-title">
+      <section
+        className={styles.section}
+        aria-labelledby="candidate-review-title"
+      >
         <div className={styles.heading}>
           <span>Understanding</span>
           <h2 id="candidate-review-title">Nothing waiting for review</h2>
@@ -77,11 +81,16 @@ export function CandidateReview({
   }
 
   return (
-    <section className={styles.section} aria-labelledby="candidate-review-title">
+    <section
+      className={styles.section}
+      aria-labelledby="candidate-review-title"
+    >
       <div className={styles.heading}>
         <span>Understanding</span>
         <h2 id="candidate-review-title">Review proposed meaning</h2>
-        <p>Only your decision can turn a proposal into durable World Model truth.</p>
+        <p>
+          Only your decision can turn a proposal into durable World Model truth.
+        </p>
       </div>
       <div className={styles.cards}>
         {candidates.map((candidate) => {
