@@ -17,8 +17,18 @@ function displayObject(value: CandidateReviewItem["object"]) {
 
 type ScalarKind = "boolean" | "number" | "string";
 
-function scalarKind(value: CandidateScalar): ScalarKind {
-  return typeof value;
+function scalarKind(value: unknown): ScalarKind {
+  if (typeof value === "string") return "string";
+  if (typeof value === "number") return "number";
+  if (typeof value === "boolean") return "boolean";
+  throw new Error("Unsupported scalar value.");
+}
+
+function parseScalarKind(value: string): ScalarKind {
+  if (value === "string" || value === "number" || value === "boolean") {
+    return value;
+  }
+  throw new Error("Unsupported scalar type.");
 }
 
 function parseScalar(kind: ScalarKind, value: string): CandidateScalar {
@@ -254,16 +264,24 @@ function CorrectionForm({
         <select
           disabled={disabled}
           onChange={(event) => {
-            const nextKind = event.target.value as ScalarKind;
-            setObjectKind(nextKind);
-            if (
-              nextKind === "boolean" &&
-              objectValue !== "true" &&
-              objectValue !== "false"
-            ) {
-              setObjectValue("false");
+            try {
+              const nextKind = parseScalarKind(event.target.value);
+              setObjectKind(nextKind);
+              if (
+                nextKind === "boolean" &&
+                objectValue !== "true" &&
+                objectValue !== "false"
+              ) {
+                setObjectValue("false");
+              }
+              setValueError("");
+            } catch (error) {
+              setValueError(
+                error instanceof Error
+                  ? error.message
+                  : "Corrected value type is invalid.",
+              );
             }
-            setValueError("");
           }}
           value={objectKind}
         >
