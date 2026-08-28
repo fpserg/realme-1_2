@@ -125,7 +125,9 @@ describe("Step 103 admission database contract", () => {
     expect(migration).toContain("FROM public.candidate_claim_evidence AS link");
     expect(migration).toContain("supersedes_assertion_id");
     expect(migration).toContain("assertions_successor_unique");
-    expect(migration).toContain("v_prior_valid_from + interval '1 microsecond'");
+    expect(migration).toContain(
+      "v_prior_valid_from + interval '1 microsecond'",
+    );
     expect(migration).not.toContain("DELETE FROM public.candidate_claims");
     expect(migration).not.toContain("UPDATE public.candidate_claims");
   });

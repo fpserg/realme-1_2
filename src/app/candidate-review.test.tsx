@@ -27,7 +27,9 @@ const candidate: CandidateReviewItem = {
   subject: "Football",
 };
 
-function withObject(object: CandidateReviewItem["object"]): CandidateReviewItem {
+function withObject(
+  object: CandidateReviewItem["object"],
+): CandidateReviewItem {
   return { ...candidate, object };
 }
 

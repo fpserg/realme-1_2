@@ -25,7 +25,8 @@ function parseScalar(kind: ScalarKind, value: string): CandidateScalar {
   if (kind === "string") return value;
   if (kind === "boolean") return value === "true";
   const parsed = Number(value);
-  if (!Number.isFinite(parsed)) throw new Error("Value must be a finite number.");
+  if (!Number.isFinite(parsed))
+    throw new Error("Value must be a finite number.");
   return parsed;
 }
 
@@ -204,7 +205,9 @@ function CorrectionForm({
   const [objectKind, setObjectKind] = useState<ScalarKind>(
     scalarKind(candidate.object),
   );
-  const [objectValue, setObjectValue] = useState(displayObject(candidate.object));
+  const [objectValue, setObjectValue] = useState(
+    displayObject(candidate.object),
+  );
   const [valueError, setValueError] = useState("");
 
   return (
@@ -218,7 +221,9 @@ function CorrectionForm({
           onSubmit({ object, predicate, subject });
         } catch (error) {
           setValueError(
-            error instanceof Error ? error.message : "Corrected value is invalid.",
+            error instanceof Error
+              ? error.message
+              : "Corrected value is invalid.",
           );
         }
       }}
@@ -251,7 +256,11 @@ function CorrectionForm({
           onChange={(event) => {
             const nextKind = event.target.value as ScalarKind;
             setObjectKind(nextKind);
-            if (nextKind === "boolean" && objectValue !== "true" && objectValue !== "false") {
+            if (
+              nextKind === "boolean" &&
+              objectValue !== "true" &&
+              objectValue !== "false"
+            ) {
               setObjectValue("false");
             }
             setValueError("");
