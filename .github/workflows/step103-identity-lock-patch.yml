@@ -28,16 +28,18 @@ jobs:
 
           sql_path = Path('supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql')
           sql = sql_path.read_text()
-          sql = sql.replace(
-              "  v_object jsonb;\n  v_subject_node_id uuid;",
-              "  v_object jsonb;\n  v_normalized_subject text;\n  v_subject_node_id uuid;",
-              1,
-          )
+          if "v_normalized_subject text;" not in sql:
+              sql = sql.replace(
+                  "  v_object jsonb;\n  v_subject_node_id uuid;",
+                  "  v_object jsonb;\n  v_normalized_subject text;\n  v_subject_node_id uuid;",
+                  1,
+              )
           needle = "  v_subject := v_payload->>'subject';\n  v_predicate := v_payload->>'predicate';\n  v_object := v_payload->'object';\n\n  IF v_candidate.proposed_subject_node_id IS NOT NULL THEN"
           replacement = "  v_subject := v_payload->>'subject';\n  v_predicate := v_payload->>'predicate';\n  v_object := v_payload->'object';\n  v_normalized_subject := lower(regexp_replace(btrim(v_subject), '\\\\s+', ' ', 'g'));\n\n  -- Serialize canonical identity resolution/creation for this World + normalized subject.\n  -- The transaction-scoped advisory lock is derived entirely inside PostgreSQL and\n  -- releases automatically on commit/rollback. Resolution is intentionally performed\n  -- only after this lock so different candidate rows cannot race first discovery.\n  PERFORM pg_catalog.pg_advisory_xact_lock(\n    pg_catalog.hashtextextended(\n      v_world_id::text || E'\\x1f' || v_normalized_subject,\n      0\n    )\n  );\n\n  IF v_candidate.proposed_subject_node_id IS NOT NULL THEN"
-          if needle not in sql:
-              raise SystemExit('admission subject assignment anchor not found')
-          sql = sql.replace(needle, replacement, 1)
+          if "pg_catalog.pg_advisory_xact_lock(" not in sql:
+              if needle not in sql:
+                  raise SystemExit('admission subject assignment anchor not found')
+              sql = sql.replace(needle, replacement, 1)
           sql = sql.replace(
               "        AND lower(regexp_replace(btrim(alias.alias), '\\\\s+', ' ', 'g')) =\n            lower(regexp_replace(btrim(v_subject), '\\\\s+', ' ', 'g'))",
               "        AND lower(regexp_replace(btrim(alias.alias), '\\\\s+', ' ', 'g')) =\n            v_normalized_subject",
@@ -52,7 +54,7 @@ jobs:
 
           test_path = Path('src/infrastructure/supabase/step-103-admission-contract.test.ts')
           test = test_path.read_text()
-          marker = '  it("keeps generic canonical writes denied",'
+          marker = '  it("denies generic client writes to admission and canonical tables", () => {'
           addition = '''  it("serializes first identity discovery by World and normalized subject inside PostgreSQL", () => {\n    expect(migration).toContain("v_normalized_subject := lower(regexp_replace(btrim(v_subject)");\n    expect(migration).toContain("pg_catalog.pg_advisory_xact_lock(");\n    expect(migration).toContain("pg_catalog.hashtextextended(");\n    expect(migration).toContain("v_world_id::text || E'\\\\x1f' || v_normalized_subject");\n\n    const lockAt = migration.indexOf("pg_catalog.pg_advisory_xact_lock(");\n    const aliasLookupAt = migration.indexOf("count(DISTINCT alias.node_id)::integer");\n    const createNodeAt = migration.indexOf("INSERT INTO public.ontology_nodes");\n    expect(lockAt).toBeGreaterThan(-1);\n    expect(aliasLookupAt).toBeGreaterThan(lockAt);\n    expect(createNodeAt).toBeGreaterThan(aliasLookupAt);\n  });\n\n'''
           if addition not in test:
               if marker not in test:
@@ -81,4 +83,4 @@ jobs:
           git commit -m 'Serialize Step 103 first identity discovery'
           git push origin HEAD:agent/step-103-admission-versioned-world-model
 
-# retrigger
+# retrigger-2
