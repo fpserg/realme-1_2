@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 102 ACCEPTED / STEP 103 NOT STARTED**
+Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 102 ACCEPTED / STEP 103 IMPLEMENTATION CANDIDATE**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -134,4 +134,14 @@ non-canonical candidate state with no admission or canonical mutation path.
 No live authenticated interpretation inference has yet been demonstrated; the
 accepted deterministic provider/worker evidence is sufficient for Step 102,
 while a synthetic live-provider smoke remains prudent before provider rollout.
-Step 103 has not started.
+
+**Step 103 — Admission and versioned World Model: IMPLEMENTATION CANDIDATE / NOT ACCEPTED.**
+
+The Warden opened Step 103 on 2026-08-28. The bounded candidate adds a
+mobile-first unresolved-candidate review surface and a user-only admission
+command with accept, reject, correct and defer semantics. Accepting or correcting
+may create one transactionally versioned canonical assertion while preserving
+the immutable AI candidate, exact evidence provenance, prior canonical versions
+and stable ontology identity. Reject and defer create no canonical state. Step
+103 remains subject to independent Tier H Inspector review, exact-head CI,
+preview and staging verification. Step 104 is NOT STARTED.
