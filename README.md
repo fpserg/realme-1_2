@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEP 102 ACCEPTED / STEP 103 IMPLEMENTATION CANDIDATE**
+Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEPS 93–102 ACCEPTED + INTEGRATED / STEP 103 OPEN — IMPLEMENTATION CANDIDATE / NOT ACCEPTED / STEP 104 NOT STARTED**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -135,7 +135,7 @@ No live authenticated interpretation inference has yet been demonstrated; the
 accepted deterministic provider/worker evidence is sufficient for Step 102,
 while a synthetic live-provider smoke remains prudent before provider rollout.
 
-**Step 103 — Admission and versioned World Model: IMPLEMENTATION CANDIDATE / NOT ACCEPTED.**
+**Step 103 — Admission and versioned World Model: OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED.**
 
 The Warden opened Step 103 on 2026-08-28. The bounded candidate adds a
 mobile-first unresolved-candidate review surface and a user-only admission
