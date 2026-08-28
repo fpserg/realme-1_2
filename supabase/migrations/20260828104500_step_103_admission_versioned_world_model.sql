@@ -113,6 +113,7 @@ DECLARE
   v_node_id uuid;
   v_assertion_id uuid;
   v_prior_assertion_id uuid;
+  v_prior_valid_from timestamptz;
   v_now timestamptz := statement_timestamp();
 BEGIN
   IF v_actor_id IS NULL THEN
@@ -315,8 +316,8 @@ BEGIN
   END IF;
 
   IF v_subject_node_id IS NOT NULL THEN
-    SELECT assertion.id
-    INTO v_prior_assertion_id
+    SELECT assertion.id, assertion.valid_from
+    INTO v_prior_assertion_id, v_prior_valid_from
     FROM public.assertions AS assertion
     WHERE assertion.world_id = v_world_id
       AND assertion.subject_node_id = v_subject_node_id
@@ -327,6 +328,11 @@ BEGIN
     FOR UPDATE;
 
     IF v_prior_assertion_id IS NOT NULL THEN
+      v_now := greatest(
+        clock_timestamp(),
+        v_prior_valid_from + interval '1 microsecond'
+      );
+
       UPDATE public.assertions
       SET valid_to = v_now
       WHERE world_id = v_world_id
