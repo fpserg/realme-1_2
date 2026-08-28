@@ -1,0 +1,38 @@
+name: Step 103 normalization fix
+
+on:
+  push:
+    paths:
+      - .github/workflows/step103-normalization-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/step-103-admission-versioned-world-model
+          fetch-depth: 0
+      - name: Fix normalization escape
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql')
+          text = path.read_text()
+          old = "v_normalized_subject := lower(regexp_replace(btrim(v_subject), '\\\\s+', ' ', 'g'));"
+          new = "v_normalized_subject := lower(regexp_replace(btrim(v_subject), '\\s+', ' ', 'g'));"
+          if old not in text:
+              raise SystemExit('over-escaped normalization anchor not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          rm .github/workflows/step103-normalization-fix.yml
+          git config user.name 'fpserg'
+          git config user.email '111433126+fpserg@users.noreply.github.com'
+          git add supabase/migrations/20260828104500_step_103_admission_versioned_world_model.sql .github/workflows/step103-normalization-fix.yml
+          git commit -m 'Fix Step 103 subject normalization'
+          git push origin HEAD:agent/step-103-admission-versioned-world-model
