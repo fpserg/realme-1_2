@@ -233,7 +233,7 @@ BEGIN
     );
 
     RETURN QUERY SELECT p_candidate_claim_id, v_decision_id, 'defer'::text,
-      NULL::uuid, NULL::uuid, NULL::uuid, true;
+      NULL::uuid, NULL::uuid, NULL::uuid, false;
     RETURN;
   END IF;
 
