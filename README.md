@@ -142,6 +142,9 @@ mobile-first unresolved-candidate review surface and a user-only admission
 command with accept, reject, correct and defer semantics. Accepting or correcting
 may create one transactionally versioned canonical assertion while preserving
 the immutable AI candidate, exact evidence provenance, prior canonical versions
-and stable ontology identity. Reject and defer create no canonical state. Step
-103 remains subject to independent Tier H Inspector review, exact-head CI,
-preview and staging verification. Step 104 is NOT STARTED.
+and stable ontology identity. First canonical identity discovery is serialized
+inside PostgreSQL by a transaction-scoped lock keyed to World plus normalized
+subject, so concurrent different candidates cannot create duplicate stable
+identities for the same semantic subject. Reject and defer create no canonical
+state. Step 103 remains subject to independent Tier H Inspector review,
+exact-head CI, preview and staging verification. Step 104 is NOT STARTED.
