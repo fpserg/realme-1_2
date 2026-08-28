@@ -23,9 +23,17 @@ const candidate: CandidateReviewItem = {
   id: "candidate-1",
   object: "Realm",
   predicate: "classification",
-  proposedSubjectNodeId: "node-1",
+  proposedSubjectNodeId: null,
   subject: "Football",
 };
+
+function withObject(object: CandidateReviewItem["object"]): CandidateReviewItem {
+  return { ...candidate, object };
+}
+
+function submittedBody() {
+  return JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body));
+}
 
 describe("CandidateReview", () => {
   beforeEach(() => {
@@ -63,9 +71,7 @@ describe("CandidateReview", () => {
 
     await screen.findByText("Deferred. This candidate remains reviewable.");
     expect(screen.getByText("Football")).toBeInTheDocument();
-    expect(
-      JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body)),
-    ).toEqual({
+    expect(submittedBody()).toEqual({
       action: "defer",
       candidateId: "candidate-1",
     });
@@ -81,22 +87,20 @@ describe("CandidateReview", () => {
     expect(screen.getByText("Nothing waiting for review")).toBeInTheDocument();
   });
 
-  it("submits corrected durable meaning without rewriting the displayed AI candidate first", async () => {
+  it("submits corrected string durable meaning without rewriting the displayed AI candidate first", async () => {
     render(<CandidateReview initialCandidates={[candidate]} />);
     fireEvent.click(screen.getByRole("button", { name: "Correct" }));
 
     fireEvent.change(screen.getByLabelText("Subject"), {
       target: { value: "Football life" },
     });
-    fireEvent.change(screen.getByLabelText("Value"), {
+    fireEvent.change(screen.getByLabelText(/^Value$/), {
       target: { value: "Domain" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Admit correction" }));
 
     await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
-    expect(
-      JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body)),
-    ).toEqual({
+    expect(submittedBody()).toEqual({
       action: "correct",
       candidateId: "candidate-1",
       correction: {
@@ -105,5 +109,65 @@ describe("CandidateReview", () => {
         subject: "Football life",
       },
     });
+  });
+
+  it("retains a number when only another correction field changes", async () => {
+    render(<CandidateReview initialCandidates={[withObject(42)]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Correct" }));
+    fireEvent.change(screen.getByLabelText("Subject"), {
+      target: { value: "Football training" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Admit correction" }));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(submittedBody().correction.object).toBe(42);
+  });
+
+  it("retains a boolean when only another correction field changes", async () => {
+    render(<CandidateReview initialCandidates={[withObject(true)]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Correct" }));
+    fireEvent.change(screen.getByLabelText("Durable meaning"), {
+      target: { value: "currently_active" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Admit correction" }));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(submittedBody().correction.object).toBe(true);
+  });
+
+  it("parses an edited numeric value as a number", async () => {
+    render(<CandidateReview initialCandidates={[withObject(42)]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Correct" }));
+    fireEvent.change(screen.getByLabelText(/^Value$/), {
+      target: { value: "43.5" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Admit correction" }));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(submittedBody().correction.object).toBe(43.5);
+  });
+
+  it("parses an edited boolean value as a boolean", async () => {
+    render(<CandidateReview initialCandidates={[withObject(true)]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Correct" }));
+    fireEvent.change(screen.getByLabelText(/^Value$/), {
+      target: { value: "false" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Admit correction" }));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(submittedBody().correction.object).toBe(false);
+  });
+
+  it("keeps a string value a string", async () => {
+    render(<CandidateReview initialCandidates={[withObject("42")]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Correct" }));
+    fireEvent.change(screen.getByLabelText("Subject"), {
+      target: { value: "Football score" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Admit correction" }));
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(submittedBody().correction.object).toBe("42");
   });
 });
