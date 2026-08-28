@@ -263,7 +263,9 @@ candidates with `proposed_subject_node_id = NULL`. It demonstrated:
 The rollback returned staging to the accepted 12-migration baseline with 0 Auth
 users, 0 accounts, 0 Worlds, 24/24 public product tables retaining RLS and no
 synthetic admission/canonical rows. Production remains unmigrated and untouched.
-Exact-head CI and deploy-preview evidence are still required before this
+The four files identified by the repository formatter have now been normalized
+with the normal Prettier configuration and no temporary formatter workflow
+remains. Exact-head CI and deploy-preview evidence are still required before this
 candidate is handed back for independent Inspector review.
 
 Steps 93–102 remain ACCEPTED + INTEGRATED. Step 103 remains OPEN /
