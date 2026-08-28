@@ -73,10 +73,5 @@ export async function decideCandidate(
   if (action !== "correct" && correction) {
     throw new Error("Only correction accepts corrected durable meaning.");
   }
-  return repository.decide(
-    { userId },
-    candidateClaimId,
-    action,
-    correction,
-  );
+  return repository.decide({ userId }, candidateClaimId, action, correction);
 }
