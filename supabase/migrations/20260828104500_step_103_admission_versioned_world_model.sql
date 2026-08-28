@@ -196,6 +196,21 @@ BEGIN
       RAISE EXCEPTION 'Deferral does not accept a correction payload.' USING ERRCODE = '22023';
     END IF;
 
+    SELECT decision.id
+    INTO v_decision_id
+    FROM public.admission_decisions AS decision
+    WHERE decision.world_id = v_world_id
+      AND decision.candidate_claim_id = p_candidate_claim_id
+      AND decision.decision_kind = 'defer'
+      AND decision.decided_by_account_id = v_actor_id
+    LIMIT 1;
+
+    IF v_decision_id IS NOT NULL THEN
+      RETURN QUERY SELECT p_candidate_claim_id, v_decision_id, 'defer'::text,
+        NULL::uuid, NULL::uuid, NULL::uuid, true;
+      RETURN;
+    END IF;
+
     INSERT INTO public.admission_decisions (
       world_id,
       candidate_claim_id,
@@ -204,9 +219,6 @@ BEGIN
       decided_by_account_id
     )
     VALUES (v_world_id, p_candidate_claim_id, 'defer', 'user', v_actor_id)
-    ON CONFLICT (world_id, candidate_claim_id, decided_by_account_id)
-      WHERE decision_kind = 'defer'
-    DO UPDATE SET candidate_claim_id = EXCLUDED.candidate_claim_id
     RETURNING id INTO v_decision_id;
 
     INSERT INTO public.audit_events (
