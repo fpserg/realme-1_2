@@ -300,7 +300,7 @@ BEGIN
   v_subject := v_payload->>'subject';
   v_predicate := v_payload->>'predicate';
   v_object := v_payload->'object';
-  v_normalized_subject := lower(regexp_replace(btrim(v_subject), '\\s+', ' ', 'g'));
+  v_normalized_subject := lower(regexp_replace(btrim(v_subject), '\s+', ' ', 'g'));
 
   -- Serialize canonical identity resolution/creation for this World + normalized subject.
   -- The transaction-scoped advisory lock is derived entirely inside PostgreSQL and
