@@ -110,6 +110,8 @@ DECLARE
   v_predicate text;
   v_object jsonb;
   v_subject_node_id uuid;
+  v_resolved_alias_node_id uuid;
+  v_alias_match_count integer;
   v_node_id uuid;
   v_assertion_id uuid;
   v_prior_assertion_id uuid;
@@ -231,7 +233,7 @@ BEGIN
     );
 
     RETURN QUERY SELECT p_candidate_claim_id, v_decision_id, 'defer'::text,
-      NULL::uuid, NULL::uuid, NULL::uuid, false;
+      NULL::uuid, NULL::uuid, NULL::uuid, true;
     RETURN;
   END IF;
 
@@ -297,48 +299,88 @@ BEGIN
   v_subject := v_payload->>'subject';
   v_predicate := v_payload->>'predicate';
   v_object := v_payload->'object';
-  v_subject_node_id := v_candidate.proposed_subject_node_id;
 
-  IF v_predicate = 'classification' AND v_subject_node_id IS NULL THEN
-    INSERT INTO public.ontology_nodes (world_id, admitted_by_decision_id)
-    VALUES (v_world_id, v_decision_id)
-    RETURNING id INTO v_node_id;
+  IF v_candidate.proposed_subject_node_id IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM public.ontology_nodes AS node
+      WHERE node.world_id = v_world_id
+        AND node.id = v_candidate.proposed_subject_node_id
+    ) THEN
+      RAISE EXCEPTION 'Proposed subject identity is outside this World or does not exist.'
+        USING ERRCODE = '42501';
+    END IF;
 
-    INSERT INTO public.ontology_aliases (
-      world_id, node_id, alias, admitted_by_decision_id
-    ) VALUES (
-      v_world_id, v_node_id, v_subject, v_decision_id
-    );
+    IF NOT EXISTS (
+      SELECT 1
+      FROM public.ontology_aliases AS alias
+      WHERE alias.world_id = v_world_id
+        AND alias.node_id = v_candidate.proposed_subject_node_id
+        AND alias.valid_to IS NULL
+        AND lower(regexp_replace(btrim(alias.alias), '\s+', ' ', 'g')) =
+            lower(regexp_replace(btrim(v_subject), '\s+', ' ', 'g'))
+    ) THEN
+      RAISE EXCEPTION 'Proposed subject identity is incompatible with the admitted subject.'
+        USING ERRCODE = '22023';
+    END IF;
 
-    v_subject_node_id := v_node_id;
+    v_subject_node_id := v_candidate.proposed_subject_node_id;
   ELSE
-    v_node_id := NULL;
-  END IF;
+    SELECT
+      count(DISTINCT alias.node_id)::integer,
+      min(alias.node_id::text)::uuid
+    INTO v_alias_match_count, v_resolved_alias_node_id
+    FROM public.ontology_aliases AS alias
+    WHERE alias.world_id = v_world_id
+      AND alias.valid_to IS NULL
+      AND lower(regexp_replace(btrim(alias.alias), '\s+', ' ', 'g')) =
+          lower(regexp_replace(btrim(v_subject), '\s+', ' ', 'g'));
 
-  IF v_subject_node_id IS NOT NULL THEN
-    SELECT assertion.id, assertion.valid_from
-    INTO v_prior_assertion_id, v_prior_valid_from
-    FROM public.assertions AS assertion
-    WHERE assertion.world_id = v_world_id
-      AND assertion.subject_node_id = v_subject_node_id
-      AND assertion.predicate = v_predicate
-      AND assertion.valid_to IS NULL
-    ORDER BY assertion.created_at DESC, assertion.id DESC
-    LIMIT 1
-    FOR UPDATE;
+    IF v_alias_match_count = 1 THEN
+      v_subject_node_id := v_resolved_alias_node_id;
+    ELSIF v_alias_match_count > 1 THEN
+      RAISE EXCEPTION 'Subject identity is ambiguous; correction or disambiguation is required.'
+        USING ERRCODE = '22023';
+    ELSIF v_predicate = 'classification' THEN
+      INSERT INTO public.ontology_nodes (world_id, admitted_by_decision_id)
+      VALUES (v_world_id, v_decision_id)
+      RETURNING id INTO v_node_id;
 
-    IF v_prior_assertion_id IS NOT NULL THEN
-      v_now := greatest(
-        clock_timestamp(),
-        v_prior_valid_from + interval '1 microsecond'
+      INSERT INTO public.ontology_aliases (
+        world_id, node_id, alias, admitted_by_decision_id
+      ) VALUES (
+        v_world_id, v_node_id, v_subject, v_decision_id
       );
 
-      UPDATE public.assertions
-      SET valid_to = v_now
-      WHERE world_id = v_world_id
-        AND id = v_prior_assertion_id
-        AND valid_to IS NULL;
+      v_subject_node_id := v_node_id;
+    ELSE
+      RAISE EXCEPTION 'Subject identity is unresolved; correction is required before admission.'
+        USING ERRCODE = '22023';
     END IF;
+  END IF;
+
+  SELECT assertion.id, assertion.valid_from
+  INTO v_prior_assertion_id, v_prior_valid_from
+  FROM public.assertions AS assertion
+  WHERE assertion.world_id = v_world_id
+    AND assertion.subject_node_id = v_subject_node_id
+    AND assertion.predicate = v_predicate
+    AND assertion.valid_to IS NULL
+  ORDER BY assertion.created_at DESC, assertion.id DESC
+  LIMIT 1
+  FOR UPDATE;
+
+  IF v_prior_assertion_id IS NOT NULL THEN
+    v_now := greatest(
+      clock_timestamp(),
+      v_prior_valid_from + interval '1 microsecond'
+    );
+
+    UPDATE public.assertions
+    SET valid_to = v_now
+    WHERE world_id = v_world_id
+      AND id = v_prior_assertion_id
+      AND valid_to IS NULL;
   END IF;
 
   INSERT INTO public.assertions (
@@ -381,6 +423,7 @@ BEGIN
       'decision_id', v_decision_id,
       'corrected', p_action = 'correct',
       'supersedes_assertion_id', v_prior_assertion_id,
+      'resolved_subject_node_id', v_subject_node_id,
       'created_node_id', v_node_id
     )
   );
