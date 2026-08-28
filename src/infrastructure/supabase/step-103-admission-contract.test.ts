@@ -132,6 +132,26 @@ describe("Step 103 admission database contract", () => {
     expect(migration).not.toContain("UPDATE public.candidate_claims");
   });
 
+  it("serializes first identity discovery by World and normalized subject inside PostgreSQL", () => {
+    expect(migration).toContain(
+      "v_normalized_subject := lower(regexp_replace(btrim(v_subject)",
+    );
+    expect(migration).toContain("pg_catalog.pg_advisory_xact_lock(");
+    expect(migration).toContain("pg_catalog.hashtextextended(");
+    expect(migration).toContain(
+      "v_world_id::text || E'\\x1f' || v_normalized_subject",
+    );
+
+    const lockAt = migration.indexOf("pg_catalog.pg_advisory_xact_lock(");
+    const aliasLookupAt = migration.indexOf(
+      "count(DISTINCT alias.node_id)::integer",
+    );
+    const createNodeAt = migration.indexOf("INSERT INTO public.ontology_nodes");
+    expect(lockAt).toBeGreaterThan(-1);
+    expect(aliasLookupAt).toBeGreaterThan(lockAt);
+    expect(createNodeAt).toBeGreaterThan(aliasLookupAt);
+  });
+
   it("denies generic client writes to admission and canonical tables", () => {
     for (const table of [
       "admission_decisions",

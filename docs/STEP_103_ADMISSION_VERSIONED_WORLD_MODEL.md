@@ -128,6 +128,15 @@ Cross-World nodes and aliases never participate in identity resolution. A null
 its accepted Step 98 meaning remains reserved for genuinely World-level
 propositions.
 
+First discovery is also serialized inside PostgreSQL across different candidate
+rows. Before any proposed-node validation or alias lookup, the command acquires
+a transaction-scoped advisory lock derived from the candidate World ID plus the
+normalized admitted subject. After the lock is acquired it performs the same-World
+active-alias lookup, so concurrent first classifications of the same normalized
+subject can create at most one stable identity; the later transaction reuses the
+committed identity (or safely retries after a deterministic database failure).
+The lock key is never exposed outside the admission transaction.
+
 This closes the real Step 102 → Step 103 path where current candidates normally
 carry `proposed_subject_node_id = NULL`. A first admitted `Football →
 classification → Domain` may create one stable Football node and alias. A later

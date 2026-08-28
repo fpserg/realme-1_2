@@ -109,6 +109,7 @@ DECLARE
   v_subject text;
   v_predicate text;
   v_object jsonb;
+  v_normalized_subject text;
   v_subject_node_id uuid;
   v_resolved_alias_node_id uuid;
   v_alias_match_count integer;
@@ -299,6 +300,18 @@ BEGIN
   v_subject := v_payload->>'subject';
   v_predicate := v_payload->>'predicate';
   v_object := v_payload->'object';
+  v_normalized_subject := lower(regexp_replace(btrim(v_subject), '\\s+', ' ', 'g'));
+
+  -- Serialize canonical identity resolution/creation for this World + normalized subject.
+  -- The transaction-scoped advisory lock is derived entirely inside PostgreSQL and
+  -- releases automatically on commit/rollback. Resolution is intentionally performed
+  -- only after this lock so different candidate rows cannot race first discovery.
+  PERFORM pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(
+      v_world_id::text || E'\x1f' || v_normalized_subject,
+      0
+    )
+  );
 
   IF v_candidate.proposed_subject_node_id IS NOT NULL THEN
     IF NOT EXISTS (
