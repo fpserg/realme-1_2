@@ -33,12 +33,7 @@ describe("admission application boundary", () => {
     await listCandidateReviews("account-1", target);
     expect(target.decide).not.toHaveBeenCalled();
 
-    await decideCandidate(
-      "account-1",
-      "candidate-1",
-      "accept",
-      target,
-    );
+    await decideCandidate("account-1", "candidate-1", "accept", target);
     expect(target.decide).toHaveBeenCalledOnce();
   });
 
@@ -50,13 +45,11 @@ describe("admission application boundary", () => {
 
   it("does not permit payload mutation through accept, reject or defer", async () => {
     await expect(
-      decideCandidate(
-        "account-1",
-        "candidate-1",
-        "accept",
-        repository(),
-        { subject: "A", predicate: "is", object: "B" },
-      ),
+      decideCandidate("account-1", "candidate-1", "accept", repository(), {
+        subject: "A",
+        predicate: "is",
+        object: "B",
+      }),
     ).rejects.toThrow("Only correction accepts corrected durable meaning.");
   });
 });
