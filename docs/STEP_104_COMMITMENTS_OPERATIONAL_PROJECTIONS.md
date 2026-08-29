@@ -10,17 +10,18 @@ Step 104 projects admitted canonical commitment facts into bounded operational s
 
 A commitment is an existing admitted ontology node. Its durable identity is therefore independent of wording, due date, status and projection membership.
 
-The Step 104 projection recognizes three active scalar assertion predicates on that node:
+The Step 104 projection recognizes the accepted Step 103 scalar assertion vocabulary on that node:
 
-- `commitment.title` — display wording;
-- `commitment.due_local_date` — ISO civil date `YYYY-MM-DD`;
-- `commitment.status` — the bounded status set `open`, `completed`, `cancelled`.
+- `classification = commitment` — explicit commitment classification;
+- `commitment_title` — optional admitted display wording, with the active admitted ontology alias as the presentation fallback;
+- `commitment_due_local_date` — ISO civil date `YYYY-MM-DD`;
+- `commitment_status` — the bounded status set `open`, `completed`, `cancelled`.
 
 These are ordinary versioned assertions governed by the accepted Step 103 admission path. Step 104 adds no browser or projection mutation path for them. Due-date and status changes remain assertion history rather than projection updates.
 
 ## Projection semantics
 
-`commitment_projection_source` is a disposable `security_invoker` view over current admitted assertions. It carries the canonical commitment node ID and exact assertion IDs for title, due date and status.
+`commitment_projection_source` is a disposable `security_invoker` view over current admitted assertions and active admitted aliases. It carries the canonical commitment node ID and exact assertion IDs for classification, title when present, due date and status. An alias-derived title does not fabricate a title assertion reference.
 
 `list_operational_commitments(surface, horizon_days)` is the only authenticated Step 104 read command. It derives actor and World server-side, requires exactly one World membership, reads the active Step 100 time setting, and derives the current operational date from the configured timezone and operational-day boundary.
 
@@ -31,7 +32,7 @@ These are ordinary versioned assertions governed by the accepted Step 103 admiss
 
 ## Rebuild law
 
-The projection layer contains no canonical writes. The verification fixture destroys and rebuilds the projection view inside a rollback-only transaction, checks projection equivalence before/after rebuild, and fingerprints canonical assertions to prove canonical truth is unchanged.
+The projection layer contains no canonical writes. The verification fixture destroys and rebuilds the projection view and read RPC inside a rollback-only transaction, checks projection equivalence before/after rebuild, and fingerprints canonical assertions to prove canonical truth is unchanged.
 
 ## Security boundary
 
