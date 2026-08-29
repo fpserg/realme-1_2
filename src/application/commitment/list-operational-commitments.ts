@@ -4,7 +4,10 @@ import type {
 } from "@/domain/commitment/commitment";
 
 export type CommitmentProjectionRepository = {
-  list(surface: CommitmentSurface, horizonDays?: number): Promise<CommitmentProjectionItem[]>;
+  list(
+    surface: CommitmentSurface,
+    horizonDays?: number,
+  ): Promise<CommitmentProjectionItem[]>;
 };
 
 export async function listOperationalCommitments(
