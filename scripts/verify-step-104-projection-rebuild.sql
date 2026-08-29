@@ -66,12 +66,15 @@ WITH active AS (
     AND assertion.predicate IN ('commitment.title', 'commitment.due_local_date', 'commitment.status')
 ), pivoted AS (
   SELECT active.world_id, active.commitment_id,
-    max(CASE WHEN active.predicate = 'commitment.title' THEN active.value #>> '{}' END) AS title,
-    max(CASE WHEN active.predicate = 'commitment.status' THEN active.value #>> '{}' END) AS status,
-    max(CASE WHEN active.predicate = 'commitment.due_local_date' THEN active.value #>> '{}' END) AS due_text,
-    max(CASE WHEN active.predicate = 'commitment.title' THEN active.assertion_id END) AS title_assertion_id,
-    max(CASE WHEN active.predicate = 'commitment.status' THEN active.assertion_id END) AS status_assertion_id,
-    max(CASE WHEN active.predicate = 'commitment.due_local_date' THEN active.assertion_id END) AS due_assertion_id
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.title') AS title,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.status') AS status,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.due_local_date') AS due_text,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.title')::uuid AS title_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.status')::uuid AS status_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.due_local_date')::uuid AS due_assertion_id,
+    count(*) FILTER (WHERE active.predicate = 'commitment.title') AS title_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment.status') AS status_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment.due_local_date') AS due_count
   FROM active GROUP BY active.world_id, active.commitment_id
 )
 SELECT pivoted.world_id, pivoted.commitment_id, pivoted.title,
@@ -80,7 +83,10 @@ SELECT pivoted.world_id, pivoted.commitment_id, pivoted.title,
     THEN to_date(pivoted.due_text, 'YYYY-MM-DD') ELSE NULL END AS due_local_date,
   pivoted.status, pivoted.title_assertion_id, pivoted.due_assertion_id, pivoted.status_assertion_id
 FROM pivoted
-WHERE pivoted.title IS NOT NULL
+WHERE pivoted.title_count = 1
+  AND pivoted.status_count = 1
+  AND pivoted.due_count <= 1
+  AND pivoted.title IS NOT NULL
   AND length(btrim(pivoted.title)) > 0
   AND pivoted.status IN ('open', 'completed', 'cancelled');
 REVOKE ALL ON public.commitment_projection_source FROM PUBLIC, anon, authenticated;
