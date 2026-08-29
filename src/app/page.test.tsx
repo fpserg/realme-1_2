@@ -32,8 +32,12 @@ describe("HomeView", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Commitments" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Today" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Commitments" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Today" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Horizon · 30 days" }),
     ).toBeInTheDocument();
