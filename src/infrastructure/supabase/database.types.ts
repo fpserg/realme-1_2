@@ -258,6 +258,23 @@ export type RealMeDatabase = {
           was_replay: boolean;
         }[];
       };
+      list_operational_commitments: {
+        Args: {
+          p_horizon_days?: number;
+          p_surface: "today" | "horizon";
+        };
+        Returns: {
+          commitment_id: string;
+          due_assertion_id: string | null;
+          due_local_date: string | null;
+          is_stale: boolean;
+          status: string;
+          status_assertion_id: string | null;
+          surface: string;
+          title: string;
+          title_assertion_id: string | null;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
