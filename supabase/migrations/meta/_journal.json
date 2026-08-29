@@ -2,19 +2,103 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    {"idx":0,"version":"7","when":1786926190000,"tag":"20260817002310_step_97_identity_and_world_ownership","breakpoints":true},
-    {"idx":1,"version":"7","when":1787219699000,"tag":"20260820095459_step_98_canonical_truth_schema","breakpoints":true},
-    {"idx":2,"version":"7","when":1787219794000,"tag":"20260820095634_step_98_internal_table_denials","breakpoints":true},
-    {"idx":3,"version":"7","when":1787220106000,"tag":"20260820100146_step_98_admission_invariants","breakpoints":true},
-    {"idx":4,"version":"7","when":1787236680000,"tag":"20260820143800_step_98_correction_invariants","breakpoints":true},
-    {"idx":5,"version":"7","when":1787252340000,"tag":"20260820185900_step_99_persist_first_observation_capture","breakpoints":true},
-    {"idx":6,"version":"7","when":1787261981000,"tag":"20260820213941_step_100_native_temporal_continuity","breakpoints":true},
-    {"idx":7,"version":"7","when":1787262041000,"tag":"20260820214041_step_100_period_conflict_correction","breakpoints":true},
-    {"idx":8,"version":"7","when":1787262107000,"tag":"20260820214147_step_100_setting_monotonic_clock_correction","breakpoints":true},
-    {"idx":9,"version":"7","when":1787265280000,"tag":"20260820223440_step_100_dst_civil_boundary_correction","breakpoints":true},
-    {"idx":10,"version":"7","when":1787293919000,"tag":"20260821063159_step_102_interpretation_durable_job_pipeline","breakpoints":true},
-    {"idx":11,"version":"7","when":1787836156000,"tag":"20260827130916_step_102_worker_recovery_and_reconciliation","breakpoints":true},
-    {"idx":12,"version":"7","when":1787913900000,"tag":"20260828104500_step_103_admission_versioned_world_model","breakpoints":true},
-    {"idx":13,"version":"7","when":1788022200000,"tag":"20260829195000_step_104_commitments_operational_projections","breakpoints":true}
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786926190000,
+      "tag": "20260817002310_step_97_identity_and_world_ownership",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787219699000,
+      "tag": "20260820095459_step_98_canonical_truth_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787219794000,
+      "tag": "20260820095634_step_98_internal_table_denials",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787220106000,
+      "tag": "20260820100146_step_98_admission_invariants",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787236680000,
+      "tag": "20260820143800_step_98_correction_invariants",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787252340000,
+      "tag": "20260820185900_step_99_persist_first_observation_capture",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787261981000,
+      "tag": "20260820213941_step_100_native_temporal_continuity",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787262041000,
+      "tag": "20260820214041_step_100_period_conflict_correction",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787262107000,
+      "tag": "20260820214147_step_100_setting_monotonic_clock_correction",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787265280000,
+      "tag": "20260820223440_step_100_dst_civil_boundary_correction",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787293919000,
+      "tag": "20260821063159_step_102_interpretation_durable_job_pipeline",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787836156000,
+      "tag": "20260827130916_step_102_worker_recovery_and_reconciliation",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1787913900000,
+      "tag": "20260828104500_step_103_admission_versioned_world_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788022200000,
+      "tag": "20260829195000_step_104_commitments_operational_projections",
+      "breakpoints": true
+    }
   ]
 }
