@@ -2,6 +2,7 @@ export type CommitmentStatus = "open" | "completed" | "cancelled";
 export type CommitmentSurface = "today" | "horizon";
 
 export type CommitmentProjectionItem = {
+  classificationAssertionId: string;
   commitmentId: string;
   dueLocalDate: string;
   dueAssertionId: string;
@@ -10,7 +11,7 @@ export type CommitmentProjectionItem = {
   statusAssertionId: string;
   surface: CommitmentSurface;
   title: string;
-  titleAssertionId: string;
+  titleAssertionId: string | null;
 };
 
 export function isCommitmentStatus(value: string): value is CommitmentStatus {
