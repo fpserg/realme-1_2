@@ -13,31 +13,45 @@ WITH active AS (
     AND assertion.subject_node_id IS NOT NULL
     AND assertion.object_node_id IS NULL
     AND assertion.predicate IN (
-      'commitment.title',
-      'commitment.due_local_date',
-      'commitment.status'
+      'classification',
+      'commitment_title',
+      'commitment_due_local_date',
+      'commitment_status'
     )
 ),
 pivoted AS (
   SELECT
     active.world_id,
     active.commitment_id,
-    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.title') AS title,
-    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.status') AS status,
-    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.due_local_date') AS due_text,
-    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.title')::uuid AS title_assertion_id,
-    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.status')::uuid AS status_assertion_id,
-    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.due_local_date')::uuid AS due_assertion_id,
-    count(*) FILTER (WHERE active.predicate = 'commitment.title') AS title_count,
-    count(*) FILTER (WHERE active.predicate = 'commitment.status') AS status_count,
-    count(*) FILTER (WHERE active.predicate = 'commitment.due_local_date') AS due_count
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'classification') AS classification,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment_title') AS admitted_title,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment_status') AS status,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment_due_local_date') AS due_text,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'classification')::uuid AS classification_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment_title')::uuid AS title_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment_status')::uuid AS status_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment_due_local_date')::uuid AS due_assertion_id,
+    count(*) FILTER (WHERE active.predicate = 'classification') AS classification_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment_title') AS title_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment_status') AS status_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment_due_local_date') AS due_count
   FROM active
   GROUP BY active.world_id, active.commitment_id
+),
+active_alias AS (
+  SELECT
+    alias.world_id,
+    alias.node_id AS commitment_id,
+    min(alias.alias) AS alias_title,
+    count(*) AS alias_count
+  FROM public.ontology_aliases AS alias
+  WHERE alias.valid_to IS NULL
+  GROUP BY alias.world_id, alias.node_id
 )
 SELECT
   pivoted.world_id,
   pivoted.commitment_id,
-  pivoted.title,
+  COALESCE(pivoted.admitted_title, active_alias.alias_title) AS title,
   CASE
     WHEN pivoted.due_text ~ '^\d{4}-\d{2}-\d{2}$'
       AND to_char(to_date(pivoted.due_text, 'YYYY-MM-DD'), 'YYYY-MM-DD') = pivoted.due_text
@@ -45,15 +59,21 @@ SELECT
     ELSE NULL
   END AS due_local_date,
   pivoted.status,
+  pivoted.classification_assertion_id,
   pivoted.title_assertion_id,
   pivoted.due_assertion_id,
   pivoted.status_assertion_id
 FROM pivoted
-WHERE pivoted.title_count = 1
+JOIN active_alias
+  ON active_alias.world_id = pivoted.world_id
+ AND active_alias.commitment_id = pivoted.commitment_id
+WHERE pivoted.classification_count = 1
+  AND pivoted.title_count <= 1
   AND pivoted.status_count = 1
   AND pivoted.due_count <= 1
-  AND pivoted.title IS NOT NULL
-  AND length(btrim(pivoted.title)) > 0
+  AND active_alias.alias_count = 1
+  AND lower(pivoted.classification) = 'commitment'
+  AND length(btrim(COALESCE(pivoted.admitted_title, active_alias.alias_title))) > 0
   AND pivoted.status IN ('open', 'completed', 'cancelled');
 
 REVOKE ALL ON public.commitment_projection_source FROM PUBLIC, anon, authenticated;
@@ -69,6 +89,7 @@ RETURNS TABLE (
   status text,
   surface text,
   is_stale boolean,
+  classification_assertion_id uuid,
   title_assertion_id uuid,
   due_assertion_id uuid,
   status_assertion_id uuid
@@ -134,6 +155,7 @@ BEGIN
     projection.status = 'open'
       AND projection.due_local_date IS NOT NULL
       AND projection.due_local_date < v_operational_date AS is_stale,
+    projection.classification_assertion_id,
     projection.title_assertion_id,
     projection.due_assertion_id,
     projection.status_assertion_id
