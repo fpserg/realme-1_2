@@ -43,7 +43,9 @@ export function OperationalProjections({
       <header>
         <span className={styles.eyebrow}>Operational projection</span>
         <h2 id="commitment-projections-title">Commitments</h2>
-        <p>Derived from admitted World facts. Projection state is disposable.</p>
+        <p>
+          Derived from admitted World facts. Projection state is disposable.
+        </p>
       </header>
       <div className={styles.columns}>
         <section aria-labelledby="today-title">
