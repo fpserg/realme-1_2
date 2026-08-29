@@ -27,9 +27,7 @@ describe("Step 104 commitment projections", () => {
     expect(entries[13]).toMatchObject({ idx: 13, tag: step104Tag });
     expect(current.prevId).toBe(previous.id);
     expect(current.id).not.toBe(previous.id);
-    expect(
-      migrations.filter((name) => name.endsWith(".sql")),
-    ).toHaveLength(14);
+    expect(migrations.filter((name) => name.endsWith(".sql"))).toHaveLength(14);
   });
 
   it(
