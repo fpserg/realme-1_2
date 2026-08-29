@@ -20,7 +20,9 @@ describe("SupabaseCommitmentProjectionRepository", () => {
       ],
       error: null,
     });
-    const repository = new SupabaseCommitmentProjectionRepository({ rpc } as never);
+    const repository = new SupabaseCommitmentProjectionRepository({
+      rpc,
+    } as never);
 
     await expect(repository.list("today")).resolves.toEqual([
       expect.objectContaining({
