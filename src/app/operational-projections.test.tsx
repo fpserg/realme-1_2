@@ -9,8 +9,7 @@ describe("OperationalProjections", () => {
       <OperationalProjections
         today={[
           {
-            classificationAssertionId:
-              "10400000-0000-4000-8000-000000000100",
+            classificationAssertionId: "10400000-0000-4000-8000-000000000100",
             commitmentId: "10400000-0000-4000-8000-000000000010",
             dueAssertionId: "10400000-0000-4000-8000-000000000102",
             dueLocalDate: "2026-08-28",
@@ -24,8 +23,7 @@ describe("OperationalProjections", () => {
         ]}
         horizon={[
           {
-            classificationAssertionId:
-              "10400000-0000-4000-8000-000000000200",
+            classificationAssertionId: "10400000-0000-4000-8000-000000000200",
             commitmentId: "10400000-0000-4000-8000-000000000020",
             dueAssertionId: "10400000-0000-4000-8000-000000000202",
             dueLocalDate: "2026-09-04",
