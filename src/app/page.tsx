@@ -62,10 +62,7 @@ export function HomeView({ state }: { state: HomeState }) {
           </form>
         </header>
         <div className={styles.appSections}>
-          <OperationalProjections
-            horizon={state.horizon}
-            today={state.today}
-          />
+          <OperationalProjections horizon={state.horizon} today={state.today} />
           <CompanionDialogue
             authenticatedAccountId={state.accountId}
             key={`dialogue-${state.accountId}`}
