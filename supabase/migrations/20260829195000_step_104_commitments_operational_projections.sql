@@ -75,6 +75,7 @@ AS $$
 DECLARE
   v_actor_id uuid := (SELECT auth.uid());
   v_world_id uuid;
+  v_world_count integer;
   v_timezone_name text;
   v_boundary time;
   v_local_now timestamp;
@@ -92,15 +93,13 @@ BEGIN
     RAISE EXCEPTION 'horizon must be between 1 and 90 days' USING ERRCODE = '22023';
   END IF;
 
-  SELECT membership.world_id
-  INTO v_world_id
+  SELECT count(*), min(membership.world_id)
+  INTO v_world_count, v_world_id
   FROM public.world_memberships AS membership
-  WHERE membership.user_id = v_actor_id
-  ORDER BY membership.created_at
-  LIMIT 1;
+  WHERE membership.user_id = v_actor_id;
 
-  IF v_world_id IS NULL THEN
-    RAISE EXCEPTION 'world membership required' USING ERRCODE = '42501';
+  IF v_world_count <> 1 OR v_world_id IS NULL THEN
+    RAISE EXCEPTION 'exactly one world membership required' USING ERRCODE = '42501';
   END IF;
 
   SELECT setting.timezone_name, setting.operational_day_boundary
