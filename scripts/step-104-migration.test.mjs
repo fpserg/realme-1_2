@@ -33,7 +33,7 @@ describe("Step 104 commitment projections", () => {
   });
 
   it(
-    "projects commitment identity and versioned facts without creating a second truth store",
+    "projects classified commitment identity and versioned facts without a second truth store",
     async () => {
       const sql = await readFile(migrationPath, "utf8");
 
@@ -42,15 +42,18 @@ describe("Step 104 commitment projections", () => {
       );
       expect(sql).toMatch(/WITH \(security_invoker = true\)/i);
       expect(sql).toMatch(/assertion\.subject_node_id AS commitment_id/i);
-      expect(sql).toContain("'commitment.title'");
-      expect(sql).toContain("'commitment.due_local_date'");
-      expect(sql).toContain("'commitment.status'");
+      expect(sql).toContain("'classification'");
+      expect(sql).toContain("'commitment_title'");
+      expect(sql).toContain("'commitment_due_local_date'");
+      expect(sql).toContain("'commitment_status'");
+      expect(sql).toMatch(/lower\(pivoted\.classification\) = 'commitment'/i);
       expect(sql).toMatch(
         /pivoted\.status IN \('open', 'completed', 'cancelled'\)/i,
       );
       expect(sql).toMatch(
-        /title_assertion_id[\s\S]*due_assertion_id[\s\S]*status_assertion_id/i,
+        /classification_assertion_id[\s\S]*title_assertion_id[\s\S]*due_assertion_id[\s\S]*status_assertion_id/i,
       );
+      expect(sql).toMatch(/FROM public\.ontology_aliases AS alias/i);
       expect(sql).not.toMatch(/CREATE TABLE|ALTER TABLE/i);
       expect(sql).not.toMatch(
         /INSERT INTO public\.(observations|candidate_claims|admission_decisions|ontology_nodes|ontology_aliases|ontology_relationships|assertions|assertion_evidence)/i,
@@ -117,6 +120,7 @@ describe("Step 104 commitment projections", () => {
       expect(sql).toContain("rebuild projection");
       expect(sql).toContain("projection equivalence");
       expect(sql).toContain("canonical truth unchanged");
+      expect(sql).toContain("classification_assertion_id");
       expect(sql).toMatch(/rollback;\s*$/i);
     },
   );
