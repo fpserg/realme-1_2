@@ -4,6 +4,7 @@ import type { CommitmentProjectionRepository } from "./list-operational-commitme
 import { listOperationalCommitments } from "./list-operational-commitments";
 
 const item = {
+  classificationAssertionId: "10400000-0000-4000-8000-000000000100",
   commitmentId: "10400000-0000-4000-8000-000000000010",
   dueAssertionId: "10400000-0000-4000-8000-000000000102",
   dueLocalDate: "2026-08-29",
