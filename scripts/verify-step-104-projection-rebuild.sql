@@ -21,18 +21,23 @@ insert into public.ontology_nodes (id, world_id, admitted_by_decision_id)
 values
   ('10400000-0000-4000-8000-000000000010', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000020'),
   ('10400000-0000-4000-8000-000000000011', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000021');
+insert into public.ontology_aliases (
+  id, world_id, node_id, alias, admitted_by_decision_id
+) values
+  ('10400000-0000-4000-8000-000000000030', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000010', 'File report', '10400000-0000-4000-8000-000000000020'),
+  ('10400000-0000-4000-8000-000000000031', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000011', 'Cancelled item', '10400000-0000-4000-8000-000000000021');
 insert into public.assertions (
   id, world_id, subject_node_id, predicate, value, admitted_by_decision_id
 ) values
-  ('10400000-0000-4000-8000-000000000101', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000010', 'commitment.title', '"File report"'::jsonb, '10400000-0000-4000-8000-000000000020'),
-  ('10400000-0000-4000-8000-000000000102', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000010', 'commitment.due_local_date', to_jsonb((statement_timestamp() at time zone 'Europe/Amsterdam')::date::text), '10400000-0000-4000-8000-000000000020'),
-  ('10400000-0000-4000-8000-000000000103', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000010', 'commitment.status', '"open"'::jsonb, '10400000-0000-4000-8000-000000000020'),
-  ('10400000-0000-4000-8000-000000000111', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000011', 'commitment.title', '"Cancelled item"'::jsonb, '10400000-0000-4000-8000-000000000021'),
-  ('10400000-0000-4000-8000-000000000112', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000011', 'commitment.due_local_date', to_jsonb(((statement_timestamp() at time zone 'Europe/Amsterdam')::date + 2)::text), '10400000-0000-4000-8000-000000000021'),
-  ('10400000-0000-4000-8000-000000000113', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000011', 'commitment.status', '"cancelled"'::jsonb, '10400000-0000-4000-8000-000000000021');
+  ('10400000-0000-4000-8000-000000000100', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000010', 'classification', '"commitment"'::jsonb, '10400000-0000-4000-8000-000000000020'),
+  ('10400000-0000-4000-8000-000000000101', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000010', 'commitment_title', '"File report"'::jsonb, '10400000-0000-4000-8000-000000000020'),
+  ('10400000-0000-4000-8000-000000000102', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000010', 'commitment_due_local_date', to_jsonb((statement_timestamp() at time zone 'Europe/Amsterdam')::date::text), '10400000-0000-4000-8000-000000000020'),
+  ('10400000-0000-4000-8000-000000000103', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000010', 'commitment_status', '"open"'::jsonb, '10400000-0000-4000-8000-000000000020'),
+  ('10400000-0000-4000-8000-000000000110', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000011', 'classification', '"commitment"'::jsonb, '10400000-0000-4000-8000-000000000021'),
+  ('10400000-0000-4000-8000-000000000112', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000011', 'commitment_due_local_date', to_jsonb(((statement_timestamp() at time zone 'Europe/Amsterdam')::date + 2)::text), '10400000-0000-4000-8000-000000000021'),
+  ('10400000-0000-4000-8000-000000000113', '10400000-0000-4000-8000-000000000001', '10400000-0000-4000-8000-000000000011', 'commitment_status', '"cancelled"'::jsonb, '10400000-0000-4000-8000-000000000021');
 
 set local session_replication_role = origin;
-select set_config('request.jwt.claim.sub', '10400000-0000-4000-8000-000000000002', true);
 
 -- canonical truth fingerprint
 create temporary table step_104_truth_before as
@@ -69,31 +74,45 @@ WITH active AS (
     AND assertion.subject_node_id IS NOT NULL
     AND assertion.object_node_id IS NULL
     AND assertion.predicate IN (
-      'commitment.title',
-      'commitment.due_local_date',
-      'commitment.status'
+      'classification',
+      'commitment_title',
+      'commitment_due_local_date',
+      'commitment_status'
     )
 ),
 pivoted AS (
   SELECT
     active.world_id,
     active.commitment_id,
-    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.title') AS title,
-    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.status') AS status,
-    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.due_local_date') AS due_text,
-    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.title')::uuid AS title_assertion_id,
-    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.status')::uuid AS status_assertion_id,
-    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.due_local_date')::uuid AS due_assertion_id,
-    count(*) FILTER (WHERE active.predicate = 'commitment.title') AS title_count,
-    count(*) FILTER (WHERE active.predicate = 'commitment.status') AS status_count,
-    count(*) FILTER (WHERE active.predicate = 'commitment.due_local_date') AS due_count
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'classification') AS classification,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment_title') AS admitted_title,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment_status') AS status,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment_due_local_date') AS due_text,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'classification')::uuid AS classification_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment_title')::uuid AS title_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment_status')::uuid AS status_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment_due_local_date')::uuid AS due_assertion_id,
+    count(*) FILTER (WHERE active.predicate = 'classification') AS classification_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment_title') AS title_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment_status') AS status_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment_due_local_date') AS due_count
   FROM active
   GROUP BY active.world_id, active.commitment_id
+),
+active_alias AS (
+  SELECT
+    alias.world_id,
+    alias.node_id AS commitment_id,
+    min(alias.alias) AS alias_title,
+    count(*) AS alias_count
+  FROM public.ontology_aliases AS alias
+  WHERE alias.valid_to IS NULL
+  GROUP BY alias.world_id, alias.node_id
 )
 SELECT
   pivoted.world_id,
   pivoted.commitment_id,
-  pivoted.title,
+  COALESCE(pivoted.admitted_title, active_alias.alias_title) AS title,
   CASE
     WHEN pivoted.due_text ~ '^\d{4}-\d{2}-\d{2}$'
       AND to_char(to_date(pivoted.due_text, 'YYYY-MM-DD'), 'YYYY-MM-DD') = pivoted.due_text
@@ -101,15 +120,21 @@ SELECT
     ELSE NULL
   END AS due_local_date,
   pivoted.status,
+  pivoted.classification_assertion_id,
   pivoted.title_assertion_id,
   pivoted.due_assertion_id,
   pivoted.status_assertion_id
 FROM pivoted
-WHERE pivoted.title_count = 1
+JOIN active_alias
+  ON active_alias.world_id = pivoted.world_id
+ AND active_alias.commitment_id = pivoted.commitment_id
+WHERE pivoted.classification_count = 1
+  AND pivoted.title_count <= 1
   AND pivoted.status_count = 1
   AND pivoted.due_count <= 1
-  AND pivoted.title IS NOT NULL
-  AND length(btrim(pivoted.title)) > 0
+  AND active_alias.alias_count = 1
+  AND lower(pivoted.classification) = 'commitment'
+  AND length(btrim(COALESCE(pivoted.admitted_title, active_alias.alias_title))) > 0
   AND pivoted.status IN ('open', 'completed', 'cancelled');
 REVOKE ALL ON public.commitment_projection_source FROM PUBLIC, anon, authenticated;
 
@@ -124,6 +149,7 @@ RETURNS TABLE (
   status text,
   surface text,
   is_stale boolean,
+  classification_assertion_id uuid,
   title_assertion_id uuid,
   due_assertion_id uuid,
   status_assertion_id uuid
@@ -185,6 +211,7 @@ BEGIN
     projection.status = 'open'
       AND projection.due_local_date IS NOT NULL
       AND projection.due_local_date < v_operational_date AS is_stale,
+    projection.classification_assertion_id,
     projection.title_assertion_id,
     projection.due_assertion_id,
     projection.status_assertion_id
@@ -224,6 +251,11 @@ BEGIN
   ), 'projection changed after destroy/rebuild';
   ASSERT (SELECT count(*) FROM step_104_projection_after) = 2,
     'expected two derived commitment identities';
+  ASSERT (
+    SELECT title = 'Cancelled item' AND title_assertion_id IS NULL
+    FROM step_104_projection_after
+    WHERE commitment_id = '10400000-0000-4000-8000-000000000011'
+  ), 'expected alias fallback without fabricated title assertion provenance';
 END;
 $$;
 
