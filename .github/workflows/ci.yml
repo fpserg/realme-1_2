@@ -50,6 +50,26 @@ jobs:
             exit 1
           fi
 
+      - name: Diagnose formatting — app
+        continue-on-error: true
+        run: pnpm exec prettier --check "src/app/**/*.{ts,tsx,css}"
+
+      - name: Diagnose formatting — domain and application
+        continue-on-error: true
+        run: pnpm exec prettier --check "src/{domain,application}/**/*.{ts,tsx}"
+
+      - name: Diagnose formatting — infrastructure and scripts
+        continue-on-error: true
+        run: pnpm exec prettier --check "src/infrastructure/**/*.{ts,tsx}" "scripts/**/*.{mjs,ts}"
+
+      - name: Diagnose formatting — docs
+        continue-on-error: true
+        run: pnpm exec prettier --check "*.md" "docs/**/*.md"
+
+      - name: Diagnose formatting — migration metadata
+        continue-on-error: true
+        run: pnpm exec prettier --check "supabase/migrations/meta/**/*.json"
+
       - name: Verify formatting
         run: pnpm format:check
 
