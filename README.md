@@ -1,6 +1,6 @@
 # RealMe 1.2
 
-Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEPS 93–102 ACCEPTED + INTEGRATED / STEP 103 OPEN — IMPLEMENTATION CANDIDATE / NOT ACCEPTED / STEP 104 NOT STARTED**
+Status: **FOUNDING SEQUENCE COMPLETE / MVP ROADMAP ACCEPTED / STEPS 93–102 ACCEPTED + INTEGRATED / STEP 103 ACCEPTED + COMPLETE — AWAITING ACCEPTANCE-DELTA VERIFICATION / NOT YET INTEGRATED / STEP 104 NOT STARTED / NOT AUTHORIZED**
 
 RealMe 1.2 is the clean production successor to the frozen `fpserg/realme-mvp-1_1` prototype.
 
@@ -135,16 +135,18 @@ No live authenticated interpretation inference has yet been demonstrated; the
 accepted deterministic provider/worker evidence is sufficient for Step 102,
 while a synthetic live-provider smoke remains prudent before provider rollout.
 
-**Step 103 — Admission and versioned World Model: OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED.**
+**Step 103 — Admission and versioned World Model: ACCEPTED / COMPLETE.**
 
-The Warden opened Step 103 on 2026-08-28. The bounded candidate adds a
-mobile-first unresolved-candidate review surface and a user-only admission
-command with accept, reject, correct and defer semantics. Accepting or correcting
-may create one transactionally versioned canonical assertion while preserving
-the immutable AI candidate, exact evidence provenance, prior canonical versions
-and stable ontology identity. First canonical identity discovery is serialized
-inside PostgreSQL by a transaction-scoped lock keyed to World plus normalized
-subject, so concurrent different candidates cannot create duplicate stable
-identities for the same semantic subject. Reject and defer create no canonical
-state. Step 103 remains subject to independent Tier H Inspector review,
-exact-head CI, preview and staging verification. Step 104 is NOT STARTED.
+The Warden accepted Step 103 on 2026-08-29 after independent Tier H Inspector
+APPROVE and exact-head CI, deploy-preview and staging verification. The accepted
+implementation head is `ec864f5c5ef4d3ce6b03b79d84a958c1b3328712` with tree
+`445c136263726b55cb2a17d8d07c34a0a1604f5b`. The accepted boundary provides a
+mobile-first unresolved-candidate review surface and user-only accept, reject,
+correct and defer decisions; transactionally versioned canonical assertions;
+exact evidence provenance; stable ontology identity through reclassification;
+and PostgreSQL serialization of concurrent first discovery by World plus
+normalized subject. Reject and defer create no canonical state. Step 103 is
+accepted but is not yet integrated pending independent acceptance-delta
+verification. Production rollout remains deferred, and production
+`public.rls_auto_enable()` execution-grant remediation remains mandatory before
+the first RealMe production migration. Step 104 is NOT STARTED / NOT AUTHORIZED.

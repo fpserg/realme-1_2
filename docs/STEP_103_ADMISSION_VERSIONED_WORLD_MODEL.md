@@ -1,14 +1,26 @@
 # Step 103 — Admission and Versioned World Model
 
-Version: 0.2
+Version: 1.0
 
-Status: OPEN — IMPLEMENTATION CANDIDATE / NOT ACCEPTED
+Status: ACCEPTED / COMPLETE — AWAITING ACCEPTANCE-DELTA VERIFICATION / NOT YET INTEGRATED
 
 Opened by: Warden
 
 Opened on: 2026-08-28
 
-Step 104: NOT STARTED
+Accepted by: Warden
+
+Accepted on: 2026-08-29
+
+Independent Inspector: APPROVE
+
+Accepted implementation head:
+`ec864f5c5ef4d3ce6b03b79d84a958c1b3328712`
+
+Accepted implementation tree:
+`445c136263726b55cb2a17d8d07c34a0a1604f5b`
+
+Step 104: NOT STARTED / NOT AUTHORIZED
 
 Risk: Tier H
 
@@ -27,9 +39,10 @@ Acceptance gate:
 > No AI-generated interpretation becomes canonical without passing admission
 > policy.
 
-Step 103 is not accepted until independent Inspector review, exact-head CI,
-preview and bounded staging verification are complete and the Warden explicitly
-accepts it.
+The independent Tier H Inspector returned APPROVE on the exact accepted
+implementation head and tree above. The Warden then explicitly accepted Step 103
+on 2026-08-29. This acceptance record changes documentation/status only; it does
+not amend the accepted implementation.
 
 ## Admission authority
 
@@ -242,10 +255,11 @@ Step 103 does not implement:
 - broader conversation archiving;
 - Step 102 candidate-generation changes.
 
-Production `public.rls_auto_enable()` execution-grant remediation remains
-mandatory before the first RealMe production migration and is not part of Step 103.
+Production rollout remains deferred. Production `public.rls_auto_enable()`
+execution-grant remediation remains mandatory before the first RealMe production
+migration and is not part of Step 103.
 
-## Verification evidence before Inspector re-review
+## Acceptance verification evidence
 
 Rollback-only synthetic staging verification exercised real Step 102-shaped
 candidates with `proposed_subject_node_id = NULL`. It demonstrated:
@@ -269,14 +283,25 @@ candidates with `proposed_subject_node_id = NULL`. It demonstrated:
 12. the two Step 103 RPCs remain the only new authenticated `SECURITY DEFINER`
     surface and both retain empty search paths.
 
-The rollback returned staging to the accepted 12-migration baseline with 0 Auth
-users, 0 accounts, 0 Worlds, 24/24 public product tables retaining RLS and no
-synthetic admission/canonical rows. Production remains unmigrated and untouched.
-The four files identified by the repository formatter have now been normalized
-with the normal Prettier configuration and no temporary formatter workflow
-remains. Exact-head CI and deploy-preview evidence are still required before this
-candidate is handed back for independent Inspector review.
+A subsequent real two-session PostgreSQL contention regression used two distinct
+Step 102-shaped candidate rows in one World, both with null proposed node IDs and
+normalized textual subject Football. The second transaction waited on the
+World+normalized-subject transaction-scoped advisory lock, then resolved and
+reused the identity created by the first transaction. The final state contained
+one stable Football node, one active canonical Football alias, two lawful
+classification versions on that same node, exact evidence provenance and no
+replay duplication.
 
-Steps 93–102 remain ACCEPTED + INTEGRATED. Step 103 remains OPEN /
-IMPLEMENTATION CANDIDATE / NOT ACCEPTED until independently reviewed and
-explicitly accepted. Step 104 is NOT STARTED.
+Staging was restored to the accepted clean 12-migration baseline with 0 Auth
+users, 0 accounts, 0 Worlds, 24/24 public product tables retaining RLS and no
+Step 103 functions or synthetic admission/canonical rows. Production remains
+unmigrated and untouched.
+
+Exact accepted implementation head CI passed in GitHub Actions run #205, ID
+`33215217887`. The exact-head Netlify deploy preview also passed at deploy ID
+`6a9205aed576e90008d07122`. Independent Inspector disposition: APPROVE. Warden
+disposition: ACCEPT STEP 103.
+
+Steps 93–103 are ACCEPTED. Steps 97–102 are integrated. Step 103 is ACCEPTED /
+COMPLETE but remains NOT YET INTEGRATED pending independent acceptance-delta
+verification. Step 104 is NOT STARTED / NOT AUTHORIZED.
