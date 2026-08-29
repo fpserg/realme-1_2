@@ -5,8 +5,8 @@ import {
   type CandidateReviewItem,
 } from "@/application/admission/admission";
 import { listOperationalCommitments } from "@/application/commitment/list-operational-commitments";
-import { listObservationHistory } from "@/application/observation/observation-capture";
 import { reconcileObservationInterpretations } from "@/application/interpretation/enqueue-interpretation";
+import { listObservationHistory } from "@/application/observation/observation-capture";
 import {
   loadTemporalContinuity,
   type TemporalContextView,
@@ -14,11 +14,11 @@ import {
 import { getCurrentWorld } from "@/application/world/get-current-world";
 import type { CommitmentProjectionItem } from "@/domain/commitment/commitment";
 import type { ObservationHistoryItem } from "@/domain/observation/observation";
-import { readSupabasePublicConfig } from "@/infrastructure/supabase/environment";
 import { SupabaseAdmissionRepository } from "@/infrastructure/supabase/admission-repository";
 import { SupabaseCommitmentProjectionRepository } from "@/infrastructure/supabase/commitment-projection-repository";
-import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
+import { readSupabasePublicConfig } from "@/infrastructure/supabase/environment";
 import { SupabaseInterpretationEnqueueRepository } from "@/infrastructure/supabase/interpretation-enqueue-repository";
+import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
 import { SupabaseTemporalRepository } from "@/infrastructure/supabase/temporal-repository";
 import { SupabaseWorldAccessRepository } from "@/infrastructure/supabase/world-access-repository";
 
@@ -62,7 +62,10 @@ export function HomeView({ state }: { state: HomeState }) {
           </form>
         </header>
         <div className={styles.appSections}>
-          <OperationalProjections horizon={state.horizon} today={state.today} />
+          <OperationalProjections
+            horizon={state.horizon}
+            today={state.today}
+          />
           <CompanionDialogue
             authenticatedAccountId={state.accountId}
             key={`dialogue-${state.accountId}`}
