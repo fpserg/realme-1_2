@@ -51,7 +51,10 @@ jobs:
           fi
 
       - name: Verify formatting
-        run: pnpm format:check
+        run: |
+          pnpm prettier --write scripts/step-104-migration.test.mjs src/app/page.test.tsx src/infrastructure/supabase/commitment-projection-repository.test.ts
+          git diff -- scripts/step-104-migration.test.mjs src/app/page.test.tsx src/infrastructure/supabase/commitment-projection-repository.test.ts
+          exit 1
 
       - name: Lint
         run: pnpm lint
