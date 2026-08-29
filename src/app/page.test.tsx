@@ -11,7 +11,7 @@ describe("HomeView", () => {
       screen.getByRole("heading", { name: "A private World begins here." }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("101 accepted · 102 implementation candidate"),
+      screen.getByText("102 accepted · 103 implementation candidate"),
     ).toBeInTheDocument();
     expect(screen.getByText("Build not configured")).toBeInTheDocument();
     expect(screen.getByText("Unformed by design")).toBeInTheDocument();
@@ -22,6 +22,7 @@ describe("HomeView", () => {
       <HomeView
         state={{
           accountId: "123e4567-e89b-42d3-a456-426614174000",
+          candidates: [],
           kind: "ready",
           observations: [],
           temporal: { currentPeriod: null, setting: null },
@@ -31,6 +32,9 @@ describe("HomeView", () => {
 
     expect(
       screen.getByRole("heading", { name: "Dialogue" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Nothing waiting for review" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "What should be remembered?" }),

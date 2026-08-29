@@ -232,6 +232,32 @@ export type RealMeDatabase = {
           was_created: boolean;
         }[];
       };
+      list_candidate_reviews: {
+        Args: Record<string, never>;
+        Returns: {
+          candidate_claim_id: string;
+          candidate_payload: Record<string, unknown>;
+          created_at: string;
+          evidence: unknown;
+          proposed_subject_node_id: string | null;
+        }[];
+      };
+      decide_candidate: {
+        Args: {
+          p_action: "accept" | "reject" | "correct" | "defer";
+          p_candidate_claim_id: string;
+          p_correction_payload?: Record<string, unknown> | null;
+        };
+        Returns: {
+          candidate_claim_id: string;
+          decision_id: string;
+          decision_action: string;
+          canonical_assertion_id: string | null;
+          canonical_node_id: string | null;
+          superseded_assertion_id: string | null;
+          was_replay: boolean;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

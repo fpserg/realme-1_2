@@ -1,10 +1,10 @@
 # RealMe 1.2 — Roadmap to Perceivable MVP
 
-Version: 1.7
+Version: 1.8
 Status: ACCEPTED — POST-FOUNDING MVP ROADMAP
 Accepted by: Warden
 Accepted on: 2026-08-16
-Current state: Step 102 — ACCEPTED / Step 103 — NOT STARTED
+Current state: Steps 93–102 — ACCEPTED + INTEGRATED / Step 103 — ACCEPTED + COMPLETE / AWAITING ACCEPTANCE-DELTA VERIFICATION / NOT YET INTEGRATED / Step 104 — NOT STARTED / NOT AUTHORIZED
 
 ## 1. Purpose and authority
 
@@ -40,6 +40,7 @@ A chat shell, static dashboard or painted map alone does not qualify.
 - **Step 100 — Native Temporal Continuity: ACCEPTED**
 - **Step 101 — One-Companion Dialogue: ACCEPTED**
 - **Step 102 — Interpretation and Durable Job Pipeline: ACCEPTED**
+- **Step 103 — Admission and Versioned World Model: ACCEPTED**
 
 ## 4. Accepted implementation sequence
 
@@ -161,6 +162,13 @@ Deliver:
 
 Acceptance gate: no AI-generated interpretation becomes canonical without passing admission policy.
 
+Accepted by the Warden on 2026-08-29 after independent Tier H Inspector APPROVE.
+Accepted implementation head: `ec864f5c5ef4d3ce6b03b79d84a958c1b3328712`.
+Accepted implementation tree: `445c136263726b55cb2a17d8d07c34a0a1604f5b`.
+Integration remains pending acceptance-delta verification. Production rollout is
+deferred, and production `public.rls_auto_enable()` remediation remains mandatory
+before the first RealMe production migration.
+
 ### Step 104 — Commitments and Operational Projections
 
 Turn memory into visible continuity.
@@ -176,6 +184,8 @@ Deliver:
 - late updates without manual closing rituals.
 
 Acceptance gate: projections can be destroyed and rebuilt from canonical records without changing truth.
+
+**Step 104 is NOT STARTED / NOT AUTHORIZED.**
 
 ### Step 105 — Code-Native Living World
 
@@ -289,8 +299,9 @@ Acceptance gate: Architect review, Code Review clearance and explicit Warden acc
 
 ## 6. Continuation law
 
-The roadmap governs sequence, not automatic execution. Steps 97 through 102
-are accepted. Step 103 is NOT STARTED and may begin only through a separate
-explicit Warden instruction. Later steps may be refined when opened, but their
-accepted outcome and constitutional acceptance gate must not be weakened
-without an explicit roadmap amendment.
+The roadmap governs sequence, not automatic execution. Steps 93 through 103 are
+accepted. Steps 97 through 102 are integrated; Step 103 is ACCEPTED / COMPLETE
+but remains NOT YET INTEGRATED pending independent acceptance-delta verification.
+Step 104 is NOT STARTED / NOT AUTHORIZED. Later steps may be refined when opened,
+but their accepted outcome and constitutional acceptance gate must not be
+weakened without an explicit roadmap amendment.

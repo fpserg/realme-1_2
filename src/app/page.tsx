@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+import {
+  listCandidateReviews,
+  type CandidateReviewItem,
+} from "@/application/admission/admission";
 import { listObservationHistory } from "@/application/observation/observation-capture";
 import { reconcileObservationInterpretations } from "@/application/interpretation/enqueue-interpretation";
 import {
@@ -9,6 +13,7 @@ import {
 import { getCurrentWorld } from "@/application/world/get-current-world";
 import type { ObservationHistoryItem } from "@/domain/observation/observation";
 import { readSupabasePublicConfig } from "@/infrastructure/supabase/environment";
+import { SupabaseAdmissionRepository } from "@/infrastructure/supabase/admission-repository";
 import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
 import { SupabaseInterpretationEnqueueRepository } from "@/infrastructure/supabase/interpretation-enqueue-repository";
 import { SupabaseTemporalRepository } from "@/infrastructure/supabase/temporal-repository";
@@ -16,6 +21,7 @@ import { SupabaseWorldAccessRepository } from "@/infrastructure/supabase/world-a
 
 import { createSupabaseServerClient } from "./_supabase/server";
 import { logout } from "./auth/actions";
+import { CandidateReview } from "./candidate-review";
 import { CompanionDialogue } from "./companion-dialogue";
 import { ObservationCapture } from "./observation-capture";
 import styles from "./page.module.css";
@@ -27,6 +33,7 @@ type HomeState =
   | { kind: "provisioning-error" }
   | {
       accountId: string;
+      candidates: CandidateReviewItem[];
       kind: "ready";
       observations: ObservationHistoryItem[];
       temporal: TemporalContextView;
@@ -39,8 +46,8 @@ export function HomeView({ state }: { state: HomeState }) {
       <main className={styles.appMain}>
         <header className={styles.appHeader}>
           <div>
-            <span className={styles.eyebrow}>RealMe 1.2 · Step 102</span>
-            <p>Durable interpretation pipeline candidate</p>
+            <span className={styles.eyebrow}>RealMe 1.2 · Step 103</span>
+            <p>User-authorized admission candidate</p>
           </div>
           <form action={logout}>
             <button className={styles.secondaryAction} type="submit">
@@ -53,6 +60,7 @@ export function HomeView({ state }: { state: HomeState }) {
             authenticatedAccountId={state.accountId}
             key={`dialogue-${state.accountId}`}
           />
+          <CandidateReview initialCandidates={state.candidates} />
           <ObservationCapture
             authenticatedAccountId={state.accountId}
             initialTemporalContext={state.temporal}
@@ -67,7 +75,7 @@ export function HomeView({ state }: { state: HomeState }) {
   return (
     <main className={styles.main}>
       <section className={styles.panel} aria-labelledby="world-title">
-        <span className={styles.eyebrow}>RealMe 1.2 · Step 102</span>
+        <span className={styles.eyebrow}>RealMe 1.2 · Step 103</span>
         <h1 id="world-title">A private World begins here.</h1>
         <p>
           Sign in to receive one private World and one companion. Your World
@@ -83,7 +91,7 @@ export function HomeView({ state }: { state: HomeState }) {
         <dl className={styles.status}>
           <div>
             <dt>Current step</dt>
-            <dd>101 accepted · 102 implementation candidate</dd>
+            <dd>102 accepted · 103 implementation candidate</dd>
           </div>
           <div>
             <dt>World access</dt>
@@ -96,8 +104,8 @@ export function HomeView({ state }: { state: HomeState }) {
             </dd>
           </div>
           <div>
-            <dt>Companion</dt>
-            <dd>Created after sign-up</dd>
+            <dt>Admission authority</dt>
+            <dd>User only</dd>
           </div>
           <div>
             <dt>World state</dt>
@@ -136,6 +144,10 @@ export default async function HomePage() {
       userId,
       new SupabaseInterpretationEnqueueRepository(supabase),
     );
+    const candidates = await listCandidateReviews(
+      userId,
+      new SupabaseAdmissionRepository(supabase),
+    );
     const temporalRepository = new SupabaseTemporalRepository(supabase);
     const temporal = await loadTemporalContinuity(
       userId,
@@ -144,6 +156,7 @@ export default async function HomePage() {
     );
     state = {
       accountId: userId,
+      candidates,
       kind: "ready",
       observations: temporal.observations,
       temporal: {
