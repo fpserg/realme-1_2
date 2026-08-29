@@ -34,14 +34,14 @@ const snapshot = JSON.parse(
 );
 
 describe("Step 103 admission database contract", () => {
-  it("is a continuous thirteenth Drizzle migration without rewriting accepted history", () => {
+  it("remains the continuous thirteenth Drizzle migration without rewriting accepted history", () => {
     const sqlMigrations = readdirSync(
       join(process.cwd(), "supabase/migrations"),
     ).filter((name) => name.endsWith(".sql"));
-    expect(sqlMigrations).toHaveLength(13);
-    expect(journal.entries).toHaveLength(13);
+    expect(sqlMigrations).toHaveLength(14);
+    expect(journal.entries).toHaveLength(14);
     expect(journal.entries.map((entry: { idx: number }) => entry.idx)).toEqual(
-      Array.from({ length: 13 }, (_, index) => index),
+      Array.from({ length: 14 }, (_, index) => index),
     );
     expect(
       journal.entries.filter(
