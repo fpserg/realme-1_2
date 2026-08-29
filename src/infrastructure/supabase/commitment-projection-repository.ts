@@ -32,10 +32,10 @@ export class SupabaseCommitmentProjectionRepository
 
     return (data ?? []).map((row) => {
       if (
+        !row.classification_assertion_id ||
         !row.commitment_id ||
         !row.title ||
         !row.due_local_date ||
-        !row.title_assertion_id ||
         !row.due_assertion_id ||
         !row.status_assertion_id ||
         !isCommitmentStatus(row.status) ||
@@ -45,6 +45,7 @@ export class SupabaseCommitmentProjectionRepository
       }
 
       return {
+        classificationAssertionId: row.classification_assertion_id,
         commitmentId: row.commitment_id,
         dueLocalDate: row.due_local_date,
         dueAssertionId: row.due_assertion_id,
