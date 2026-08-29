@@ -264,6 +264,7 @@ export type RealMeDatabase = {
           p_surface: "today" | "horizon";
         };
         Returns: {
+          classification_assertion_id: string | null;
           commitment_id: string;
           due_assertion_id: string | null;
           due_local_date: string | null;
