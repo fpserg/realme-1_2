@@ -19,10 +19,13 @@ export class SupabaseCommitmentProjectionRepository
     surface: CommitmentSurface,
     horizonDays = 30,
   ): Promise<CommitmentProjectionItem[]> {
-    const { data, error } = await this.client.rpc("list_operational_commitments", {
-      p_horizon_days: horizonDays,
-      p_surface: surface,
-    });
+    const { data, error } = await this.client.rpc(
+      "list_operational_commitments",
+      {
+        p_horizon_days: horizonDays,
+        p_surface: surface,
+      },
+    );
 
     if (error) {
       throw new Error("Unable to load operational commitments", {
