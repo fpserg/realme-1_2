@@ -48,15 +48,15 @@ export function OperationalProjections({
         </p>
       </header>
       <div className={styles.columns}>
-        <section aria-labelledby="today-title">
-          <h3 id="today-title">Today</h3>
+        <section aria-labelledby="commitment-today-title">
+          <h3 id="commitment-today-title">Today</h3>
           <ProjectionList
             empty="Nothing due in the current operational day."
             items={today}
           />
         </section>
-        <section aria-labelledby="horizon-title">
-          <h3 id="horizon-title">Horizon · 30 days</h3>
+        <section aria-labelledby="commitment-horizon-title">
+          <h3 id="commitment-horizon-title">Horizon · 30 days</h3>
           <ProjectionList
             empty="Nothing due in the next 30 operational dates."
             items={horizon}
