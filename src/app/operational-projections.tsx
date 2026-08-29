@@ -36,7 +36,10 @@ export function OperationalProjections({
   today: CommitmentProjectionItem[];
 }) {
   return (
-    <section className={styles.panel} aria-labelledby="commitment-projections-title">
+    <section
+      className={styles.panel}
+      aria-labelledby="commitment-projections-title"
+    >
       <header>
         <span className={styles.eyebrow}>Operational projection</span>
         <h2 id="commitment-projections-title">Commitments</h2>
@@ -45,11 +48,17 @@ export function OperationalProjections({
       <div className={styles.columns}>
         <section aria-labelledby="today-title">
           <h3 id="today-title">Today</h3>
-          <ProjectionList empty="Nothing due in the current operational day." items={today} />
+          <ProjectionList
+            empty="Nothing due in the current operational day."
+            items={today}
+          />
         </section>
         <section aria-labelledby="horizon-title">
           <h3 id="horizon-title">Horizon · 30 days</h3>
-          <ProjectionList empty="Nothing due in the next 30 operational dates." items={horizon} />
+          <ProjectionList
+            empty="Nothing due in the next 30 operational dates."
+            items={horizon}
+          />
         </section>
       </div>
     </section>
