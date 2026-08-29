@@ -7,8 +7,7 @@ WITH active AS (
     assertion.subject_node_id AS commitment_id,
     assertion.id AS assertion_id,
     assertion.predicate,
-    assertion.value,
-    assertion.admitted_by_decision_id
+    assertion.value
   FROM public.assertions AS assertion
   WHERE assertion.valid_to IS NULL
     AND assertion.subject_node_id IS NOT NULL
@@ -23,12 +22,15 @@ pivoted AS (
   SELECT
     active.world_id,
     active.commitment_id,
-    max(CASE WHEN active.predicate = 'commitment.title' THEN active.value #>> '{}' END) AS title,
-    max(CASE WHEN active.predicate = 'commitment.status' THEN active.value #>> '{}' END) AS status,
-    max(CASE WHEN active.predicate = 'commitment.due_local_date' THEN active.value #>> '{}' END) AS due_text,
-    max(CASE WHEN active.predicate = 'commitment.title' THEN active.assertion_id END) AS title_assertion_id,
-    max(CASE WHEN active.predicate = 'commitment.status' THEN active.assertion_id END) AS status_assertion_id,
-    max(CASE WHEN active.predicate = 'commitment.due_local_date' THEN active.assertion_id END) AS due_assertion_id
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.title') AS title,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.status') AS status,
+    min(active.value #>> '{}') FILTER (WHERE active.predicate = 'commitment.due_local_date') AS due_text,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.title')::uuid AS title_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.status')::uuid AS status_assertion_id,
+    min(active.assertion_id::text) FILTER (WHERE active.predicate = 'commitment.due_local_date')::uuid AS due_assertion_id,
+    count(*) FILTER (WHERE active.predicate = 'commitment.title') AS title_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment.status') AS status_count,
+    count(*) FILTER (WHERE active.predicate = 'commitment.due_local_date') AS due_count
   FROM active
   GROUP BY active.world_id, active.commitment_id
 )
@@ -47,7 +49,10 @@ SELECT
   pivoted.due_assertion_id,
   pivoted.status_assertion_id
 FROM pivoted
-WHERE pivoted.title IS NOT NULL
+WHERE pivoted.title_count = 1
+  AND pivoted.status_count = 1
+  AND pivoted.due_count <= 1
+  AND pivoted.title IS NOT NULL
   AND length(btrim(pivoted.title)) > 0
   AND pivoted.status IN ('open', 'completed', 'cancelled');
 
@@ -93,7 +98,7 @@ BEGIN
     RAISE EXCEPTION 'horizon must be between 1 and 90 days' USING ERRCODE = '22023';
   END IF;
 
-  SELECT count(*), min(membership.world_id)
+  SELECT count(*), min(membership.world_id::text)::uuid
   INTO v_world_count, v_world_id
   FROM public.world_memberships AS membership
   WHERE membership.user_id = v_actor_id;
