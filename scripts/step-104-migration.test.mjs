@@ -7,28 +7,17 @@ const step104Tag =
 const migrationPath = `supabase/migrations/${step104Tag}.sql`;
 
 describe("Step 104 commitment projections", () => {
-  it("extends the migration chain exactly once", async () => {
-    const [journal, snapshot, previousSnapshot, migrations] = await Promise.all(
-      [
-        readFile("supabase/migrations/meta/_journal.json", "utf8"),
-        readFile(
-          "supabase/migrations/meta/20260829195000_snapshot.json",
-          "utf8",
-        ),
-        readFile(
-          "supabase/migrations/meta/20260828104500_snapshot.json",
-          "utf8",
-        ),
-        readdir("supabase/migrations"),
-      ],
-    );
+  it("extends the custom migration journal exactly once without a schema snapshot", async () => {
+    const [journal, migrations, metadata] = await Promise.all([
+      readFile("supabase/migrations/meta/_journal.json", "utf8"),
+      readdir("supabase/migrations"),
+      readdir("supabase/migrations/meta"),
+    ]);
     const entries = JSON.parse(journal).entries;
-    const current = JSON.parse(snapshot);
-    const previous = JSON.parse(previousSnapshot);
 
     expect(entries[13]).toMatchObject({ idx: 13, tag: step104Tag });
-    expect(current.prevId).toBe(previous.id);
-    expect(current.id).not.toBe(previous.id);
+    expect(entries).toHaveLength(14);
+    expect(metadata).not.toContain("20260829195000_snapshot.json");
     expect(migrations.filter((name) => name.endsWith(".sql"))).toHaveLength(14);
   });
 
