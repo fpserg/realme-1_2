@@ -4,6 +4,7 @@ import {
   listCandidateReviews,
   type CandidateReviewItem,
 } from "@/application/admission/admission";
+import { listOperationalCommitments } from "@/application/commitment/list-operational-commitments";
 import { listObservationHistory } from "@/application/observation/observation-capture";
 import { reconcileObservationInterpretations } from "@/application/interpretation/enqueue-interpretation";
 import {
@@ -11,9 +12,11 @@ import {
   type TemporalContextView,
 } from "@/application/time/temporal-continuity";
 import { getCurrentWorld } from "@/application/world/get-current-world";
+import type { CommitmentProjectionItem } from "@/domain/commitment/commitment";
 import type { ObservationHistoryItem } from "@/domain/observation/observation";
 import { readSupabasePublicConfig } from "@/infrastructure/supabase/environment";
 import { SupabaseAdmissionRepository } from "@/infrastructure/supabase/admission-repository";
+import { SupabaseCommitmentProjectionRepository } from "@/infrastructure/supabase/commitment-projection-repository";
 import { SupabaseObservationRepository } from "@/infrastructure/supabase/observation-repository";
 import { SupabaseInterpretationEnqueueRepository } from "@/infrastructure/supabase/interpretation-enqueue-repository";
 import { SupabaseTemporalRepository } from "@/infrastructure/supabase/temporal-repository";
@@ -24,6 +27,7 @@ import { logout } from "./auth/actions";
 import { CandidateReview } from "./candidate-review";
 import { CompanionDialogue } from "./companion-dialogue";
 import { ObservationCapture } from "./observation-capture";
+import { OperationalProjections } from "./operational-projections";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -34,9 +38,11 @@ type HomeState =
   | {
       accountId: string;
       candidates: CandidateReviewItem[];
+      horizon: CommitmentProjectionItem[];
       kind: "ready";
       observations: ObservationHistoryItem[];
       temporal: TemporalContextView;
+      today: CommitmentProjectionItem[];
     }
   | { kind: "signed-out" };
 
@@ -46,8 +52,8 @@ export function HomeView({ state }: { state: HomeState }) {
       <main className={styles.appMain}>
         <header className={styles.appHeader}>
           <div>
-            <span className={styles.eyebrow}>RealMe 1.2 · Step 103</span>
-            <p>User-authorized admission candidate</p>
+            <span className={styles.eyebrow}>RealMe 1.2 · Step 104</span>
+            <p>Canonical truth projected into operational focus</p>
           </div>
           <form action={logout}>
             <button className={styles.secondaryAction} type="submit">
@@ -56,6 +62,7 @@ export function HomeView({ state }: { state: HomeState }) {
           </form>
         </header>
         <div className={styles.appSections}>
+          <OperationalProjections horizon={state.horizon} today={state.today} />
           <CompanionDialogue
             authenticatedAccountId={state.accountId}
             key={`dialogue-${state.accountId}`}
@@ -75,7 +82,7 @@ export function HomeView({ state }: { state: HomeState }) {
   return (
     <main className={styles.main}>
       <section className={styles.panel} aria-labelledby="world-title">
-        <span className={styles.eyebrow}>RealMe 1.2 · Step 103</span>
+        <span className={styles.eyebrow}>RealMe 1.2 · Step 104</span>
         <h1 id="world-title">A private World begins here.</h1>
         <p>
           Sign in to receive one private World and one companion. Your World
@@ -91,7 +98,7 @@ export function HomeView({ state }: { state: HomeState }) {
         <dl className={styles.status}>
           <div>
             <dt>Current step</dt>
-            <dd>102 accepted · 103 implementation candidate</dd>
+            <dd>103 accepted · 104 implementation candidate</dd>
           </div>
           <div>
             <dt>World access</dt>
@@ -108,8 +115,8 @@ export function HomeView({ state }: { state: HomeState }) {
             <dd>User only</dd>
           </div>
           <div>
-            <dt>World state</dt>
-            <dd>Unformed by design</dd>
+            <dt>Projection authority</dt>
+            <dd>Derived only</dd>
           </div>
         </dl>
       </section>
@@ -148,6 +155,9 @@ export default async function HomePage() {
       userId,
       new SupabaseAdmissionRepository(supabase),
     );
+    const commitments = await listOperationalCommitments(
+      new SupabaseCommitmentProjectionRepository(supabase),
+    );
     const temporalRepository = new SupabaseTemporalRepository(supabase);
     const temporal = await loadTemporalContinuity(
       userId,
@@ -157,12 +167,14 @@ export default async function HomePage() {
     state = {
       accountId: userId,
       candidates,
+      horizon: commitments.horizon,
       kind: "ready",
       observations: temporal.observations,
       temporal: {
         currentPeriod: temporal.currentPeriod,
         setting: temporal.setting,
       },
+      today: commitments.today,
     };
   } catch {
     state = { kind: "provisioning-error" };
