@@ -17,38 +17,39 @@ describe("HomeView", () => {
     expect(screen.getByText("Derived only")).toBeInTheDocument();
   });
 
-  it("shows disposable Today and Horizon projections beside the accepted surfaces", () => {
-    render(
-      <HomeView
-        state={{
-          accountId: "123e4567-e89b-42d3-a456-426614174000",
-          candidates: [],
-          horizon: [],
-          kind: "ready",
-          observations: [],
-          temporal: { currentPeriod: null, setting: null },
-          today: [],
-        }}
-      />,
-    );
+  it(
+    "shows disposable Today and Horizon projections beside the accepted surfaces",
+    () => {
+      render(
+        <HomeView
+          state={{
+            accountId: "123e4567-e89b-42d3-a456-426614174000",
+            candidates: [],
+            horizon: [],
+            kind: "ready",
+            observations: [],
+            temporal: { currentPeriod: null, setting: null },
+            today: [],
+          }}
+        />,
+      );
 
-    expect(
-      screen.getByRole("heading", { name: "Commitments" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Today" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Horizon · 30 days" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Dialogue" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Nothing waiting for review" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "What should be remembered?" }),
-    ).toBeInTheDocument();
-  });
+      expect(
+        screen.getByRole("heading", { name: "Commitments" }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Today" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Horizon · 30 days" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Dialogue" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Nothing waiting for review" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "What should be remembered?" }),
+      ).toBeInTheDocument();
+    },
+  );
 });
