@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { HomeView } from "./page";
@@ -32,12 +32,12 @@ describe("HomeView", () => {
       />,
     );
 
+    const commitments = screen.getByRole("region", { name: "Commitments" });
     expect(
-      screen.getByRole("heading", { name: "Commitments" }),
+      within(commitments).getByRole("heading", { name: "Today" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Today" })).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Horizon · 30 days" }),
+      within(commitments).getByRole("heading", { name: "Horizon · 30 days" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Dialogue" }),
