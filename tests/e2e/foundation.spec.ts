@@ -42,10 +42,14 @@ test("keeps the integrated core loop perceivable at mobile viewport", async ({
     page.getByRole("region", { name: "Capture and continuity" }),
   ).toBeInViewport();
   await expect(page.getByLabel("Observation text")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save observation" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save observation" }),
+  ).toBeVisible();
 
   await navigation.getByRole("link", { name: "Companion" }).click();
-  await expect(page.getByRole("region", { name: "Companion" })).toBeInViewport();
+  await expect(
+    page.getByRole("region", { name: "Companion" }),
+  ).toBeInViewport();
   await expect(page.getByRole("textbox", { name: "Message" })).toBeVisible();
 
   await navigation.getByRole("link", { name: "Review" }).click();
@@ -69,9 +73,13 @@ test("keeps the integrated core loop perceivable at mobile viewport", async ({
   await expect(
     page.getByRole("region", { name: "World understanding" }),
   ).toBeInViewport();
-  await expect(page.getByRole("region", { name: "Living World" })).toBeVisible();
   await expect(
-    page.getByText("No admitted Realms yet. The World remains visually unformed."),
+    page.getByRole("region", { name: "Living World" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "No admitted Realms yet. The World remains visually unformed.",
+    ),
   ).toBeVisible();
 });
 

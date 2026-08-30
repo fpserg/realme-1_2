@@ -2,7 +2,10 @@
   display: grid;
   min-height: 100svh;
   place-items: center;
-  padding: max(1.5rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
+  padding: max(1.5rem, env(safe-area-inset-top))
+    max(1.25rem, env(safe-area-inset-right))
+    max(1.5rem, env(safe-area-inset-bottom))
+    max(1.25rem, env(safe-area-inset-left));
 }
 
 .panel {
@@ -94,7 +97,10 @@
   width: min(100%, 58rem);
   min-height: 100svh;
   margin: 0 auto;
-  padding: max(1rem, env(safe-area-inset-top)) max(0.85rem, env(safe-area-inset-right)) max(5rem, env(safe-area-inset-bottom)) max(0.85rem, env(safe-area-inset-left));
+  padding: max(1rem, env(safe-area-inset-top))
+    max(0.85rem, env(safe-area-inset-right))
+    max(5rem, env(safe-area-inset-bottom))
+    max(0.85rem, env(safe-area-inset-left));
 }
 
 .appHeader {

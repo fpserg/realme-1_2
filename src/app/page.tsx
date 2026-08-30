@@ -65,15 +65,22 @@ function AuthorityGuide() {
         </div>
         <div>
           <dt>RealMe interpreted</dt>
-          <dd>Candidate understanding. It remains non-canonical until you decide.</dd>
+          <dd>
+            Candidate understanding. It remains non-canonical until you decide.
+          </dd>
         </div>
         <div>
           <dt>You admitted</dt>
-          <dd>Canonical World understanding created only through explicit review.</dd>
+          <dd>
+            Canonical World understanding created only through explicit review.
+          </dd>
         </div>
         <div>
           <dt>Projected</dt>
-          <dd>Today, Horizon and the Living World are rebuildable views, not truth stores.</dd>
+          <dd>
+            Today, Horizon and the Living World are rebuildable views, not truth
+            stores.
+          </dd>
         </div>
       </dl>
     </aside>
@@ -89,13 +96,19 @@ function InterpretationSummary({
 }) {
   if (candidates.length > 0) {
     return (
-      <section className={styles.loopStatus} aria-labelledby="interpretation-status-title">
+      <section
+        className={styles.loopStatus}
+        aria-labelledby="interpretation-status-title"
+      >
         <span className={styles.statusDot} aria-hidden="true" />
         <div>
           <span className={styles.eyebrow}>Interpretation</span>
           <h2 id="interpretation-status-title">Review is ready</h2>
           <p>
-            {candidates.length} unresolved {candidates.length === 1 ? "candidate is" : "candidates are"} waiting. Nothing becomes canonical until you explicitly accept or correct it.
+            {candidates.length} unresolved{" "}
+            {candidates.length === 1 ? "candidate is" : "candidates are"}{" "}
+            waiting. Nothing becomes canonical until you explicitly accept or
+            correct it.
           </p>
           <a href="#review">Go to review</a>
         </div>
@@ -105,13 +118,18 @@ function InterpretationSummary({
 
   if (observations.length > 0) {
     return (
-      <section className={styles.loopStatus} aria-labelledby="interpretation-status-title">
+      <section
+        className={styles.loopStatus}
+        aria-labelledby="interpretation-status-title"
+      >
         <span className={styles.statusDot} aria-hidden="true" />
         <div>
           <span className={styles.eyebrow}>Interpretation</span>
           <h2 id="interpretation-status-title">No review is ready</h2>
           <p>
-            Your observations are saved. Interpretation may still be pending, or it may have produced no unresolved candidate. RealMe does not claim completion before the durable pipeline exposes review work.
+            Your observations are saved. Interpretation may still be pending, or
+            it may have produced no unresolved candidate. RealMe does not claim
+            completion before the durable pipeline exposes review work.
           </p>
         </div>
       </section>
@@ -119,12 +137,18 @@ function InterpretationSummary({
   }
 
   return (
-    <section className={styles.loopStatus} aria-labelledby="interpretation-status-title">
+    <section
+      className={styles.loopStatus}
+      aria-labelledby="interpretation-status-title"
+    >
       <span className={styles.statusDot} aria-hidden="true" />
       <div>
         <span className={styles.eyebrow}>Interpretation</span>
         <h2 id="interpretation-status-title">Nothing to interpret yet</h2>
-        <p>Capture an observation first. Empty state is preserved without invented understanding.</p>
+        <p>
+          Capture an observation first. Empty state is preserved without
+          invented understanding.
+        </p>
         <a href="#capture">Capture an observation</a>
       </div>
     </section>
@@ -139,7 +163,11 @@ export function HomeView({ state }: { state: HomeState }) {
           <div>
             <span className={styles.eyebrow}>RealMe</span>
             <h1>Your World, from evidence to understanding</h1>
-            <p>Capture what happened, review what RealMe inferred, and move through admitted understanding and projections without mixing their authority.</p>
+            <p>
+              Capture what happened, review what RealMe inferred, and move
+              through admitted understanding and projections without mixing
+              their authority.
+            </p>
           </div>
           <form action={logout}>
             <button className={styles.secondaryAction} type="submit">
@@ -163,12 +191,19 @@ export function HomeView({ state }: { state: HomeState }) {
         />
 
         <div className={styles.appSections}>
-          <section id="capture" className={styles.integratedSection} aria-label="Capture and continuity">
+          <section
+            id="capture"
+            className={styles.integratedSection}
+            aria-label="Capture and continuity"
+          >
             <div className={styles.sectionIntro}>
               <span className={styles.sequence}>01</span>
               <div>
                 <h2>Capture what happened</h2>
-                <p>Persistence comes first. Unsynced recovery stays account-scoped until the server confirms the observation.</p>
+                <p>
+                  Persistence comes first. Unsynced recovery stays
+                  account-scoped until the server confirms the observation.
+                </p>
               </div>
             </div>
             <ObservationCapture
@@ -179,12 +214,19 @@ export function HomeView({ state }: { state: HomeState }) {
             />
           </section>
 
-          <section id="companion" className={styles.integratedSection} aria-label="Companion">
+          <section
+            id="companion"
+            className={styles.integratedSection}
+            aria-label="Companion"
+          >
             <div className={styles.sectionIntro}>
               <span className={styles.sequence}>02</span>
               <div>
                 <h2>Talk with your companion</h2>
-                <p>Dialogue can help you reflect and capture material, but conversation itself does not become canonical World truth.</p>
+                <p>
+                  Dialogue can help you reflect and capture material, but
+                  conversation itself does not become canonical World truth.
+                </p>
               </div>
             </div>
             <CompanionDialogue
@@ -193,34 +235,59 @@ export function HomeView({ state }: { state: HomeState }) {
             />
           </section>
 
-          <section id="review" className={styles.integratedSection} aria-label="Interpretation review and admission">
+          <section
+            id="review"
+            className={styles.integratedSection}
+            aria-label="Interpretation review and admission"
+          >
             <div className={styles.sectionIntro}>
               <span className={styles.sequence}>03</span>
               <div>
                 <h2>Review interpretation</h2>
-                <p>Accept, reject, correct or defer unresolved candidates. Canonical change requires your explicit admission action.</p>
+                <p>
+                  Accept, reject, correct or defer unresolved candidates.
+                  Canonical change requires your explicit admission action.
+                </p>
               </div>
             </div>
             <CandidateReview initialCandidates={state.candidates} />
           </section>
 
-          <section id="projections" className={styles.integratedSection} aria-label="Operational projections">
+          <section
+            id="projections"
+            className={styles.integratedSection}
+            aria-label="Operational projections"
+          >
             <div className={styles.sectionIntro}>
               <span className={styles.sequence}>04</span>
               <div>
                 <h2>Act from projections</h2>
-                <p>Today and Horizon are rebuildable operational views derived from admitted facts and authoritative time.</p>
+                <p>
+                  Today and Horizon are rebuildable operational views derived
+                  from admitted facts and authoritative time.
+                </p>
               </div>
             </div>
-            <OperationalProjections horizon={state.horizon} today={state.today} />
+            <OperationalProjections
+              horizon={state.horizon}
+              today={state.today}
+            />
           </section>
 
-          <section id="world" className={styles.integratedSection} aria-label="World understanding">
+          <section
+            id="world"
+            className={styles.integratedSection}
+            aria-label="World understanding"
+          >
             <div className={styles.sectionIntro}>
               <span className={styles.sequence}>05</span>
               <div>
                 <h2>See admitted World understanding</h2>
-                <p>The Living World is a disposable visual projection. At the current canonical boundary it shows admitted Realm roots only; sparse output is truthful.</p>
+                <p>
+                  The Living World is a disposable visual projection. At the
+                  current canonical boundary it shows admitted Realm roots only;
+                  sparse output is truthful.
+                </p>
               </div>
             </div>
             <LivingWorld projection={state.livingWorld} />
@@ -236,7 +303,8 @@ export function HomeView({ state }: { state: HomeState }) {
         <span className={styles.eyebrow}>RealMe</span>
         <h1 id="world-title">A private World begins here.</h1>
         <p>
-          Sign in to receive one private World and one companion. Your World begins unformed, without a generic map or imposed roster.
+          Sign in to receive one private World and one companion. Your World
+          begins unformed, without a generic map or imposed roster.
         </p>
 
         {state.kind === "signed-out" ? (
