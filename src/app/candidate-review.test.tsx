@@ -11,6 +11,12 @@ import type { CandidateReviewItem } from "@/application/admission/admission";
 
 import { CandidateReview } from "./candidate-review";
 
+const { refresh } = vi.hoisted(() => ({ refresh: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh }),
+}));
+
 const candidate: CandidateReviewItem = {
   createdAt: "2026-08-28T08:00:00.000Z",
   evidence: [
@@ -39,6 +45,7 @@ function submittedBody() {
 
 describe("CandidateReview", () => {
   beforeEach(() => {
+    refresh.mockReset();
     vi.stubGlobal(
       "fetch",
       vi.fn(
@@ -77,9 +84,10 @@ describe("CandidateReview", () => {
       action: "defer",
       candidateId: "candidate-1",
     });
+    expect(refresh).toHaveBeenCalledOnce();
   });
 
-  it("removes a candidate after final acceptance", async () => {
+  it("removes a candidate after final acceptance and refreshes server state", async () => {
     render(<CandidateReview initialCandidates={[candidate]} />);
     fireEvent.click(screen.getByRole("button", { name: "Accept" }));
 
@@ -87,6 +95,7 @@ describe("CandidateReview", () => {
       expect(screen.queryByText("Football")).not.toBeInTheDocument(),
     );
     expect(screen.getByText("Nothing waiting for review")).toBeInTheDocument();
+    expect(refresh).toHaveBeenCalledOnce();
   });
 
   it("submits corrected string durable meaning without rewriting the displayed AI candidate first", async () => {
@@ -111,6 +120,7 @@ describe("CandidateReview", () => {
         subject: "Football life",
       },
     });
+    expect(refresh).toHaveBeenCalledOnce();
   });
 
   it("retains a number when only another correction field changes", async () => {

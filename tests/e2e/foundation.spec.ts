@@ -4,12 +4,10 @@ test("serves the mobile Step 102 candidate boundary without configured secrets",
   page,
 }) => {
   await page.goto("/");
-
   await expect(
     page.getByRole("heading", { name: "A private World begins here." }),
   ).toBeVisible();
   await expect(page.getByText("Build not configured")).toBeVisible();
-
   const response = await page.request.get("/api/health");
   expect(response.ok()).toBe(true);
   await expect(response.json()).resolves.toMatchObject({
@@ -19,26 +17,104 @@ test("serves the mobile Step 102 candidate boundary without configured secrets",
   });
 });
 
+test("keeps the integrated core loop stateful and perceivable at mobile viewport", async ({
+  page,
+  context,
+}) => {
+  await context.clearCookies();
+  await page.goto("/e2e-integrated");
+
+  const navigation = page.getByRole("navigation", { name: "RealMe core loop" });
+  await expect(navigation).toBeVisible();
+  for (const name of [
+    "Capture",
+    "Companion",
+    "Review",
+    "Today & Horizon",
+    "World",
+  ]) {
+    await expect(navigation.getByRole("link", { name })).toBeVisible();
+  }
+
+  await navigation.getByRole("link", { name: "Capture" }).click();
+  await expect(
+    page.getByRole("region", { name: "Capture and continuity" }),
+  ).toBeInViewport();
+  await expect(page.getByLabel("Observation text")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Save observation" }),
+  ).toBeVisible();
+
+  await navigation.getByRole("link", { name: "Companion" }).click();
+  await expect(
+    page.getByRole("region", { name: "Companion" }),
+  ).toBeInViewport();
+  await expect(page.getByRole("textbox", { name: "Message" })).toBeVisible();
+
+  await navigation.getByRole("link", { name: "Review" }).click();
+  const review = page.getByRole("region", {
+    name: "Interpretation review and admission",
+  });
+  await expect(review).toBeInViewport();
+  const realmCard = review.getByRole("article").filter({ hasText: "Family" });
+  for (const action of ["Accept", "Reject", "Correct", "Defer"]) {
+    await expect(realmCard.getByRole("button", { name: action })).toBeVisible();
+  }
+
+  await realmCard.getByRole("button", { name: "Accept" }).click();
+  await expect(review.getByText("Family", { exact: true })).toHaveCount(0);
+
+  await navigation.getByRole("link", { name: "World" }).click();
+  const world = page.getByRole("region", { name: "World understanding" });
+  await expect(world).toBeInViewport();
+  const canonical = world.getByRole("region", { name: "What RealMe knows" });
+  await expect(canonical.getByText("Family", { exact: true })).toBeVisible();
+  await expect(canonical.getByText("Realm", { exact: true })).toBeVisible();
+  const livingWorld = world.getByRole("region", { name: "Living World" });
+  await expect(livingWorld.getByText("Family", { exact: true })).toBeVisible();
+
+  await navigation.getByRole("link", { name: "Review" }).click();
+  const priorityCard = review.getByRole("article").filter({ hasText: "Work" });
+  await priorityCard.getByRole("button", { name: "Accept" }).click();
+  await expect(review.getByText("Work", { exact: true })).toHaveCount(0);
+
+  await navigation.getByRole("link", { name: "World" }).click();
+  await expect(canonical.getByText("Work", { exact: true })).toBeVisible();
+  await expect(canonical.getByText("priority", { exact: true })).toBeVisible();
+  await expect(canonical.getByText("high", { exact: true })).toBeVisible();
+  await expect(livingWorld.getByText("Work", { exact: true })).toHaveCount(0);
+
+  await navigation.getByRole("link", { name: "Today & Horizon" }).click();
+  const projections = page.getByRole("region", {
+    name: "Operational projections",
+  });
+  await expect(projections).toBeInViewport();
+  const commitments = projections.getByRole("region", { name: "Commitments" });
+  await expect(
+    commitments.getByRole("heading", { name: "Today" }),
+  ).toBeVisible();
+  await expect(
+    commitments.getByRole("heading", { name: "Horizon · 30 days" }),
+  ).toBeVisible();
+});
+
 test("captures, places in Today and reconstructs the timeline after reload", async ({
   page,
 }) => {
   const exactText = `Mobile evidence ${crypto.randomUUID()}`;
   await page.goto("/e2e-capture");
-
   const captureRegion = page.getByRole("region", {
     name: "What should be remembered?",
   });
-
   await captureRegion.getByLabel("Observation text").fill(exactText);
   await expect(
     captureRegion.getByText("unsynced", { exact: true }),
   ).toBeVisible();
   await captureRegion.getByRole("button", { name: "Save observation" }).click();
-
   const history = page.getByRole("region", { name: "Observation history" });
-  const savedObservation = history.getByRole("listitem").filter({
-    hasText: exactText,
-  });
+  const savedObservation = history
+    .getByRole("listitem")
+    .filter({ hasText: exactText });
   await expect(
     savedObservation.getByText("saved", { exact: true }),
   ).toBeVisible();
@@ -49,7 +125,6 @@ test("captures, places in Today and reconstructs the timeline after reload", asy
       .getByRole("listitem")
       .filter({ hasText: exactText }),
   ).toBeVisible();
-
   await page.reload();
   await expect(
     page
@@ -69,14 +144,12 @@ test("streams one-companion dialogue after evidence persistence", async ({
 }) => {
   const exactText = `Dialogue evidence ${crypto.randomUUID()}`;
   await page.goto("/e2e-dialogue");
-
   const dialogue = page.getByRole("region", { name: "Dialogue" });
   await dialogue.getByRole("textbox", { name: "Message" }).fill(exactText);
   await dialogue.getByRole("button", { name: "Send" }).click();
-
-  const userMessage = dialogue.getByRole("listitem").filter({
-    hasText: exactText,
-  });
+  const userMessage = dialogue
+    .getByRole("listitem")
+    .filter({ hasText: exactText });
   await expect(userMessage.getByText("saved", { exact: true })).toBeVisible();
   await expect(
     dialogue.getByText("I hear you. Your evidence is safely held."),
@@ -84,7 +157,6 @@ test("streams one-companion dialogue after evidence persistence", async ({
   await expect(
     dialogue.getByText("fixture · step-101-deterministic"),
   ).toBeVisible();
-
   await page.reload();
   const history = page.getByRole("region", { name: "Observation history" });
   await expect(history.getByText(exactText)).toBeVisible();
@@ -96,11 +168,9 @@ test("keeps saved evidence through provider failure and retries idempotently", a
 }) => {
   const exactText = `FAIL_PROVIDER ${crypto.randomUUID()}`;
   await page.goto("/e2e-dialogue");
-
   const dialogue = page.getByRole("region", { name: "Dialogue" });
   await dialogue.getByRole("textbox", { name: "Message" }).fill(exactText);
   await dialogue.getByRole("button", { name: "Send" }).click();
-
   await expect(dialogue.getByText("incomplete", { exact: true })).toBeVisible();
   await expect(
     dialogue.getByText(
@@ -111,7 +181,6 @@ test("keeps saved evidence through provider failure and retries idempotently", a
   await expect(
     dialogue.getByText("I hear you. Your evidence is safely held."),
   ).toBeVisible();
-
   await page.reload();
   const history = page.getByRole("region", { name: "Observation history" });
   await expect(

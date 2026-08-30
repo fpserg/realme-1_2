@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type {
@@ -25,9 +26,8 @@ function scalarKind(value: unknown): ScalarKind {
 }
 
 function parseScalarKind(value: string): ScalarKind {
-  if (value === "string" || value === "number" || value === "boolean") {
+  if (value === "string" || value === "number" || value === "boolean")
     return value;
-  }
   throw new Error("Unsupported scalar type.");
 }
 
@@ -42,9 +42,12 @@ function parseScalar(kind: ScalarKind, value: string): CandidateScalar {
 
 export function CandidateReview({
   initialCandidates,
+  decisionEndpoint = "/api/admission/decision",
 }: {
   initialCandidates: CandidateReviewItem[];
+  decisionEndpoint?: string;
 }) {
+  const router = useRouter();
   const [candidates, setCandidates] = useState(initialCandidates);
   const [editing, setEditing] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
@@ -58,7 +61,7 @@ export function CandidateReview({
     setPending(candidate.id);
     setNotice((current) => ({ ...current, [candidate.id]: "" }));
     try {
-      const response = await fetch("/api/admission/decision", {
+      const response = await fetch(decisionEndpoint, {
         body: JSON.stringify({ action, candidateId: candidate.id, correction }),
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -77,6 +80,7 @@ export function CandidateReview({
         );
       }
       setEditing(null);
+      router.refresh();
     } catch (error) {
       setNotice((current) => ({
         ...current,
@@ -271,9 +275,8 @@ function CorrectionForm({
                 nextKind === "boolean" &&
                 objectValue !== "true" &&
                 objectValue !== "false"
-              ) {
+              )
                 setObjectValue("false");
-              }
               setValueError("");
             } catch (error) {
               setValueError(
