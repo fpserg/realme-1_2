@@ -21,7 +21,11 @@ const state = (
   ...overrides,
 });
 
-const relationship = (predicate: string, sourceNodeId = realmId, targetNodeId = childId) => ({
+const relationship = (
+  predicate: string,
+  sourceNodeId = realmId,
+  targetNodeId = childId,
+) => ({
   id: `relationship-${predicate}-${sourceNodeId}-${targetNodeId}`,
   predicate,
   sourceNodeId,
@@ -53,13 +57,15 @@ describe("composeLivingWorld", () => {
       ],
     });
 
-    expect(composeLivingWorld(canonical).nodes.map((node) => node.canonicalId)).toEqual([
-      realmId,
-      secondRealmId,
-    ]);
-    expect(composeLivingWorld({ ...canonical, nodes: [...canonical.nodes].reverse() })).toEqual(
-      composeLivingWorld(canonical),
-    );
+    expect(
+      composeLivingWorld(canonical).nodes.map((node) => node.canonicalId),
+    ).toEqual([realmId, secondRealmId]);
+    expect(
+      composeLivingWorld({
+        ...canonical,
+        nodes: [...canonical.nodes].reverse(),
+      }),
+    ).toEqual(composeLivingWorld(canonical));
   });
 
   it("keeps a World without an admitted Realm visually sparse", () => {
@@ -94,7 +100,9 @@ describe("composeLivingWorld", () => {
     );
 
     expect(projection.nodes.map((node) => node.canonicalId)).toEqual([realmId]);
-    expect(projection.nodes.some((node) => node.canonicalId === childId)).toBe(false);
+    expect(
+      projection.nodes.some((node) => node.canonicalId === childId),
+    ).toBe(false);
     expect(projection.edges).toEqual([]);
   });
 
