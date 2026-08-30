@@ -154,9 +154,7 @@ describe("HomeView", () => {
     expect(within(canonical).getByText("Work")).toBeInTheDocument();
     expect(within(canonical).getByText("priority")).toBeInTheDocument();
     expect(within(canonical).getByText("high")).toBeInTheDocument();
-    expect(
-      within(canonical).getByText(/Current admitted understanding/),
-    ).toBeInTheDocument();
+    expect(within(canonical).getByText(/accepted by you/)).toBeInTheDocument();
     expect(
       screen.getByRole("region", { name: "Living World" }),
     ).not.toHaveTextContent("Work");
@@ -182,7 +180,7 @@ describe("HomeView", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "The Living World is a disposable visual projection. At the current canonical boundary it shows admitted Realm roots only; sparse output is truthful.",
+        "Canonical understanding is read-only here. The Living World remains a disposable visual projection and currently shows admitted Realm roots only.",
       ),
     ).toBeInTheDocument();
     expect(
