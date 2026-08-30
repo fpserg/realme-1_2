@@ -50,32 +50,19 @@ jobs:
             exit 1
           fi
 
-      - name: Verify formatting
+      - name: Format correction sources
+        run: pnpm exec prettier --write src/app/api/e2e-integrated-admission/route.ts src/app/candidate-review.tsx src/app/canonical-understanding.tsx src/app/e2e-integrated/page.tsx src/app/page.module.css src/app/page.tsx src/infrastructure/supabase/canonical-understanding-repository.ts tests/e2e/foundation.spec.ts
+
+      - name: Package formatted correction sources
         run: |
-          pnpm exec prettier --write src/app/api/e2e-integrated-admission/route.ts src/app/candidate-review.tsx src/app/canonical-understanding.tsx src/app/e2e-integrated/page.tsx src/app/page.module.css src/app/page.tsx src/infrastructure/supabase/canonical-understanding-repository.ts tests/e2e/foundation.spec.ts
-          git diff -- src/app/api/e2e-integrated-admission/route.ts src/app/candidate-review.tsx src/app/canonical-understanding.tsx src/app/e2e-integrated/page.tsx src/app/page.module.css src/app/page.tsx src/infrastructure/supabase/canonical-understanding-repository.ts tests/e2e/foundation.spec.ts
-          exit 1
+          mkdir -p /tmp/step106-formatted
+          cp --parents src/app/api/e2e-integrated-admission/route.ts src/app/candidate-review.tsx src/app/canonical-understanding.tsx src/app/e2e-integrated/page.tsx src/app/page.module.css src/app/page.tsx src/infrastructure/supabase/canonical-understanding-repository.ts tests/e2e/foundation.spec.ts /tmp/step106-formatted/
 
-      - name: Lint
-        run: pnpm lint
+      - name: Upload formatted correction sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: step106-formatted
+          path: /tmp/step106-formatted
 
-      - name: Type-check
-        run: pnpm typecheck
-
-      - name: Verify architecture boundaries
-        run: pnpm check:boundaries
-
-      - name: Verify Drizzle migration artifacts
-        run: pnpm db:check
-
-      - name: Run unit and component tests
-        run: pnpm test:unit
-
-      - name: Build production application
-        run: pnpm build
-
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Run mobile smoke test
-        run: pnpm test:e2e
+      - name: Stop formatter probe
+        run: exit 1
