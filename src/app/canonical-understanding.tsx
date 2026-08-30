@@ -41,7 +41,10 @@ export function CanonicalUnderstanding({
                 <strong>{displayValue(item.value)}</strong>
               </div>
               <p>
-                Current admitted understanding · {item.admissionAction === "correct" ? "admitted correction" : "accepted by you"}
+                Current admitted understanding ·{" "}
+                {item.admissionAction === "correct"
+                  ? "admitted correction"
+                  : "accepted by you"}
               </p>
               <details>
                 <summary>Admission & evidence</summary>
@@ -83,7 +86,9 @@ export function CanonicalUnderstanding({
                     ))}
                   </div>
                 ) : (
-                  <p>No linked evidence fragment is available for this assertion.</p>
+                  <p>
+                    No linked evidence fragment is available for this assertion.
+                  </p>
                 )}
               </details>
             </article>

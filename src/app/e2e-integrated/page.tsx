@@ -17,8 +17,14 @@ const PRIORITY_CANDIDATE = "00000000-0000-4000-8000-000000001062";
 
 const realmCandidate: CandidateReviewItem = {
   createdAt: "2026-08-30T12:00:00.000Z",
-  evidence: [{ exactText: "Family is one of the main parts of my life.", sourceFragmentId: "00000000-0000-4000-8000-000000001080" }],
-  explanation: "Proposes a Realm classification for an existing stable subject.",
+  evidence: [
+    {
+      exactText: "Family is one of the main parts of my life.",
+      sourceFragmentId: "00000000-0000-4000-8000-000000001080",
+    },
+  ],
+  explanation:
+    "Proposes a Realm classification for an existing stable subject.",
   id: REALM_CANDIDATE,
   object: "Realm",
   predicate: "classification",
@@ -28,7 +34,12 @@ const realmCandidate: CandidateReviewItem = {
 
 const priorityCandidate: CandidateReviewItem = {
   createdAt: "2026-08-30T12:01:00.000Z",
-  evidence: [{ exactText: "Work is a high priority right now.", sourceFragmentId: "00000000-0000-4000-8000-000000001081" }],
+  evidence: [
+    {
+      exactText: "Work is a high priority right now.",
+      sourceFragmentId: "00000000-0000-4000-8000-000000001081",
+    },
+  ],
   explanation: "Proposes a non-structural current fact.",
   id: PRIORITY_CANDIDATE,
   object: "high",
@@ -52,7 +63,12 @@ function canonicalItem(
     admittedAt: "2026-08-30T12:02:00.000Z",
     assertionId,
     candidateClaimId,
-    evidence: [{ exactText: evidenceText, sourceFragmentId: `${assertionId.slice(0, -1)}e` }],
+    evidence: [
+      {
+        exactText: evidenceText,
+        sourceFragmentId: `${assertionId.slice(0, -1)}e`,
+      },
+    ],
     predicate,
     subjectLabel,
     subjectNodeId,
@@ -66,8 +82,10 @@ export default async function Step106IntegratedFixturePage() {
   if (process.env.REALME_E2E_FIXTURE !== "1") notFound();
 
   const store = await cookies();
-  const realmAdmitted = store.get("realme_e2e_realm_decision")?.value === "accept";
-  const priorityAdmitted = store.get("realme_e2e_priority_decision")?.value === "accept";
+  const realmAdmitted =
+    store.get("realme_e2e_realm_decision")?.value === "accept";
+  const priorityAdmitted =
+    store.get("realme_e2e_priority_decision")?.value === "accept";
 
   const candidates = [
     ...(realmAdmitted ? [] : [realmCandidate]),
@@ -75,10 +93,30 @@ export default async function Step106IntegratedFixturePage() {
   ];
   const canonicalUnderstanding: CanonicalUnderstandingItem[] = [
     ...(realmAdmitted
-      ? [canonicalItem("00000000-0000-4000-8000-000000001090", REALM_CANDIDATE, REALM_NODE_ID, "Family", "classification", "Realm", "Family is one of the main parts of my life.")]
+      ? [
+          canonicalItem(
+            "00000000-0000-4000-8000-000000001090",
+            REALM_CANDIDATE,
+            REALM_NODE_ID,
+            "Family",
+            "classification",
+            "Realm",
+            "Family is one of the main parts of my life.",
+          ),
+        ]
       : []),
     ...(priorityAdmitted
-      ? [canonicalItem("00000000-0000-4000-8000-000000001091", PRIORITY_CANDIDATE, WORK_NODE_ID, "Work", "priority", "high", "Work is a high priority right now.")]
+      ? [
+          canonicalItem(
+            "00000000-0000-4000-8000-000000001091",
+            PRIORITY_CANDIDATE,
+            WORK_NODE_ID,
+            "Work",
+            "priority",
+            "high",
+            "Work is a high priority right now.",
+          ),
+        ]
       : []),
   ];
 
@@ -95,7 +133,18 @@ export default async function Step106IntegratedFixturePage() {
           edges: [],
           height: 220,
           nodes: realmAdmitted
-            ? [{ canonicalId: REALM_NODE_ID, classification: "Realm", depth: 0, id: REALM_NODE_ID, isRealm: true, label: "Family", x: 160, y: 70 }]
+            ? [
+                {
+                  canonicalId: REALM_NODE_ID,
+                  classification: "Realm",
+                  depth: 0,
+                  id: REALM_NODE_ID,
+                  isRealm: true,
+                  label: "Family",
+                  x: 160,
+                  y: 70,
+                },
+              ]
             : [],
           rendererVersion: "living-world-code-v1",
           structuralHash: realmAdmitted ? "106realm" : "106empty",

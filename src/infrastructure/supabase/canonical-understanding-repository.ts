@@ -23,35 +23,40 @@ export class SupabaseCanonicalUnderstandingRepository
   constructor(private readonly client: SupabaseClient) {}
 
   async listCurrent(worldId: string) {
-    const [assertionsResult, aliasesResult, decisionsResult, evidenceResult, fragmentsResult] =
-      await Promise.all([
-        this.client
-          .from("assertions")
-          .select(
-            "id, world_id, subject_node_id, object_node_id, predicate, value, valid_from, admitted_by_decision_id, supersedes_assertion_id",
-          )
-          .eq("world_id", worldId)
-          .is("valid_to", null),
-        this.client
-          .from("ontology_aliases")
-          .select("node_id, alias, world_id")
-          .eq("world_id", worldId)
-          .is("valid_to", null),
-        this.client
-          .from("admission_decisions")
-          .select(
-            "id, world_id, candidate_claim_id, decision_kind, authority_kind, decided_at",
-          )
-          .eq("world_id", worldId),
-        this.client
-          .from("assertion_evidence")
-          .select("assertion_id, source_fragment_id, world_id")
-          .eq("world_id", worldId),
-        this.client
-          .from("source_fragments")
-          .select("id, exact_text, world_id")
-          .eq("world_id", worldId),
-      ]);
+    const [
+      assertionsResult,
+      aliasesResult,
+      decisionsResult,
+      evidenceResult,
+      fragmentsResult,
+    ] = await Promise.all([
+      this.client
+        .from("assertions")
+        .select(
+          "id, world_id, subject_node_id, object_node_id, predicate, value, valid_from, admitted_by_decision_id, supersedes_assertion_id",
+        )
+        .eq("world_id", worldId)
+        .is("valid_to", null),
+      this.client
+        .from("ontology_aliases")
+        .select("node_id, alias, world_id")
+        .eq("world_id", worldId)
+        .is("valid_to", null),
+      this.client
+        .from("admission_decisions")
+        .select(
+          "id, world_id, candidate_claim_id, decision_kind, authority_kind, decided_at",
+        )
+        .eq("world_id", worldId),
+      this.client
+        .from("assertion_evidence")
+        .select("assertion_id, source_fragment_id, world_id")
+        .eq("world_id", worldId),
+      this.client
+        .from("source_fragments")
+        .select("id, exact_text, world_id")
+        .eq("world_id", worldId),
+    ]);
 
     for (const result of [
       assertionsResult,
@@ -112,7 +117,9 @@ export class SupabaseCanonicalUnderstandingRepository
         (decision.decision_kind !== "accept" &&
           decision.decision_kind !== "correct")
       ) {
-        throw new Error("Active assertion lacks lawful user admission provenance.");
+        throw new Error(
+          "Active assertion lacks lawful user admission provenance.",
+        );
       }
 
       const scalar = readScalar(assertion.value);
@@ -130,7 +137,8 @@ export class SupabaseCanonicalUnderstandingRepository
         assertionId: assertion.id,
         candidateClaimId: decision.candidate_claim_id,
         evidence: [...(evidenceByAssertion.get(assertion.id) ?? [])].sort(
-          (left, right) => compareText(left.sourceFragmentId, right.sourceFragmentId),
+          (left, right) =>
+            compareText(left.sourceFragmentId, right.sourceFragmentId),
         ),
         predicate: assertion.predicate,
         subjectLabel:
