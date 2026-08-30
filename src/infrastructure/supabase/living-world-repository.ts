@@ -18,7 +18,10 @@ export class SupabaseLivingWorldRepository implements LivingWorldRepository {
   async loadCanonicalStructure(worldId: string) {
     const [nodesResult, aliasesResult, assertionsResult, relationshipsResult] =
       await Promise.all([
-        this.client.from("ontology_nodes").select("id, world_id").eq("world_id", worldId),
+        this.client
+          .from("ontology_nodes")
+          .select("id, world_id")
+          .eq("world_id", worldId),
         this.client
           .from("ontology_aliases")
           .select("id, node_id, alias, world_id")
@@ -32,7 +35,9 @@ export class SupabaseLivingWorldRepository implements LivingWorldRepository {
           .is("valid_to", null),
         this.client
           .from("ontology_relationships")
-          .select("id, subject_node_id, object_node_id, predicate, world_id")
+          .select(
+            "id, subject_node_id, object_node_id, predicate, world_id",
+          )
           .eq("world_id", worldId)
           .is("valid_to", null),
       ]);
@@ -93,19 +98,20 @@ export class SupabaseLivingWorldRepository implements LivingWorldRepository {
     });
 
     const knownNodeIds = new Set(canonicalNodes.map((node) => node.id));
-    const canonicalRelationships: CanonicalLivingWorldRelationship[] = relationships
-      .filter(
-        (relationship) =>
-          knownNodeIds.has(relationship.subject_node_id) &&
-          knownNodeIds.has(relationship.object_node_id),
-      )
-      .map((relationship) => ({
-        id: relationship.id,
-        predicate: relationship.predicate,
-        sourceNodeId: relationship.subject_node_id,
-        targetNodeId: relationship.object_node_id,
-      }))
-      .sort((left, right) => compareText(left.id, right.id));
+    const canonicalRelationships: CanonicalLivingWorldRelationship[] =
+      relationships
+        .filter(
+          (relationship) =>
+            knownNodeIds.has(relationship.subject_node_id) &&
+            knownNodeIds.has(relationship.object_node_id),
+        )
+        .map((relationship) => ({
+          id: relationship.id,
+          predicate: relationship.predicate,
+          sourceNodeId: relationship.subject_node_id,
+          targetNodeId: relationship.object_node_id,
+        }))
+        .sort((left, right) => compareText(left.id, right.id));
 
     canonicalNodes.sort((left, right) => compareText(left.id, right.id));
 

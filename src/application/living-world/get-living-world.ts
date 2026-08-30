@@ -10,7 +10,9 @@ export interface LivingWorldRepository {
 
 export class LivingWorldIsolationError extends Error {
   constructor() {
-    super("Living World canonical structure crossed the requested World boundary.");
+    super(
+      "Living World canonical structure crossed the requested World boundary.",
+    );
     this.name = "LivingWorldIsolationError";
   }
 }

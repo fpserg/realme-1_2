@@ -2,8 +2,14 @@ import type { LivingWorldProjection } from "@/domain/living-world/living-world";
 
 import styles from "./living-world.module.css";
 
-export function LivingWorld({ projection }: { projection: LivingWorldProjection }) {
-  const nodeById = new Map(projection.nodes.map((node) => [node.canonicalId, node]));
+export function LivingWorld({
+  projection,
+}: {
+  projection: LivingWorldProjection;
+}) {
+  const nodeById = new Map(
+    projection.nodes.map((node) => [node.canonicalId, node]),
+  );
 
   return (
     <section className={styles.panel} aria-labelledby="living-world-title">
@@ -53,12 +59,23 @@ export function LivingWorld({ projection }: { projection: LivingWorldProjection 
                 key={node.canonicalId}
                 transform={`translate(${node.x} ${node.y})`}
               >
-                <circle className={node.isRealm ? styles.realm : styles.structure} r={node.isRealm ? 34 : 25} />
-                <text className={styles.label} dy={node.isRealm ? 53 : 43} textAnchor="middle">
+                <circle
+                  className={node.isRealm ? styles.realm : styles.structure}
+                  r={node.isRealm ? 34 : 25}
+                />
+                <text
+                  className={styles.label}
+                  dy={node.isRealm ? 53 : 43}
+                  textAnchor="middle"
+                >
                   {node.label}
                 </text>
                 {node.classification ? (
-                  <text className={styles.classification} dy={node.isRealm ? 68 : 58} textAnchor="middle">
+                  <text
+                    className={styles.classification}
+                    dy={node.isRealm ? 68 : 58}
+                    textAnchor="middle"
+                  >
                     {node.classification}
                   </text>
                 ) : null}
@@ -69,7 +86,8 @@ export function LivingWorld({ projection }: { projection: LivingWorldProjection 
       )}
 
       <p className={styles.provenance}>
-        Regenerable from admitted World state · structural hash {projection.structuralHash}
+        Regenerable from admitted World state · structural hash{" "}
+        {projection.structuralHash}
       </p>
     </section>
   );

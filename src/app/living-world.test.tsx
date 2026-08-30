@@ -19,8 +19,14 @@ describe("LivingWorld", () => {
   it("keeps an unformed World visibly sparse", () => {
     render(<LivingWorld projection={emptyProjection} />);
 
-    expect(screen.getByRole("region", { name: "Living World" })).toBeInTheDocument();
-    expect(screen.getByText("No admitted Realms yet. The World remains visually unformed.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Living World" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "No admitted Realms yet. The World remains visually unformed.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("living-world-code-v1")).toBeInTheDocument();
   });
 
@@ -31,7 +37,8 @@ describe("LivingWorld", () => {
           ...emptyProjection,
           edges: [
             {
-              canonicalRelationshipId: "10500000-0000-4000-8000-000000000030",
+              canonicalRelationshipId:
+                "10500000-0000-4000-8000-000000000030",
               predicate: "contains",
               sourceId: "10500000-0000-4000-8000-000000000010",
               targetId: "10500000-0000-4000-8000-000000000011",
@@ -64,9 +71,19 @@ describe("LivingWorld", () => {
       />,
     );
 
-    expect(screen.getByRole("img", { name: "Code-native Living World structure" })).toBeInTheDocument();
-    expect(container.querySelector('[data-canonical-id="10500000-0000-4000-8000-000000000010"]')).not.toBeNull();
-    expect(container.querySelector('[data-canonical-id="10500000-0000-4000-8000-000000000011"]')).not.toBeNull();
+    expect(
+      screen.getByRole("img", { name: "Code-native Living World structure" }),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        '[data-canonical-id="10500000-0000-4000-8000-000000000010"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelector(
+        '[data-canonical-id="10500000-0000-4000-8000-000000000011"]',
+      ),
+    ).not.toBeNull();
     expect(screen.getByText("Practice")).toBeInTheDocument();
     expect(screen.getByText(/structural hash abcdef12/)).toBeInTheDocument();
   });

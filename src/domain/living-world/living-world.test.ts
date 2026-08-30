@@ -25,7 +25,9 @@ describe("composeLivingWorld", () => {
   it("keeps a World without an admitted Realm visually sparse", () => {
     const projection = composeLivingWorld(
       state({
-        nodes: [{ classification: "Practice", id: childId, label: "Football" }],
+        nodes: [
+          { classification: "Practice", id: childId, label: "Football" },
+        ],
       }),
     );
 
@@ -46,21 +48,40 @@ describe("composeLivingWorld", () => {
           { classification: "Place", id: deepId, label: "Pitch" },
         ],
         relationships: [
-          { id: "r3", predicate: "contains", sourceNodeId: grandchildId, targetNodeId: deepId },
-          { id: "r1", predicate: "contains", sourceNodeId: realmId, targetNodeId: childId },
-          { id: "r2", predicate: "contains", sourceNodeId: childId, targetNodeId: grandchildId },
+          {
+            id: "r3",
+            predicate: "contains",
+            sourceNodeId: grandchildId,
+            targetNodeId: deepId,
+          },
+          {
+            id: "r1",
+            predicate: "contains",
+            sourceNodeId: realmId,
+            targetNodeId: childId,
+          },
+          {
+            id: "r2",
+            predicate: "contains",
+            sourceNodeId: childId,
+            targetNodeId: grandchildId,
+          },
         ],
       }),
     );
 
-    expect(projection.nodes.map(({ canonicalId, depth }) => [canonicalId, depth])).toEqual([
+    expect(
+      projection.nodes.map(({ canonicalId, depth }) => [canonicalId, depth]),
+    ).toEqual([
       [realmId, 0],
       [childId, 1],
       [grandchildId, 2],
       [deepId, 3],
       [secondRealmId, 0],
     ]);
-    expect(projection.nodes.every((node) => node.canonicalId === node.id)).toBe(true);
+    expect(
+      projection.nodes.every((node) => node.canonicalId === node.id),
+    ).toBe(true);
   });
 
   it("is deterministic despite canonical return ordering", () => {
@@ -70,7 +91,12 @@ describe("composeLivingWorld", () => {
         { classification: "Realm", id: realmId, label: "Life" },
       ],
       relationships: [
-        { id: "r1", predicate: "contains", sourceNodeId: realmId, targetNodeId: childId },
+        {
+          id: "r1",
+          predicate: "contains",
+          sourceNodeId: realmId,
+          targetNodeId: childId,
+        },
       ],
     });
     const reordered = {
@@ -91,14 +117,23 @@ describe("composeLivingWorld", () => {
           { classification: "Practice", id: childId, label: "Football" },
         ],
         relationships: [
-          { id: "r1", predicate: "contains", sourceNodeId: realmId, targetNodeId: childId },
+          {
+            id: "r1",
+            predicate: "contains",
+            sourceNodeId: realmId,
+            targetNodeId: childId,
+          },
         ],
       }),
     );
 
     expect(before.nodes[0]?.canonicalId).toBe(realmId);
-    expect(after.nodes.find((node) => node.canonicalId === realmId)?.canonicalId).toBe(realmId);
-    expect(after.nodes.find((node) => node.canonicalId === childId)?.depth).toBe(1);
+    expect(
+      after.nodes.find((node) => node.canonicalId === realmId)?.canonicalId,
+    ).toBe(realmId);
+    expect(after.nodes.find((node) => node.canonicalId === childId)?.depth).toBe(
+      1,
+    );
   });
 
   it("reclassification and parent movement change composition without changing node identity", () => {
@@ -110,8 +145,18 @@ describe("composeLivingWorld", () => {
           { classification: "Place", id: grandchildId, label: "Pitch" },
         ],
         relationships: [
-          { id: "r1", predicate: "contains", sourceNodeId: realmId, targetNodeId: childId },
-          { id: "r2", predicate: "contains", sourceNodeId: childId, targetNodeId: grandchildId },
+          {
+            id: "r1",
+            predicate: "contains",
+            sourceNodeId: realmId,
+            targetNodeId: childId,
+          },
+          {
+            id: "r2",
+            predicate: "contains",
+            sourceNodeId: childId,
+            targetNodeId: grandchildId,
+          },
         ],
       }),
     );
@@ -123,19 +168,32 @@ describe("composeLivingWorld", () => {
           { classification: "Place", id: grandchildId, label: "Pitch" },
         ],
         relationships: [
-          { id: "r3", predicate: "contains", sourceNodeId: realmId, targetNodeId: grandchildId },
+          {
+            id: "r3",
+            predicate: "contains",
+            sourceNodeId: realmId,
+            targetNodeId: grandchildId,
+          },
         ],
       }),
     );
 
-    expect(first.nodes.find((node) => node.canonicalId === childId)?.depth).toBe(1);
-    expect(evolved.nodes.find((node) => node.canonicalId === childId)).toMatchObject({
+    expect(first.nodes.find((node) => node.canonicalId === childId)?.depth).toBe(
+      1,
+    );
+    expect(
+      evolved.nodes.find((node) => node.canonicalId === childId),
+    ).toMatchObject({
       canonicalId: childId,
       classification: "Realm",
       depth: 0,
     });
-    expect(first.nodes.find((node) => node.canonicalId === grandchildId)?.depth).toBe(2);
-    expect(evolved.nodes.find((node) => node.canonicalId === grandchildId)?.depth).toBe(1);
+    expect(
+      first.nodes.find((node) => node.canonicalId === grandchildId)?.depth,
+    ).toBe(2);
+    expect(
+      evolved.nodes.find((node) => node.canonicalId === grandchildId)?.depth,
+    ).toBe(1);
   });
 
   it("can be discarded and regenerated without changing canonical truth", () => {
@@ -145,12 +203,19 @@ describe("composeLivingWorld", () => {
         { classification: "Practice", id: childId, label: "Football" },
       ],
       relationships: [
-        { id: "r1", predicate: "contains", sourceNodeId: realmId, targetNodeId: childId },
+        {
+          id: "r1",
+          predicate: "contains",
+          sourceNodeId: realmId,
+          targetNodeId: childId,
+        },
       ],
     });
     const fingerprintBefore = JSON.stringify(canonical);
     const first = composeLivingWorld(canonical);
-    const regenerated = composeLivingWorld(JSON.parse(JSON.stringify(canonical)) as CanonicalLivingWorldState);
+    const regenerated = composeLivingWorld(
+      JSON.parse(JSON.stringify(canonical)) as CanonicalLivingWorldState,
+    );
 
     expect(regenerated).toEqual(first);
     expect(JSON.stringify(canonical)).toBe(fingerprintBefore);
