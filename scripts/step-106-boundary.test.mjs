@@ -45,8 +45,12 @@ describe("Step 106 canonical-understanding boundary", () => {
       expect(repository).not.toContain(forbidden);
     }
 
-    expect(page).toContain("getCurrentWorld(userId");
-    expect(page).toContain("listCanonicalUnderstanding(access.worldId");
+    expect(page).toContain("const access = await getCurrentWorld(");
+    expect(page).toContain("userId,");
+    expect(page).toContain(
+      "const canonicalUnderstanding = await listCanonicalUnderstanding(",
+    );
+    expect(page).toContain("access.worldId,");
   });
 
   it("refreshes authoritative server reads after successful admission", () => {
