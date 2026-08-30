@@ -64,100 +64,35 @@ const hashText = (value: string) => {
 export function composeLivingWorld(
   canonical: CanonicalLivingWorldState,
 ): LivingWorldProjection {
-  const nodes = [...canonical.nodes].sort((left, right) =>
-    compareText(left.id, right.id),
-  );
-  const relationships = [...canonical.relationships].sort((left, right) =>
-    compareText(left.id, right.id),
-  );
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const realmIds = nodes
+  const realmNodes = [...canonical.nodes]
     .filter((node) => isRealm(node.classification))
-    .map((node) => node.id);
-  const depths = new Map<string, number>(realmIds.map((id) => [id, 0]));
-  const queue = [...realmIds];
+    .sort((left, right) => compareText(left.id, right.id));
 
-  while (queue.length > 0) {
-    const sourceId = queue.shift();
-    if (!sourceId) break;
-    const sourceDepth = depths.get(sourceId);
-    if (sourceDepth === undefined) continue;
-
-    for (const relationship of relationships) {
-      if (
-        relationship.sourceNodeId !== sourceId ||
-        !nodeById.has(relationship.targetNodeId)
-      ) {
-        continue;
-      }
-
-      const nextDepth = sourceDepth + 1;
-      const currentDepth = depths.get(relationship.targetNodeId);
-      if (currentDepth === undefined || nextDepth < currentDepth) {
-        depths.set(relationship.targetNodeId, nextDepth);
-        queue.push(relationship.targetNodeId);
-      }
-    }
-  }
-
-  const visibleNodes = nodes.filter((node) => depths.has(node.id));
-  const levels = new Map<number, CanonicalLivingWorldNode[]>();
-  for (const node of visibleNodes) {
-    const depth = depths.get(node.id);
-    if (depth === undefined) continue;
-    const level = levels.get(depth) ?? [];
-    level.push(node);
-    levels.set(depth, level);
-  }
-
+  // Step 105 intentionally gives generic ontology relationships no structural
+  // authority. The accepted canonical model does not yet define a universal
+  // containment relation, so only admitted Realm roots are structurally visible.
+  // Keeping relationships on CanonicalLivingWorldState preserves the projection
+  // boundary for a later accepted structural law without fabricating one now.
   const horizontalGap = 180;
-  const verticalGap = 130;
   const margin = 70;
-  const maxLevelSize = Math.max(
-    1,
-    ...[...levels.values()].map((level) => level.length),
+  const width = Math.max(
+    320,
+    margin * 2 + Math.max(0, realmNodes.length - 1) * horizontalGap,
   );
-  const width = Math.max(320, margin * 2 + (maxLevelSize - 1) * horizontalGap);
-  const maxDepth = Math.max(0, ...depths.values());
-  const height = Math.max(220, margin * 2 + maxDepth * verticalGap);
+  const height = 220;
+  const levelWidth = Math.max(0, realmNodes.length - 1) * horizontalGap;
+  const startX = (width - levelWidth) / 2;
 
-  const projectedNodes: LivingWorldNode[] = [];
-  for (const [depth, level] of [...levels.entries()].sort(
-    ([left], [right]) => left - right,
-  )) {
-    level.sort((left, right) => compareText(left.id, right.id));
-    const levelWidth = (level.length - 1) * horizontalGap;
-    const startX = (width - levelWidth) / 2;
+  const projectedNodes: LivingWorldNode[] = realmNodes.map((node, index) => ({
+    ...node,
+    canonicalId: node.id,
+    depth: 0,
+    isRealm: true,
+    x: startX + index * horizontalGap,
+    y: margin,
+  }));
 
-    level.forEach((node, index) => {
-      projectedNodes.push({
-        ...node,
-        canonicalId: node.id,
-        depth,
-        isRealm: isRealm(node.classification),
-        x: startX + index * horizontalGap,
-        y: margin + depth * verticalGap,
-      });
-    });
-  }
-
-  projectedNodes.sort((left, right) =>
-    compareText(left.canonicalId, right.canonicalId),
-  );
-  const visibleIds = new Set(projectedNodes.map((node) => node.canonicalId));
-  const edges = relationships
-    .filter(
-      (relationship) =>
-        visibleIds.has(relationship.sourceNodeId) &&
-        visibleIds.has(relationship.targetNodeId),
-    )
-    .map((relationship) => ({
-      canonicalRelationshipId: relationship.id,
-      predicate: relationship.predicate,
-      sourceId: relationship.sourceNodeId,
-      targetId: relationship.targetNodeId,
-    }));
-
+  const edges: LivingWorldEdge[] = [];
   const structuralValue = JSON.stringify({
     edges,
     nodes: projectedNodes.map(

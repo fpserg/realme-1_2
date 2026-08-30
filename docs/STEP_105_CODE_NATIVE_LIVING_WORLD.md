@@ -1,8 +1,8 @@
 # Step 105 — Code-Native Living World
 
-Version: 0.1
+Version: 0.2
 
-Status: OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED
+Status: OPEN / IMPLEMENTATION CORRECTION CANDIDATE / NOT ACCEPTED
 
 Authorized base: `9bdf2e18f4f3ec579e1dc2f3d9b4bf5be6cef67a`
 
@@ -19,35 +19,59 @@ projection inputs.
 
 ## Projection law
 
-`living-world-code-v1` is a pure TypeScript renderer. It:
+`living-world-code-v1` is a pure TypeScript renderer. At the currently accepted
+canonical boundary it:
 
-- identifies roots only from admitted `classification = Realm` assertions;
-- preserves ontology-node UUIDs as visual primitive identities;
-- preserves admitted relationship UUIDs and predicates as visual edges;
-- follows admitted directed relationships to arbitrary depth without naming a
-  mandatory lower tier;
-- sorts canonical nodes and relationships by stable ID before composition;
-- uses deterministic minimum graph distance from an admitted Realm only for
-  derivative placement;
-- retains every visible admitted edge rather than selecting a canonical parent;
+- identifies visible structural roots only from admitted `classification = Realm`
+  assertions;
+- preserves Realm ontology-node UUIDs as visual primitive identities;
+- gives generic admitted ontology relationships no structural-containment
+  authority;
+- does not infer descendants, depth or hierarchy from relationship direction or
+  predicate spelling;
+- does not treat `contains`, `parent_of`, `part_of`, `belongs_to` or any other
+  predicate string as containment merely by intuition;
+- sorts admitted Realm roots by stable ID before composition;
+- places admitted Realm roots deterministically at depth zero;
 - leaves Worlds without an admitted Realm visually sparse;
 - uses active canonical aliases only as presentation labels and a deterministic
   `Unlabeled structure` fallback when no alias exists;
 - emits a deterministic structural hash together with the explicit renderer
   version as derivative provenance.
 
-Cycles, multiple incoming relationships and unusual relationship predicates are
-not resolved into new ontology. The compositor merely lays out the admitted
-graph and preserves its edges.
+Generic admitted relationships may remain present in canonical projection input
+for future evolution, but they currently create neither visible Living World
+edges nor structural descendants. In particular, an otherwise invisible
+non-Realm node is never exposed merely because an admitted relationship points
+to it.
+
+Sparse Realm-root-only output is constitutionally correct at this stage. It is
+not a degraded fallback. The accepted canonical model has not yet established a
+universally authorized containment semantic beneath Realm, and Step 105 does not
+invent one to make the World look richer.
+
+## Dormant arbitrary-depth capability
+
+The renderer contract already accepts generic canonical nodes and relationships,
+so a future accepted structural-containment law can supply lower structural
+visibility without replacing the Living World projection boundary, stable node
+identity, renderer provenance or code-native composition architecture.
+
+Arbitrary-depth projection is therefore an architectural capability, not a
+fabricated current ontology. Domain, Locus and any other lower tier remain
+personal/discoverable rather than universal renderer ranks.
 
 ## Identity-preserving evolution
 
-Label, classification and relationship changes alter the generated projection
-without changing the canonical node UUID. Adding an admitted child extends the
-visible graph while existing projected identities remain stable. Reclassifying a
-node as Realm may change its derivative depth to zero; moving it through a new
-active relationship may change its position; neither operation creates a visual
-replacement identity.
+A label change or admitted reclassification may alter the generated projection
+without changing the canonical node UUID. In the current slice, a node becomes a
+visible structural root only when its active admitted classification is Realm;
+reclassification away from Realm removes that derivative root without replacing
+its canonical identity.
+
+Generic relationship additions, removals, chains, cycles or direction changes do
+not currently alter structural visibility or depth because no accepted universal
+containment law authorizes them to do so.
 
 ## Regeneration
 
@@ -80,10 +104,10 @@ remains the end of the migration chain.
 ## Visible boundary
 
 The authenticated home surface shows a small read-only SVG projection made of
-edges, node shapes and labels. It exposes renderer version, stable structural
-hash and canonical IDs in the DOM for verification. It is intentionally not the
-Step 106 integrated perceivable experience, an authored World Viewer or a map
-editor.
+code-native Realm primitives and labels. It exposes renderer version, stable
+structural hash and canonical IDs in the DOM for verification. It is
+intentionally not the Step 106 integrated perceivable experience, an authored
+World Viewer or a map editor.
 
 ## Explicit exclusions
 

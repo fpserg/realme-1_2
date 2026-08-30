@@ -29,7 +29,7 @@ describe("Step 105 Living World boundary", () => {
     expect(migrations.some((name) => /step_105/i.test(name))).toBe(false);
   });
 
-  it("keeps the renderer code-native and explicitly versioned", async () => {
+  it("keeps the renderer code-native, explicitly versioned and Realm-root-only", async () => {
     const source = await readFile(
       "src/domain/living-world/living-world.ts",
       "utf8",
@@ -40,6 +40,9 @@ describe("Step 105 Living World boundary", () => {
     );
     expect(source).toContain("canonicalId: node.id");
     expect(source).toContain("structuralHash");
+    expect(source).toContain("const edges: LivingWorldEdge[] = []");
+    expect(source).toContain("generic ontology relationships no structural");
     expect(source).not.toMatch(/Domain|Locus/);
+    expect(source).not.toMatch(/queue\.shift|nextDepth|depths\.set/);
   });
 });

@@ -30,19 +30,11 @@ describe("LivingWorld", () => {
     expect(screen.getByText("living-world-code-v1")).toBeInTheDocument();
   });
 
-  it("exposes code-native primitives with canonical identity", () => {
+  it("exposes code-native Realm primitives with canonical identity", () => {
     const { container } = render(
       <LivingWorld
         projection={{
           ...emptyProjection,
-          edges: [
-            {
-              canonicalRelationshipId: "10500000-0000-4000-8000-000000000030",
-              predicate: "contains",
-              sourceId: "10500000-0000-4000-8000-000000000010",
-              targetId: "10500000-0000-4000-8000-000000000011",
-            },
-          ],
           nodes: [
             {
               canonicalId: "10500000-0000-4000-8000-000000000010",
@@ -51,18 +43,18 @@ describe("LivingWorld", () => {
               id: "10500000-0000-4000-8000-000000000010",
               isRealm: true,
               label: "Life",
-              x: 160,
+              x: 70,
               y: 70,
             },
             {
-              canonicalId: "10500000-0000-4000-8000-000000000011",
-              classification: "Practice",
-              depth: 1,
-              id: "10500000-0000-4000-8000-000000000011",
-              isRealm: false,
-              label: "Football",
-              x: 160,
-              y: 200,
+              canonicalId: "10500000-0000-4000-8000-000000000020",
+              classification: "Realm",
+              depth: 0,
+              id: "10500000-0000-4000-8000-000000000020",
+              isRealm: true,
+              label: "Work",
+              x: 250,
+              y: 70,
             },
           ],
           structuralHash: "abcdef12",
@@ -80,10 +72,10 @@ describe("LivingWorld", () => {
     ).not.toBeNull();
     expect(
       container.querySelector(
-        '[data-canonical-id="10500000-0000-4000-8000-000000000011"]',
+        '[data-canonical-id="10500000-0000-4000-8000-000000000020"]',
       ),
     ).not.toBeNull();
-    expect(screen.getByText("Practice")).toBeInTheDocument();
+    expect(screen.getAllByText("Realm")).toHaveLength(2);
     expect(screen.getByText(/structural hash abcdef12/)).toBeInTheDocument();
   });
 });
