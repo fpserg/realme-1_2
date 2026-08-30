@@ -1,7 +1,11 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { HomeView } from "./page";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 const livingWorld = {
   edges: [],
@@ -71,9 +75,7 @@ describe("HomeView", () => {
     expect(
       screen.getByRole("region", { name: "Capture and continuity" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("region", { name: "Companion" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Companion" })).toBeInTheDocument();
     expect(
       screen.getByRole("region", {
         name: "Interpretation review and admission",
@@ -114,6 +116,42 @@ describe("HomeView", () => {
         "No admitted Realms yet. The World remains visually unformed.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("shows a current non-Realm, non-commitment assertion as canonical understanding", () => {
+    render(
+      <HomeView
+        state={{
+          ...readyState,
+          canonicalUnderstanding: [
+            {
+              admissionAction: "accept",
+              admissionDecisionId: "decision-1",
+              admittedAt: "2026-08-30T10:00:00.000Z",
+              assertionId: "assertion-1",
+              candidateClaimId: "candidate-1",
+              evidence: [
+                { exactText: "Work is a high priority right now.", sourceFragmentId: "fragment-1" },
+              ],
+              predicate: "priority",
+              subjectLabel: "Work",
+              subjectNodeId: "node-work",
+              supersedesAssertionId: null,
+              validFrom: "2026-08-30T10:00:00.000Z",
+              value: "high",
+            },
+          ],
+        }}
+      />,
+    );
+
+    const canonical = screen.getByRole("region", { name: "What RealMe knows" });
+    expect(within(canonical).getByText("Work")).toBeInTheDocument();
+    expect(within(canonical).getByText("priority")).toBeInTheDocument();
+    expect(within(canonical).getByText("high")).toBeInTheDocument();
+    expect(within(canonical).getByText(/Current admitted understanding/)).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Living World" })).not.toHaveTextContent("Work");
+    expect(screen.getByRole("region", { name: "Commitments" })).not.toHaveTextContent("Work");
   });
 
   it("labels Today, Horizon and Living World as derived projections", () => {
