@@ -19,6 +19,62 @@ test("serves the mobile Step 102 candidate boundary without configured secrets",
   });
 });
 
+test("keeps the integrated core loop perceivable at mobile viewport", async ({
+  page,
+}) => {
+  await page.goto("/e2e-integrated");
+
+  const navigation = page.getByRole("navigation", { name: "RealMe core loop" });
+  await expect(navigation).toBeVisible();
+
+  for (const name of [
+    "Capture",
+    "Companion",
+    "Review",
+    "Today & Horizon",
+    "World",
+  ]) {
+    await expect(navigation.getByRole("link", { name })).toBeVisible();
+  }
+
+  await navigation.getByRole("link", { name: "Capture" }).click();
+  await expect(
+    page.getByRole("region", { name: "Capture and continuity" }),
+  ).toBeInViewport();
+  await expect(page.getByLabel("Observation text")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save observation" })).toBeVisible();
+
+  await navigation.getByRole("link", { name: "Companion" }).click();
+  await expect(page.getByRole("region", { name: "Companion" })).toBeInViewport();
+  await expect(page.getByRole("textbox", { name: "Message" })).toBeVisible();
+
+  await navigation.getByRole("link", { name: "Review" }).click();
+  await expect(
+    page.getByRole("region", { name: "Interpretation review and admission" }),
+  ).toBeInViewport();
+  await expect(
+    page.getByRole("heading", { name: "Nothing waiting for review" }),
+  ).toBeVisible();
+
+  await navigation.getByRole("link", { name: "Today & Horizon" }).click();
+  await expect(
+    page.getByRole("region", { name: "Operational projections" }),
+  ).toBeInViewport();
+  await expect(page.getByRole("heading", { name: "Today" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Horizon · 30 days" }),
+  ).toBeVisible();
+
+  await navigation.getByRole("link", { name: "World" }).click();
+  await expect(
+    page.getByRole("region", { name: "World understanding" }),
+  ).toBeInViewport();
+  await expect(page.getByRole("region", { name: "Living World" })).toBeVisible();
+  await expect(
+    page.getByText("No admitted Realms yet. The World remains visually unformed."),
+  ).toBeVisible();
+});
+
 test("captures, places in Today and reconstructs the timeline after reload", async ({
   page,
 }) => {
