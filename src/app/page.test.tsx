@@ -3,6 +3,16 @@ import { describe, expect, it } from "vitest";
 
 import { HomeView } from "./page";
 
+const livingWorld = {
+  edges: [],
+  height: 220,
+  nodes: [],
+  rendererVersion: "living-world-code-v1" as const,
+  structuralHash: "00000000",
+  width: 320,
+  worldId: "10500000-0000-4000-8000-000000000001",
+};
+
 describe("HomeView", () => {
   it("keeps an unconfigured build truthful and unformed", () => {
     render(<HomeView state={{ kind: "configuration-needed" }} />);
@@ -11,13 +21,13 @@ describe("HomeView", () => {
       screen.getByRole("heading", { name: "A private World begins here." }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("103 accepted · 104 implementation candidate"),
+      screen.getByText("104 accepted · 105 implementation candidate"),
     ).toBeInTheDocument();
     expect(screen.getByText("Build not configured")).toBeInTheDocument();
     expect(screen.getByText("Derived only")).toBeInTheDocument();
   });
 
-  it("shows disposable Today and Horizon projections beside the accepted surfaces", () => {
+  it("shows the code-native Living World beside accepted operational surfaces", () => {
     render(
       <HomeView
         state={{
@@ -25,6 +35,7 @@ describe("HomeView", () => {
           candidates: [],
           horizon: [],
           kind: "ready",
+          livingWorld,
           observations: [],
           temporal: { currentPeriod: null, setting: null },
           today: [],
@@ -32,6 +43,9 @@ describe("HomeView", () => {
       />,
     );
 
+    expect(
+      screen.getByRole("region", { name: "Living World" }),
+    ).toBeInTheDocument();
     const commitments = screen.getByRole("region", { name: "Commitments" });
     expect(
       within(commitments).getByRole("heading", { name: "Today" }),

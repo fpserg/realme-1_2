@@ -1,0 +1,86 @@
+.panel {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 18px;
+}
+
+.headingRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.headingRow h2 {
+  margin: 4px 0 0;
+  font-size: 1.35rem;
+}
+
+.eyebrow,
+.version,
+.provenance,
+.classification {
+  opacity: 0.66;
+  font-size: 0.75rem;
+}
+
+.version {
+  font-family: monospace;
+}
+
+.empty {
+  margin: 20px 0 6px;
+  opacity: 0.74;
+}
+
+.canvasWrap {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  min-width: 320px;
+}
+
+.edge {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  opacity: 0.28;
+}
+
+.realm,
+.structure {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.realm {
+  stroke-width: 3;
+}
+
+.structure {
+  opacity: 0.72;
+}
+
+.label,
+.classification {
+  fill: currentColor;
+  font-family: inherit;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.classification {
+  font-size: 10px;
+}
+
+.provenance {
+  margin: 12px 0 0;
+}
