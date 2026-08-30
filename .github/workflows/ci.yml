@@ -51,10 +51,7 @@ jobs:
           fi
 
       - name: Verify formatting
-        run: |
-          pnpm exec prettier --write scripts/step-105-boundary.test.mjs src/app/living-world.test.tsx src/domain/living-world/living-world.test.ts src/domain/living-world/living-world.ts src/infrastructure/supabase/living-world-repository.ts
-          git diff -- scripts/step-105-boundary.test.mjs src/app/living-world.test.tsx src/domain/living-world/living-world.test.ts src/domain/living-world/living-world.ts src/infrastructure/supabase/living-world-repository.ts
-          exit 1
+        run: pnpm format:check
 
       - name: Lint
         run: pnpm lint

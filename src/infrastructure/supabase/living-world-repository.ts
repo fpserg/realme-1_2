@@ -35,9 +35,7 @@ export class SupabaseLivingWorldRepository implements LivingWorldRepository {
           .is("valid_to", null),
         this.client
           .from("ontology_relationships")
-          .select(
-            "id, subject_node_id, object_node_id, predicate, world_id",
-          )
+          .select("id, subject_node_id, object_node_id, predicate, world_id")
           .eq("world_id", worldId)
           .is("valid_to", null),
       ]);

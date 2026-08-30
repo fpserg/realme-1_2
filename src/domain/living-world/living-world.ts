@@ -117,10 +117,7 @@ export function composeLivingWorld(
     1,
     ...[...levels.values()].map((level) => level.length),
   );
-  const width = Math.max(
-    320,
-    margin * 2 + (maxLevelSize - 1) * horizontalGap,
-  );
+  const width = Math.max(320, margin * 2 + (maxLevelSize - 1) * horizontalGap);
   const maxDepth = Math.max(0, ...depths.values());
   const height = Math.max(220, margin * 2 + maxDepth * verticalGap);
 
@@ -147,9 +144,7 @@ export function composeLivingWorld(
   projectedNodes.sort((left, right) =>
     compareText(left.canonicalId, right.canonicalId),
   );
-  const visibleIds = new Set(
-    projectedNodes.map((node) => node.canonicalId),
-  );
+  const visibleIds = new Set(projectedNodes.map((node) => node.canonicalId));
   const edges = relationships
     .filter(
       (relationship) =>

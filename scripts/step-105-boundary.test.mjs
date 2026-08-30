@@ -2,8 +2,7 @@ import { readFile, readdir } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
-const repositoryPath =
-  "src/infrastructure/supabase/living-world-repository.ts";
+const repositoryPath = "src/infrastructure/supabase/living-world-repository.ts";
 
 describe("Step 105 Living World boundary", () => {
   it("reads only admitted World Model structure and exposes no mutation path", async () => {

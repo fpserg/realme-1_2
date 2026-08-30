@@ -37,8 +37,7 @@ describe("LivingWorld", () => {
           ...emptyProjection,
           edges: [
             {
-              canonicalRelationshipId:
-                "10500000-0000-4000-8000-000000000030",
+              canonicalRelationshipId: "10500000-0000-4000-8000-000000000030",
               predicate: "contains",
               sourceId: "10500000-0000-4000-8000-000000000010",
               targetId: "10500000-0000-4000-8000-000000000011",

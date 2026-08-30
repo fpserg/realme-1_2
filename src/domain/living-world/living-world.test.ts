@@ -25,9 +25,7 @@ describe("composeLivingWorld", () => {
   it("keeps a World without an admitted Realm visually sparse", () => {
     const projection = composeLivingWorld(
       state({
-        nodes: [
-          { classification: "Practice", id: childId, label: "Football" },
-        ],
+        nodes: [{ classification: "Practice", id: childId, label: "Football" }],
       }),
     );
 
@@ -79,9 +77,9 @@ describe("composeLivingWorld", () => {
       [deepId, 3],
       [secondRealmId, 0],
     ]);
-    expect(
-      projection.nodes.every((node) => node.canonicalId === node.id),
-    ).toBe(true);
+    expect(projection.nodes.every((node) => node.canonicalId === node.id)).toBe(
+      true,
+    );
   });
 
   it("is deterministic despite canonical return ordering", () => {
@@ -105,7 +103,9 @@ describe("composeLivingWorld", () => {
       relationships: [...canonical.relationships].reverse(),
     };
 
-    expect(composeLivingWorld(reordered)).toEqual(composeLivingWorld(canonical));
+    expect(composeLivingWorld(reordered)).toEqual(
+      composeLivingWorld(canonical),
+    );
   });
 
   it("adds admitted structure without replacing existing identity", () => {
@@ -131,9 +131,9 @@ describe("composeLivingWorld", () => {
     expect(
       after.nodes.find((node) => node.canonicalId === realmId)?.canonicalId,
     ).toBe(realmId);
-    expect(after.nodes.find((node) => node.canonicalId === childId)?.depth).toBe(
-      1,
-    );
+    expect(
+      after.nodes.find((node) => node.canonicalId === childId)?.depth,
+    ).toBe(1);
   });
 
   it("reclassification and parent movement change composition without changing node identity", () => {
@@ -178,9 +178,9 @@ describe("composeLivingWorld", () => {
       }),
     );
 
-    expect(first.nodes.find((node) => node.canonicalId === childId)?.depth).toBe(
-      1,
-    );
+    expect(
+      first.nodes.find((node) => node.canonicalId === childId)?.depth,
+    ).toBe(1);
     expect(
       evolved.nodes.find((node) => node.canonicalId === childId),
     ).toMatchObject({
