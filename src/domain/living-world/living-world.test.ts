@@ -100,9 +100,9 @@ describe("composeLivingWorld", () => {
     );
 
     expect(projection.nodes.map((node) => node.canonicalId)).toEqual([realmId]);
-    expect(
-      projection.nodes.some((node) => node.canonicalId === childId),
-    ).toBe(false);
+    expect(projection.nodes.some((node) => node.canonicalId === childId)).toBe(
+      false,
+    );
     expect(projection.edges).toEqual([]);
   });
 
@@ -163,7 +163,9 @@ describe("composeLivingWorld", () => {
       relationships: [...canonical.relationships].reverse(),
     };
 
-    expect(composeLivingWorld(reordered)).toEqual(composeLivingWorld(canonical));
+    expect(composeLivingWorld(reordered)).toEqual(
+      composeLivingWorld(canonical),
+    );
   });
 
   it("changes Realm-root projection through admitted reclassification without identity loss", () => {
@@ -195,7 +197,9 @@ describe("composeLivingWorld", () => {
       ],
     });
 
-    expect(composeLivingWorld(canonical)).toEqual(composeLivingWorld(canonical));
+    expect(composeLivingWorld(canonical)).toEqual(
+      composeLivingWorld(canonical),
+    );
   });
 
   it("can be discarded and regenerated without changing canonical truth", () => {
