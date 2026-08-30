@@ -51,7 +51,10 @@ jobs:
           fi
 
       - name: Verify formatting
-        run: pnpm format:check
+        run: |
+          pnpm exec prettier --write src/app/page.module.css src/app/page.tsx tests/e2e/foundation.spec.ts
+          git diff -- src/app/page.module.css src/app/page.tsx tests/e2e/foundation.spec.ts
+          exit 1
 
       - name: Lint
         run: pnpm lint
