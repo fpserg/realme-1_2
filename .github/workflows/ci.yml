@@ -1,12 +1,14 @@
 name: CI
 
 on:
+  pull_request:
   push:
     branches:
-      - "agent/step-106-integrated-perceivable-experience"
+      - main
+      - "agent/**"
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -18,10 +20,8 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      - name: Check out Step 106 branch
+      - name: Check out repository
         uses: actions/checkout@v6
-        with:
-          ref: agent/step-106-integrated-perceivable-experience
 
       - name: Use Node.js 24
         uses: actions/setup-node@v6
@@ -37,16 +37,42 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Format only Step 106 correction files
-        run: pnpm exec prettier --write src/app/api/e2e-integrated-admission/route.ts src/app/candidate-review.tsx src/app/canonical-understanding.tsx src/app/e2e-integrated/page.tsx src/app/page.module.css src/app/page.tsx src/infrastructure/supabase/canonical-understanding-repository.ts tests/e2e/foundation.spec.ts
+      - name: Audit complete dependency graph
+        run: pnpm audit:security
 
-      - name: Commit bounded formatter result
+      - name: Verify environment-secret exclusions
         run: |
-          if git diff --quiet -- src/app/api/e2e-integrated-admission/route.ts src/app/candidate-review.tsx src/app/canonical-understanding.tsx src/app/e2e-integrated/page.tsx src/app/page.module.css src/app/page.tsx src/infrastructure/supabase/canonical-understanding-repository.ts tests/e2e/foundation.spec.ts; then
-            exit 0
+          git check-ignore --no-index --quiet .env.production
+          git check-ignore --no-index --quiet .env.development
+          git check-ignore --no-index --quiet .env.test
+          if git check-ignore --no-index --quiet .env.example; then
+            echo ".env.example must remain tracked"
+            exit 1
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/app/api/e2e-integrated-admission/route.ts src/app/candidate-review.tsx src/app/canonical-understanding.tsx src/app/e2e-integrated/page.tsx src/app/page.module.css src/app/page.tsx src/infrastructure/supabase/canonical-understanding-repository.ts tests/e2e/foundation.spec.ts
-          git commit -m "Apply exact Step 106 formatting"
-          git push origin HEAD:agent/step-106-integrated-perceivable-experience
+
+      - name: Verify formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Verify architecture boundaries
+        run: pnpm check:boundaries
+
+      - name: Verify Drizzle migration artifacts
+        run: pnpm db:check
+
+      - name: Run unit and component tests
+        run: pnpm test:unit
+
+      - name: Build production application
+        run: pnpm build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run mobile smoke test
+        run: pnpm test:e2e
