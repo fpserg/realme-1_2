@@ -16,17 +16,29 @@ export async function POST(request: Request) {
     !body.candidateId ||
     !["accept", "reject", "correct", "defer"].includes(body.action ?? "")
   ) {
-    return NextResponse.json({ error: "Invalid fixture decision." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid fixture decision." },
+      { status: 400 },
+    );
   }
 
   const response = NextResponse.json({ ok: true });
-  if (body.action === "accept" || body.action === "correct" || body.action === "reject") {
-    const key = body.candidateId === REALM_CANDIDATE
-      ? "realme_e2e_realm_decision"
-      : body.candidateId === PRIORITY_CANDIDATE
-        ? "realme_e2e_priority_decision"
-        : null;
-    if (key) response.cookies.set(key, body.action, { httpOnly: true, sameSite: "lax" });
+  if (
+    body.action === "accept" ||
+    body.action === "correct" ||
+    body.action === "reject"
+  ) {
+    const key =
+      body.candidateId === REALM_CANDIDATE
+        ? "realme_e2e_realm_decision"
+        : body.candidateId === PRIORITY_CANDIDATE
+          ? "realme_e2e_priority_decision"
+          : null;
+    if (key)
+      response.cookies.set(key, body.action, {
+        httpOnly: true,
+        sameSite: "lax",
+      });
   }
   return response;
 }
