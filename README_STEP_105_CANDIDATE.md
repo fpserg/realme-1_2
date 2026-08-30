@@ -1,8 +1,24 @@
-# Step 105 candidate boundary
+# Step 105 acceptance record
 
-Step 105 is **OPEN / IMPLEMENTATION AUTHORIZED / NOT ACCEPTED**.
+Step 105 is **ACCEPTED**.
 
-Exact authorized base: `9bdf2e18f4f3ec579e1dc2f3d9b4bf5be6cef67a`
-Accepted base tree: `c5b4c1372b3e30771fa9c26fa2be2a60a36b7a6d`
+Accepted implementation head: `a6febfdea27adb5c95274fb5899194e7e504cf97`
+Accepted implementation tree: `eeb3e1171893a0dfecbe2b97f9852fdbd9d4918e`
+Independent Inspector: **APPROVE**
+Warden: **ACCEPTED Step 105**
 
-This branch is limited to the Code-Native Living World vertical slice. Step 106+ remains **NOT AUTHORIZED**. Production rollout and deferred `public.rls_auto_enable()` remediation are out of scope.
+Acceptance gate satisfied:
+
+> The Living World can be destroyed and regenerated from canonical World state without changing identity, history, or truth.
+
+Accepted Step 105 projection law:
+
+- renderer: `living-world-code-v1`;
+- the Living World is a computed, disposable projection of admitted canonical World state;
+- at the currently accepted canonical model boundary, structural rendering is Realm-root-only;
+- generic ontology relationships have zero structural authority;
+- no predicate name, including `contains`, establishes containment merely by its string;
+- lower structural rendering remains dormant until canonically authorized structural semantics exist;
+- sparse output is constitutionally valid.
+
+Step 106 remains **NOT STARTED / NOT AUTHORIZED**.
