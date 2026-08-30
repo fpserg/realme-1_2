@@ -62,27 +62,27 @@ test("keeps the integrated core loop stateful and perceivable at mobile viewport
   }
 
   await realmCard.getByRole("button", { name: "Accept" }).click();
-  await expect(review.getByText("Family")).toHaveCount(0);
+  await expect(review.getByText("Family", { exact: true })).toHaveCount(0);
 
   await navigation.getByRole("link", { name: "World" }).click();
   const world = page.getByRole("region", { name: "World understanding" });
   await expect(world).toBeInViewport();
   const canonical = world.getByRole("region", { name: "What RealMe knows" });
-  await expect(canonical.getByText("Family")).toBeVisible();
+  await expect(canonical.getByText("Family", { exact: true })).toBeVisible();
   await expect(canonical.getByText("Realm", { exact: true })).toBeVisible();
   const livingWorld = world.getByRole("region", { name: "Living World" });
-  await expect(livingWorld.getByText("Family")).toBeVisible();
+  await expect(livingWorld.getByText("Family", { exact: true })).toBeVisible();
 
   await navigation.getByRole("link", { name: "Review" }).click();
   const priorityCard = review.getByRole("article").filter({ hasText: "Work" });
   await priorityCard.getByRole("button", { name: "Accept" }).click();
-  await expect(review.getByText("Work")).toHaveCount(0);
+  await expect(review.getByText("Work", { exact: true })).toHaveCount(0);
 
   await navigation.getByRole("link", { name: "World" }).click();
-  await expect(canonical.getByText("Work")).toBeVisible();
+  await expect(canonical.getByText("Work", { exact: true })).toBeVisible();
   await expect(canonical.getByText("priority", { exact: true })).toBeVisible();
   await expect(canonical.getByText("high", { exact: true })).toBeVisible();
-  await expect(livingWorld.getByText("Work")).toHaveCount(0);
+  await expect(livingWorld.getByText("Work", { exact: true })).toHaveCount(0);
 
   await navigation.getByRole("link", { name: "Today & Horizon" }).click();
   const projections = page.getByRole("region", {
