@@ -75,7 +75,9 @@ describe("HomeView", () => {
     expect(
       screen.getByRole("region", { name: "Capture and continuity" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Companion" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Companion" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("region", {
         name: "Interpretation review and admission",
@@ -131,7 +133,10 @@ describe("HomeView", () => {
               assertionId: "assertion-1",
               candidateClaimId: "candidate-1",
               evidence: [
-                { exactText: "Work is a high priority right now.", sourceFragmentId: "fragment-1" },
+                {
+                  exactText: "Work is a high priority right now.",
+                  sourceFragmentId: "fragment-1",
+                },
               ],
               predicate: "priority",
               subjectLabel: "Work",
@@ -149,9 +154,15 @@ describe("HomeView", () => {
     expect(within(canonical).getByText("Work")).toBeInTheDocument();
     expect(within(canonical).getByText("priority")).toBeInTheDocument();
     expect(within(canonical).getByText("high")).toBeInTheDocument();
-    expect(within(canonical).getByText(/Current admitted understanding/)).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Living World" })).not.toHaveTextContent("Work");
-    expect(screen.getByRole("region", { name: "Commitments" })).not.toHaveTextContent("Work");
+    expect(
+      within(canonical).getByText(/Current admitted understanding/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Living World" }),
+    ).not.toHaveTextContent("Work");
+    expect(
+      screen.getByRole("region", { name: "Commitments" }),
+    ).not.toHaveTextContent("Work");
   });
 
   it("labels Today, Horizon and Living World as derived projections", () => {

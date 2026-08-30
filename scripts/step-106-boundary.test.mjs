@@ -50,8 +50,8 @@ describe("Step 106 canonical-understanding boundary", () => {
   });
 
   it("refreshes authoritative server reads after successful admission", () => {
-    expect(review).toContain('useRouter');
-    expect(review).toContain('router.refresh()');
+    expect(review).toContain("useRouter");
+    expect(review).toContain("router.refresh()");
     expect(review).toContain('decisionEndpoint = "/api/admission/decision"');
   });
 });
