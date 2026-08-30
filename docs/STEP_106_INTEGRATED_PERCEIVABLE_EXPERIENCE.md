@@ -1,6 +1,6 @@
 # Step 106 — Integrated Perceivable Experience
 
-Status: **OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED**
+Status: **OPEN / IMPLEMENTATION CORRECTION IN PROGRESS / NOT ACCEPTED**
 
 Authorized base: `f2e5cf9add889776a1d743f89f449aefe78ded99`
 Authorized base tree: `c60eabeffe14c145ff39a69c5d361d0c078c7fd1`
@@ -9,11 +9,9 @@ Authorized base tree: `c60eabeffe14c145ff39a69c5d361d0c078c7fd1`
 
 > A user can complete the core RealMe loop through the product UI without bypassing admission authority, losing provenance, or confusing projections with canonical truth.
 
-## Integration shape
+## Integrated experience
 
-Step 106 integrates the already accepted capabilities into one authenticated home experience instead of adding new canonical behavior.
-
-The primary mobile navigation is expressed in product language:
+The authenticated `/` route remains the real product surface. Product-language navigation is:
 
 1. Capture
 2. Companion
@@ -21,73 +19,75 @@ The primary mobile navigation is expressed in product language:
 4. Today & Horizon
 5. World
 
-The same page also exposes a concise authority guide distinguishing:
+The authority distinction remains explicit:
 
-- **You said** — saved observation/evidence, not interpretation;
-- **RealMe interpreted** — unresolved candidate understanding, non-canonical;
-- **You admitted** — canonical World understanding created only through explicit review authority;
-- **Projected** — Today, Horizon and Living World, rebuildable from canonical state.
+- **You said** — persisted observation/evidence, not interpretation;
+- **RealMe interpreted** — unresolved candidate, non-canonical;
+- **You admitted** — current canonical World understanding created only through explicit review;
+- **Projected** — Today, Horizon and Living World, rebuildable views rather than truth stores.
 
-No roadmap-step terminology is required to use the authenticated product surface.
+## Read-only canonical understanding
 
-## Existing accepted boundaries reused
+Step 106 now makes **You admitted** perceivable as an actual read-only product surface named **What RealMe knows**.
 
-Step 106 reuses the accepted server-derived authority path in `src/app/page.tsx`:
+Its authority is the already accepted versioned World Model. The server derives the authenticated actor and current World, then `SupabaseCanonicalUnderstandingRepository` reads only World-scoped rows protected by the existing authenticated-member RLS policies:
 
-- authentication is resolved server-side from Supabase claims;
-- current World authority is obtained through `getCurrentWorld` and `SupabaseWorldAccessRepository`;
-- observation history remains account-scoped and persist-first;
-- interpretation reconciliation reuses the accepted durable pipeline boundary;
-- candidate review uses the accepted Step 103 list/decision path;
-- Today/Horizon use the accepted Step 104 read-only projection repository;
-- Living World uses the accepted Step 105 read-only canonical projection path;
-- temporal continuity remains governed by Step 100.
+- current `assertions` (`valid_to IS NULL`);
+- active `ontology_aliases` for understandable subject labels;
+- `admission_decisions` for explicit user-admission provenance;
+- `assertion_evidence` and `source_fragments` for exact evidence lineage.
 
-Step 106 introduces no client-supplied actor ID or World ID, no broad privileged RPC, no client-side canonical mutation path, and no AI-to-admission path.
+The primary surface shows current active assertions only. Superseded assertions cannot masquerade as current truth because `valid_to IS NULL` is mandatory. When the current assertion supersedes an earlier assertion, the superseded assertion ID remains available as secondary provenance.
 
-## Interpretation and admission
+For each current assertion the user can perceive:
 
-The page never fabricates synchronous interpretation completion.
+- understandable subject label plus stable canonical subject identity;
+- predicate;
+- canonical scalar/object value;
+- that the assertion is current admitted understanding;
+- whether it came from accept or correct;
+- admission timestamp and decision identity;
+- source candidate identity;
+- exact linked evidence fragments;
+- assertion version identity and supersession link where present.
 
-- With no observations, the product says there is nothing to interpret yet.
-- With observations but no unresolved candidate, it says no review is ready and explicitly allows that durable interpretation may still be pending or may have produced no unresolved candidate.
-- With unresolved candidates, it identifies review work as non-canonical and links the user to the existing review controls.
+This surface is not an editor, generic canonical writer, hierarchy browser or Step 108 viewer. It has no mutation controls and does not grant structural authority to generic relationships.
 
-Accept/reject/correct/defer semantics remain implemented by the already accepted Candidate Review component. Only explicit user review can invoke admission.
+## Admission refresh
 
-## World understanding and projections
+`CandidateReview` continues to use the accepted `/api/admission/decision` path. After any successful decision it calls the normal Next.js `router.refresh()` mechanism. For truth-changing **Accept** and **Correct**, that causes the authoritative server reads for candidate review, current canonical understanding, Today/Horizon and Living World to run again. No parallel client-side canonical model is constructed.
 
-Admitted understanding is kept distinct from candidate state by the authority guide and section copy.
+Reject and Defer retain their accepted semantics. A refresh after them is permitted for consistency but does not represent either action as canonical admission.
 
-Today and Horizon are labelled as rebuildable operational projections derived from admitted facts plus authoritative time.
+## Interpretation semantics
 
-Living World is labelled as a disposable visual projection. The accepted renderer remains `living-world-code-v1`; it continues to show admitted Realm roots only at the current canonical boundary. Generic ontology relationships remain structurally inert, including strings such as `contains`. Sparse output is presented as truthful rather than cosmetically repaired.
+The integrated UI still does not infer worker completion from candidate absence:
 
-## Empty and pending states
+- no observations → nothing to interpret yet;
+- observations but no unresolved candidate → review is not ready; durable interpretation may still be pending or may have produced no unresolved candidate;
+- unresolved candidates → clearly non-canonical review work.
 
-Step 106 preserves accepted empty-state behavior and adds integration copy around it:
+## Projections
 
-- no observation: capture-first explanation;
-- interpretation not exposed as ready: no-review-ready explanation without fabricated completion;
-- no unresolved candidate: existing `Nothing waiting for review` state;
-- no admitted Realm: existing `No admitted Realms yet` state;
-- no Today items: existing Step 104 empty projection state;
-- no Horizon items: existing Step 104 empty projection state.
+Today and Horizon remain read-only Step 104 projections derived from admitted facts plus authoritative Step 100 time.
 
-No placeholder canonical entities, commitments or hierarchy are invented.
+Living World remains `living-world-code-v1`, computed/disposable and Realm-root-only under current canonical semantics. Generic ontology relationships have zero structural authority, including a predicate string named `contains`. The canonical-understanding surface is never used to fabricate hierarchy.
 
-## Mobile
+## Stateful mobile evidence
 
-The authenticated page uses a small horizontally scrollable sticky core-loop navigation at narrow viewport widths and anchor targets with scroll margins. Essential navigation targets and existing interaction controls remain touch-sized.
+The environment-gated `/e2e-integrated` fixture reuses the real `HomeView`, `CandidateReview`, canonical-understanding component and Living World component. Its test-only admission endpoint is available only with `REALME_E2E_FIXTURE=1`; it exists solely to prove `router.refresh()` causes a new server render in CI without replacing the normal authenticated data path.
 
-A Step 106 E2E-only fixture is guarded by `REALME_E2E_FIXTURE=1`. Playwright exercises the integrated navigation at the canonical 390×844 mobile viewport and verifies reachability of capture, companion, review, Today/Horizon and Living World. Existing mobile E2E tests continue to exercise persist-first observation capture and companion behavior.
+At the accepted 390×844 viewport the fixture exposes a non-empty candidate with usable Accept, Reject, Correct and Defer controls. It proves without manual reload that:
 
-## Schema and production posture
+- admitting a Realm classification removes the candidate, makes the canonical fact visible and makes the Realm visible through Living World;
+- admitting a non-Realm/non-commitment assertion removes the candidate and makes that fact visible in **What RealMe knows**, while it remains absent from Living World and operational projections.
 
-Step 106 requires **no migration and no schema change**.
+Existing Step 104 repository regression coverage continues to prove Today/Horizon derive from the accepted canonical commitment path; Step 106 does not fabricate a new commitment semantic merely for this correction.
 
-No SQL, migration, Drizzle artifact, RLS policy, dependency, environment, CI workflow or Netlify configuration is modified by the candidate.
+## Security and schema posture
 
-Production remains untouched. Deferred production `public.rls_auto_enable()` remediation remains separately authorized work before the first production RealMe migration.
+Actor identity and World authority remain server-derived. World isolation remains fail-closed. No client-controlled authority, service-role exposure, broad privileged RPC, RLS weakening, AI admission path or generic canonical write API is introduced.
+
+Step 106 requires **no schema change and no migration**. Production remains untouched. Deferred production `public.rls_auto_enable()` remediation remains separately authorized work.
 
 Step 107 remains **NOT STARTED / NOT AUTHORIZED**.
