@@ -34,7 +34,7 @@ describe("Step 102 interpretation pipeline migration", () => {
     expect(JSON.parse(correctionSnapshot)).toMatchObject({
       prevId: pipelineSnapshot.id,
     });
-    expect(migrations.filter((name) => name.endsWith(".sql"))).toHaveLength(13);
+    expect(migrations.filter((name) => name.endsWith(".sql"))).toHaveLength(14);
   });
 
   it("adds durable job, run and candidate identities without new tables", async () => {

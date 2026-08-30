@@ -92,6 +92,13 @@
       "when": 1787913900000,
       "tag": "20260828104500_step_103_admission_versioned_world_model",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788022200000,
+      "tag": "20260829195000_step_104_commitments_operational_projections",
+      "breakpoints": true
     }
   ]
 }
