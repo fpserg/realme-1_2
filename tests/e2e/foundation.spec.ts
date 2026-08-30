@@ -66,7 +66,9 @@ test("keeps the integrated core loop perceivable at mobile viewport", async ({
   });
   await expect(projections).toBeInViewport();
   const commitments = projections.getByRole("region", { name: "Commitments" });
-  await expect(commitments.getByRole("heading", { name: "Today" })).toBeVisible();
+  await expect(
+    commitments.getByRole("heading", { name: "Today" }),
+  ).toBeVisible();
   await expect(
     commitments.getByRole("heading", { name: "Horizon · 30 days" }),
   ).toBeVisible();
