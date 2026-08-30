@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { HomeView } from "./page";
 
@@ -23,6 +23,8 @@ const readyState = {
   temporal: { currentPeriod: null, setting: null },
   today: [],
 };
+
+afterEach(() => cleanup());
 
 describe("HomeView", () => {
   it("keeps unauthenticated and unconfigured access bounded and truthful", () => {
