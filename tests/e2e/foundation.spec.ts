@@ -61,12 +61,14 @@ test("keeps the integrated core loop perceivable at mobile viewport", async ({
   ).toBeVisible();
 
   await navigation.getByRole("link", { name: "Today & Horizon" }).click();
+  const projections = page.getByRole("region", {
+    name: "Operational projections",
+  });
+  await expect(projections).toBeInViewport();
+  const commitments = projections.getByRole("region", { name: "Commitments" });
+  await expect(commitments.getByRole("heading", { name: "Today" })).toBeVisible();
   await expect(
-    page.getByRole("region", { name: "Operational projections" }),
-  ).toBeInViewport();
-  await expect(page.getByRole("heading", { name: "Today" })).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Horizon · 30 days" }),
+    commitments.getByRole("heading", { name: "Horizon · 30 days" }),
   ).toBeVisible();
 
   await navigation.getByRole("link", { name: "World" }).click();
