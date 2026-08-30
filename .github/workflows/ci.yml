@@ -51,7 +51,10 @@ jobs:
           fi
 
       - name: Verify formatting
-        run: pnpm format:check
+        run: |
+          pnpm exec prettier --write src/domain/living-world/living-world.test.ts
+          git diff -- src/domain/living-world/living-world.test.ts
+          exit 1
 
       - name: Lint
         run: pnpm lint
