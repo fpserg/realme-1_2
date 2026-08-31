@@ -121,7 +121,9 @@ export function buildImportPlan(manifest, filesByPath) {
 }
 
 export function buildEvidenceRows(plan, serverDerivedWorldId) {
-  if (!/^[0-9a-f-]{36}$/i.test(serverDerivedWorldId ?? '')) throw new SourceValidationError('server-derived World id required');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(serverDerivedWorldId ?? '')) {
+    throw new SourceValidationError('server-derived World id required');
+  }
   return plan.included.map((item) => ({
     observation: {
       id: item.observationId,
@@ -129,7 +131,8 @@ export function buildEvidenceRows(plan, serverDerivedWorldId) {
       source_kind: `sergey_pilot:${item.authorityClass}:${item.sourceKind}`,
       source_locator: item.sourceLocator,
       occurred_at: item.occurredAt,
-      source_local_date: item.operationalDay,
+      occurred_precision: item.occurredAt ? 'exact' : 'unknown',
+      local_calendar_date: item.operationalDay,
       capture_idempotency_key: item.captureIdempotencyKey,
     },
     fragment: {
@@ -138,21 +141,19 @@ export function buildEvidenceRows(plan, serverDerivedWorldId) {
       observation_id: item.observationId,
       ordinal: 0,
       exact_text: item.exactText,
-      integrity_hash: item.contentHash,
+      content_hash: item.contentHash,
     },
   }));
 }
 
 export function buildCandidateRequests(plan) {
-  return plan.included
-    .filter((item) => item.authorityClass !== 'E')
-    .map((item) => ({
-      sourceItemId: item.id,
-      observationId: item.observationId,
-      evidenceSourceFragmentId: item.sourceFragmentId,
-      authorityClass: item.authorityClass,
-      admissionAuthority: 'none',
-    }));
+  return plan.included.map((item) => ({
+    sourceItemId: item.id,
+    observationId: item.observationId,
+    evidenceSourceFragmentId: item.sourceFragmentId,
+    authorityClass: item.authorityClass,
+    admissionAuthority: 'none',
+  }));
 }
 
 export function assertNoCanonicalWrites(payload) {
