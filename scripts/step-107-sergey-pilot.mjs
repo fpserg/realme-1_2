@@ -1,4 +1,8 @@
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 export const AUTHORITY_CLASSES = new Set(["A", "B", "C", "D", "E"]);
 export const IMPORTABLE_CLASSES = new Set(["A", "B", "C", "D"]);
@@ -100,6 +104,87 @@ export function validateManifest(manifest) {
     requireIsoInstant(item.occurredAt, item.id);
   }
   return manifest;
+}
+
+async function git(sourceRoot, args, encoding = "utf8") {
+  try {
+    const result = await execFileAsync("git", ["-C", sourceRoot, ...args], {
+      encoding,
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    return typeof result.stdout === "string"
+      ? result.stdout.trimEnd()
+      : result.stdout;
+  } catch (error) {
+    const detail = error?.stderr?.toString?.().trim() || error?.message || "git failed";
+    throw new SourceValidationError(`pinned Git source verification failed: ${detail}`);
+  }
+}
+
+export async function loadPinnedSourceFiles(sourceRoot, manifest) {
+  validateManifest(manifest);
+
+  await git(sourceRoot, ["rev-parse", "--git-dir"]);
+  const resolvedCommit = await git(sourceRoot, [
+    "rev-parse",
+    "--verify",
+    `${manifest.sourceCommit}^{commit}`,
+  ]);
+  if (resolvedCommit !== manifest.sourceCommit) {
+    throw new SourceValidationError(
+      `source commit mismatch: expected ${manifest.sourceCommit}, got ${resolvedCommit}`,
+    );
+  }
+
+  const resolvedTree = await git(sourceRoot, [
+    "show",
+    "-s",
+    "--format=%T",
+    manifest.sourceCommit,
+  ]);
+  if (resolvedTree !== manifest.sourceTree) {
+    throw new SourceValidationError(
+      `source tree mismatch: expected ${manifest.sourceTree}, got ${resolvedTree}`,
+    );
+  }
+
+  const files = {};
+  const verifiedPaths = new Map();
+  for (const item of manifest.items) {
+    const priorBlob = verifiedPaths.get(item.path);
+    if (priorBlob && priorBlob !== item.blobSha) {
+      throw new SourceValidationError(
+        `${item.id}: same pinned path declares conflicting blob SHAs`,
+      );
+    }
+
+    const resolvedBlob = await git(sourceRoot, [
+      "rev-parse",
+      "--verify",
+      `${manifest.sourceCommit}:${item.path}`,
+    ]);
+    if (!/^[0-9a-f]{40}$/.test(resolvedBlob)) {
+      throw new SourceValidationError(`${item.id}: pinned path did not resolve to a blob`);
+    }
+    if (resolvedBlob !== item.blobSha) {
+      throw new SourceValidationError(
+        `${item.id}: source blob mismatch: expected ${item.blobSha}, got ${resolvedBlob}`,
+      );
+    }
+
+    const objectType = await git(sourceRoot, ["cat-file", "-t", resolvedBlob]);
+    if (objectType !== "blob") {
+      throw new SourceValidationError(`${item.id}: pinned object is not a Git blob`);
+    }
+
+    if (!verifiedPaths.has(item.path)) {
+      const blobBytes = await git(sourceRoot, ["cat-file", "blob", resolvedBlob], "buffer");
+      files[item.path] = blobBytes.toString("utf8");
+      verifiedPaths.set(item.path, resolvedBlob);
+    }
+  }
+
+  return files;
 }
 
 export function extractSourceText(fileText, item) {
