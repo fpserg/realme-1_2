@@ -1,6 +1,6 @@
 # Step 107 — Sergey Pilot Migration
 
-Status: **OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED**
+Status: **OPEN / CORRECTED IMPLEMENTATION CANDIDATE / NOT ACCEPTED**
 
 Authorized base: `02a2d813c5555ad27ead319993cc1f5402dc6a6d`  
 Base tree: `f1dff960fe103eedd8ff12acca8b802ca25cd010`
@@ -42,6 +42,24 @@ The representative rehearsal manifest contains two whole-file Living Inputs, one
 
 The daily `LI.md` source format does not contain a provable delimiter between individual historical submissions. Step 107 therefore preserves each selected LI file as one whole-file observation. It never heuristically splits prose.
 
+## Cryptographically pinned source bytes
+
+The executable path no longer reads evidence from mutable working-tree files.
+
+Before an executable plan is produced, the runner now:
+
+1. proves the supplied source root is a Git repository;
+2. resolves the manifest's exact `sourceCommit` as a commit object;
+3. resolves that commit's root tree and requires exact equality with `sourceTree`;
+4. resolves every selected `sourceCommit:path` to its Git object ID;
+5. requires exact equality with the manifest's per-item `blobSha`;
+6. requires the object to be a Git blob;
+7. reads the evidence bytes directly with `git cat-file blob <verified-sha>`.
+
+There is no working-tree fallback. Manifest provenance is copied into the import plan only after all Git pins have been independently resolved and verified.
+
+Automated regressions cover wrong blob SHA, absent pinned commit, tree mismatch, missing pinned path, missing blob object, and a dirty working tree whose bytes differ from the pinned commit. The dirty-worktree happy path proves that the committed historical blob bytes are used instead.
+
 ## Provenance and deterministic replay
 
 Every included source item is pinned by repository, commit, source path and Git blob SHA. Exact-text selections must occur exactly once. Whole-file selections preserve the full source file.
@@ -52,7 +70,25 @@ The planner calculates SHA-256 content fingerprints and deterministic UUIDs from
 - source-fragment identity;
 - capture idempotency identity.
 
-The SQL executor accepts only a server-derived World and its owning account through session-local operational parameters. It writes only `observations` and `source_fragments`, uses deterministic IDs, and validates that any replayed rows match the source plan exactly. It contains no canonical table write.
+The supported executor accepts only a server-derived World and its owning account. It writes only `observations` and `source_fragments`, uses deterministic IDs, and validates that any replayed rows match the source plan exactly. It contains no canonical table write.
+
+## Atomic evidence execution
+
+`scripts/run-step-107-sergey-pilot.mjs --execute` is the only supported evidence execution path.
+
+The runner uses the existing `postgres` dependency to open one explicit PostgreSQL transaction. Inside that transaction it:
+
+1. sets the Step 107 executor guard, World ID and account ID with transaction-local `set_config(..., true)`;
+2. creates and populates the temporary source-plan table;
+3. executes the ownership check;
+4. writes observations;
+5. writes source fragments;
+6. performs full persisted-row replay verification;
+7. commits only after every check succeeds.
+
+`scripts/step-107-import-evidence.sql` is an internal transaction body and fails immediately unless the transaction-local executor guard is present. Operators are not expected to remember `BEGIN`, and direct/autocommit execution is unsupported.
+
+Any ownership, write or replay mismatch rejects the transaction. No observation or source fragment introduced by the failed attempt survives.
 
 ## Temporal treatment
 
@@ -138,6 +174,31 @@ A rollback-only `CREATE OR REPLACE VIEW` rebuild of the Step 104 commitment proj
 
 An identical evidence/enqueue replay produced zero count delta in observations, fragments, jobs, interpretation runs, candidate claims, ontology nodes or assertions. Replaying all three final admissions returned the existing decisions/assertions with `was_replay = true`.
 
+## Inspector correction staging regression
+
+After the atomicity correction, staging was exercised with a real PostgreSQL replay conflict designed to fail only after a new observation would have been written and a source-fragment ID collided with an existing fragment.
+
+Before the attempt:
+
+- observations: 5;
+- source fragments: 5;
+- observation-row fingerprint: `a73d45079359dcc497b2bebb115307b6`;
+- source-fragment-row fingerprint: `7ed0ab2f470f9b3ee7730187d0bea34c`.
+
+Replay verification raised `Step 107 replay mismatch: persisted evidence differs from pinned source plan.` The transaction rolled back.
+
+After the failed attempt:
+
+- observations: 5;
+- source fragments: 5;
+- observation-row fingerprint: `a73d45079359dcc497b2bebb115307b6`;
+- source-fragment-row fingerprint: `7ed0ab2f470f9b3ee7730187d0bea34c`;
+- deliberately attempted observation `99999999-9999-4999-8999-999999999991`: absent.
+
+An immediately following identical replay of the existing five evidence rows completed successfully and left the observation count at 5.
+
+The regression changed no schema and left the representative pilot reconciliation state intact.
+
 ## Scope boundary
 
 Step 107 does not authorize or implement:
@@ -150,4 +211,4 @@ Step 107 does not authorize or implement:
 - new structural hierarchy semantics;
 - Step 108.
 
-Step 107 remains **OPEN / IMPLEMENTATION CANDIDATE / NOT ACCEPTED** pending independent Inspector review and Warden acceptance.
+Step 107 remains **OPEN / CORRECTED IMPLEMENTATION CANDIDATE / NOT ACCEPTED** pending independent Inspector re-review and Warden acceptance. Step 108 remains unauthorized.
