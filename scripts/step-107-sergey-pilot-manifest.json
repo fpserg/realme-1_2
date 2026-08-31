@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "sourceRepository": "fpserg/RealMe",
+  "sourceCommit": "b701e303e0e716dd54099938fab092d419d30e61",
+  "sourceTree": "b5b3edd5d31cc1a4955a493ad0d9dd8948550d88",
+  "items": [
+    {
+      "id": "li-2026-08-29",
+      "path": "docs/PRODUCT/DAILY/2026/08/2026-08-29/LI.md",
+      "blobSha": "dd29129aed0c80365c59e8f1c206c35051283ec7",
+      "authorityClass": "A",
+      "sourceKind": "living_input",
+      "selection": { "kind": "whole_file" },
+      "operationalDay": "2026-08-29",
+      "occurredAt": null,
+      "action": "import"
+    },
+    {
+      "id": "li-2026-08-30",
+      "path": "docs/PRODUCT/DAILY/2026/08/2026-08-30/LI.md",
+      "blobSha": "92171a19ded89d4dedce3ba83752a31e18fc2818",
+      "authorityClass": "A",
+      "sourceKind": "living_input",
+      "selection": { "kind": "whole_file" },
+      "operationalDay": "2026-08-30",
+      "occurredAt": null,
+      "action": "import"
+    },
+    {
+      "id": "or-2026-08-30-realme",
+      "path": "docs/PRODUCT/DAILY/2026/08/2026-08-30/OR.md",
+      "blobSha": "114a7d89a2492bcc1cb0c25a4213d2cc5577d1a1",
+      "authorityClass": "B",
+      "sourceKind": "operational_record",
+      "selection": { "kind": "exact_text", "text": "- Advanced RealMe app development." },
+      "operationalDay": "2026-08-30",
+      "occurredAt": null,
+      "action": "import"
+    },
+    {
+      "id": "world-household-realm",
+      "path": "docs/PRODUCT/VISUAL/REALME_WORLD_V1_CANONICAL_FREEZE.md",
+      "blobSha": "c5400b3eb060b78bdfb9c5dd8d6cb94cd65645df",
+      "authorityClass": "C",
+      "sourceKind": "accepted_product_decision",
+      "selection": { "kind": "exact_text", "text": "- Household — NW continental Realm." },
+      "operationalDay": null,
+      "occurredAt": null,
+      "action": "import"
+    },
+    {
+      "id": "wbtd-2026-08-30-realme-roadmap",
+      "path": "docs/PRODUCT/DAILY/2026/08/2026-08-30/WBTD.md",
+      "blobSha": "f803e54685925b0db2dd3bf29beb44f1792cd6df",
+      "authorityClass": "D",
+      "sourceKind": "wbtd_interpretation",
+      "selection": { "kind": "exact_text", "text": "- Continue the current RealMe app-development roadmap; the Warden estimates approximately one to two more days are required." },
+      "operationalDay": "2026-08-30",
+      "occurredAt": null,
+      "action": "import"
+    },
+    {
+      "id": "world-household-colour-signature",
+      "path": "docs/PRODUCT/VISUAL/REALME_WORLD_V1_CANONICAL_FREEZE.md",
+      "blobSha": "c5400b3eb060b78bdfb9c5dd8d6cb94cd65645df",
+      "authorityClass": "E",
+      "sourceKind": "presentation_only",
+      "selection": { "kind": "exact_text", "text": "Household colour signature: GREEN, expressed through living terrain rather than a green filter." },
+      "operationalDay": null,
+      "occurredAt": null,
+      "action": "exclude",
+      "excludeReason": "presentation_only_zero_canonical_authority"
+    }
+  ]
+}
