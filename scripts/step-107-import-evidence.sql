@@ -1,19 +1,24 @@
--- Step 107 Sergey pilot evidence executor.
+-- Step 107 Sergey pilot evidence transaction body.
 -- Operational tooling only: no schema changes and no canonical mutation.
--- Caller must create/populate temp table step107_source_items in the same session:
---   observation_id uuid, fragment_id uuid, capture_idempotency_key uuid,
---   source_kind text, source_locator text, occurred_at timestamptz,
---   occurred_precision text, local_calendar_date date, exact_text text,
---   content_hash text.
--- Caller must set session-local GUCs before execution:
---   select set_config('realme.step107_world_id', '<server-derived-world-uuid>', true);
---   select set_config('realme.step107_account_id', '<authenticated-account-uuid>', true);
+-- SUPPORTED EXECUTION PATH ONLY:
+--   node scripts/run-step-107-sergey-pilot.mjs ... --execute
+--
+-- The runner opens one PostgreSQL transaction, sets transaction-local World,
+-- account and executor-guard GUCs, creates/populates step107_source_items, then
+-- executes this body. Any error from ownership checks, writes or replay
+-- verification rejects the transaction and therefore leaves no partial evidence.
+-- Do not execute this file directly or under autocommit.
 
 DO $$
 DECLARE
+  v_guard text := current_setting('realme.step107_executor_guard', true);
   v_world_id uuid := current_setting('realme.step107_world_id')::uuid;
   v_account_id uuid := current_setting('realme.step107_account_id')::uuid;
 BEGIN
+  IF v_guard IS DISTINCT FROM 'transactional-v1' THEN
+    RAISE EXCEPTION 'Step 107 SQL must run through the transactional executor.';
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1
     FROM public.world_memberships AS membership
