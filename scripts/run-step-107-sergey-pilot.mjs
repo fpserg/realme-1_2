@@ -11,7 +11,8 @@ import {
 
 function argument(name) {
   const prefix = `--${name}=`;
-  return process.argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length);
+  const found = process.argv.find((arg) => arg.startsWith(prefix));
+  return found?.slice(prefix.length);
 }
 
 const sourceRoot = argument("source-root");
