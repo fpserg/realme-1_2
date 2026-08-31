@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   AmbiguousIdentityError,
@@ -178,7 +179,7 @@ describe("Step 107 Sergey pilot planner", () => {
 
   it("keeps the SQL executor evidence-only and replay-safe", async () => {
     const sql = await readFile(
-      new URL("./step-107-import-evidence.sql", import.meta.url),
+      resolve(process.cwd(), "scripts/step-107-import-evidence.sql"),
       "utf8",
     );
     expect(sql).toContain("INSERT INTO public.observations");
