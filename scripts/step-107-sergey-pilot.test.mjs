@@ -1,5 +1,14 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { execFile } from "node:child_process";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import {
   AmbiguousIdentityError,
@@ -9,11 +18,14 @@ import {
   buildEvidenceRows,
   buildImportPlan,
   deterministicUuid,
+  loadPinnedSourceFiles,
   reconciliationFingerprint,
   resolveExplicitIdentityMappings,
   sha256,
   validateManifest,
 } from "./step-107-sergey-pilot.mjs";
+
+const execFileAsync = promisify(execFile);
 
 const manifest = {
   version: 1,
@@ -64,12 +76,157 @@ const files = {
   "world.md": "GREEN",
 };
 
+async function git(root, ...args) {
+  const { stdout } = await execFileAsync("git", ["-C", root, ...args], {
+    encoding: "utf8",
+  });
+  return stdout.trim();
+}
+
+async function createPinnedRepo() {
+  const root = await mkdtemp(join(tmpdir(), "realme-step107-"));
+  await git(root, "init");
+  await git(root, "config", "user.email", "step107@example.invalid");
+  await git(root, "config", "user.name", "Step 107 Test");
+  await mkdir(join(root, "daily"), { recursive: true });
+  const committedText = "LI\n\nPinned historical bytes.\n";
+  await writeFile(join(root, "daily", "LI.md"), committedText, "utf8");
+  await git(root, "add", "daily/LI.md");
+  await git(root, "commit", "-m", "pinned source");
+  const sourceCommit = await git(root, "rev-parse", "HEAD");
+  const sourceTree = await git(root, "show", "-s", "--format=%T", "HEAD");
+  const blobSha = await git(root, "rev-parse", `${sourceCommit}:daily/LI.md`);
+  const pinnedManifest = {
+    version: 1,
+    sourceRepository: "fpserg/RealMe",
+    sourceCommit,
+    sourceTree,
+    items: [
+      {
+        id: "li",
+        path: "daily/LI.md",
+        blobSha,
+        authorityClass: "A",
+        sourceKind: "living_input",
+        selection: { kind: "whole_file" },
+        operationalDay: "2026-08-30",
+        occurredAt: null,
+        action: "import",
+      },
+    ],
+  };
+  return { root, committedText, pinnedManifest, blobSha };
+}
+
 describe("Step 107 Sergey pilot planner", () => {
   it("pins repository, commit and tree and rejects malformed manifests", () => {
     expect(validateManifest(manifest)).toBe(manifest);
     expect(() =>
       validateManifest({ ...manifest, sourceCommit: "main" }),
     ).toThrow(SourceValidationError);
+  });
+
+  it("reads verified pinned Git blob bytes instead of a modified worktree", async () => {
+    const fixture = await createPinnedRepo();
+    try {
+      await writeFile(
+        join(fixture.root, "daily", "LI.md"),
+        "MUTABLE WORKTREE CONTENT\n",
+        "utf8",
+      );
+      const loaded = await loadPinnedSourceFiles(
+        fixture.root,
+        fixture.pinnedManifest,
+      );
+      expect(loaded["daily/LI.md"]).toBe(fixture.committedText);
+      expect(loaded["daily/LI.md"]).not.toContain("MUTABLE WORKTREE");
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed on a wrong manifest blob SHA", async () => {
+    const fixture = await createPinnedRepo();
+    try {
+      const wrong = {
+        ...fixture.pinnedManifest,
+        items: [
+          { ...fixture.pinnedManifest.items[0], blobSha: "f".repeat(40) },
+        ],
+      };
+      await expect(loadPinnedSourceFiles(fixture.root, wrong)).rejects.toThrow(
+        /source blob mismatch/,
+      );
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed when the pinned commit is absent", async () => {
+    const fixture = await createPinnedRepo();
+    try {
+      await expect(
+        loadPinnedSourceFiles(fixture.root, {
+          ...fixture.pinnedManifest,
+          sourceCommit: "1".repeat(40),
+        }),
+      ).rejects.toThrow(SourceValidationError);
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed on source tree mismatch", async () => {
+    const fixture = await createPinnedRepo();
+    try {
+      await expect(
+        loadPinnedSourceFiles(fixture.root, {
+          ...fixture.pinnedManifest,
+          sourceTree: "2".repeat(40),
+        }),
+      ).rejects.toThrow(/source tree mismatch/);
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed when a pinned path is missing", async () => {
+    const fixture = await createPinnedRepo();
+    try {
+      const missingPath = {
+        ...fixture.pinnedManifest,
+        items: [
+          {
+            ...fixture.pinnedManifest.items[0],
+            path: "daily/MISSING.md",
+          },
+        ],
+      };
+      await expect(
+        loadPinnedSourceFiles(fixture.root, missingPath),
+      ).rejects.toThrow(SourceValidationError);
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed when the pinned Git blob object is missing", async () => {
+    const fixture = await createPinnedRepo();
+    try {
+      const objectPath = join(
+        fixture.root,
+        ".git",
+        "objects",
+        fixture.blobSha.slice(0, 2),
+        fixture.blobSha.slice(2),
+      );
+      await rm(objectPath, { force: true });
+      await expect(
+        loadPinnedSourceFiles(fixture.root, fixture.pinnedManifest),
+      ).rejects.toThrow(SourceValidationError);
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
   });
 
   it("uses whole-file LI segmentation and exact unique anchors only", () => {
@@ -177,14 +334,23 @@ describe("Step 107 Sergey pilot planner", () => {
     );
   });
 
-  it("keeps the SQL executor evidence-only and replay-safe", async () => {
+  it("keeps the SQL executor evidence-only, guarded and replay-safe", async () => {
     const sql = await readFile(
       resolve(process.cwd(), "scripts/step-107-import-evidence.sql"),
+      "utf8",
+    );
+    const runner = await readFile(
+      resolve(process.cwd(), "scripts/run-step-107-sergey-pilot.mjs"),
       "utf8",
     );
     expect(sql).toContain("INSERT INTO public.observations");
     expect(sql).toContain("INSERT INTO public.source_fragments");
     expect(sql).toContain("ON CONFLICT (id) DO NOTHING");
+    expect(sql).toContain("transactional-v1");
+    expect(runner).toContain("await sql.begin(async (tx) =>");
+    expect(runner).toContain("realme.step107_executor_guard");
+    expect(runner).toContain("realme.step107_world_id");
+    expect(runner).toContain("realme.step107_account_id");
     for (const table of [
       "admission_decisions",
       "ontology_nodes",
