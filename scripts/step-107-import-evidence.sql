@@ -5,16 +5,20 @@
 --   source_kind text, source_locator text, occurred_at timestamptz,
 --   occurred_precision text, local_calendar_date date, exact_text text,
 --   content_hash text.
--- Caller must set psql variables :world_id and :account_id to the server-derived
--- pilot World and authenticated pilot account.
+-- Caller must set session-local GUCs before execution:
+--   select set_config('realme.step107_world_id', '<server-derived-world-uuid>', true);
+--   select set_config('realme.step107_account_id', '<authenticated-account-uuid>', true);
 
 DO $$
+DECLARE
+  v_world_id uuid := current_setting('realme.step107_world_id')::uuid;
+  v_account_id uuid := current_setting('realme.step107_account_id')::uuid;
 BEGIN
   IF NOT EXISTS (
     SELECT 1
     FROM public.world_memberships AS membership
-    WHERE membership.world_id = :'world_id'::uuid
-      AND membership.user_id = :'account_id'::uuid
+    WHERE membership.world_id = v_world_id
+      AND membership.user_id = v_account_id
       AND membership.role = 'owner'
   ) THEN
     RAISE EXCEPTION 'Step 107 importer requires the owning account and server-derived World.';
@@ -35,8 +39,8 @@ INSERT INTO public.observations (
 )
 SELECT
   source.observation_id,
-  :'world_id'::uuid,
-  :'account_id'::uuid,
+  current_setting('realme.step107_world_id')::uuid,
+  current_setting('realme.step107_account_id')::uuid,
   source.source_kind,
   source.source_locator,
   source.occurred_at,
@@ -56,7 +60,7 @@ INSERT INTO public.source_fragments (
 )
 SELECT
   source.fragment_id,
-  :'world_id'::uuid,
+  current_setting('realme.step107_world_id')::uuid,
   source.observation_id,
   0,
   source.exact_text,
@@ -65,19 +69,22 @@ FROM step107_source_items AS source
 ON CONFLICT (id) DO NOTHING;
 
 DO $$
+DECLARE
+  v_world_id uuid := current_setting('realme.step107_world_id')::uuid;
+  v_account_id uuid := current_setting('realme.step107_account_id')::uuid;
 BEGIN
   IF EXISTS (
     SELECT 1
     FROM step107_source_items AS source
     LEFT JOIN public.observations AS observation
-      ON observation.world_id = :'world_id'::uuid
+      ON observation.world_id = v_world_id
      AND observation.id = source.observation_id
     LEFT JOIN public.source_fragments AS fragment
-      ON fragment.world_id = :'world_id'::uuid
+      ON fragment.world_id = v_world_id
      AND fragment.id = source.fragment_id
     WHERE observation.id IS NULL
        OR fragment.id IS NULL
-       OR observation.recorded_by_account_id IS DISTINCT FROM :'account_id'::uuid
+       OR observation.recorded_by_account_id IS DISTINCT FROM v_account_id
        OR observation.source_kind IS DISTINCT FROM source.source_kind
        OR observation.source_locator IS DISTINCT FROM source.source_locator
        OR observation.occurred_at IS DISTINCT FROM source.occurred_at
