@@ -116,8 +116,11 @@ async function git(sourceRoot, args, encoding = "utf8") {
       ? result.stdout.trimEnd()
       : result.stdout;
   } catch (error) {
-    const detail = error?.stderr?.toString?.().trim() || error?.message || "git failed";
-    throw new SourceValidationError(`pinned Git source verification failed: ${detail}`);
+    const detail =
+      error?.stderr?.toString?.().trim() || error?.message || "git failed";
+    throw new SourceValidationError(
+      `pinned Git source verification failed: ${detail}`,
+    );
   }
 }
 
@@ -164,7 +167,9 @@ export async function loadPinnedSourceFiles(sourceRoot, manifest) {
       `${manifest.sourceCommit}:${item.path}`,
     ]);
     if (!/^[0-9a-f]{40}$/.test(resolvedBlob)) {
-      throw new SourceValidationError(`${item.id}: pinned path did not resolve to a blob`);
+      throw new SourceValidationError(
+        `${item.id}: pinned path did not resolve to a blob`,
+      );
     }
     if (resolvedBlob !== item.blobSha) {
       throw new SourceValidationError(
@@ -174,11 +179,17 @@ export async function loadPinnedSourceFiles(sourceRoot, manifest) {
 
     const objectType = await git(sourceRoot, ["cat-file", "-t", resolvedBlob]);
     if (objectType !== "blob") {
-      throw new SourceValidationError(`${item.id}: pinned object is not a Git blob`);
+      throw new SourceValidationError(
+        `${item.id}: pinned object is not a Git blob`,
+      );
     }
 
     if (!verifiedPaths.has(item.path)) {
-      const blobBytes = await git(sourceRoot, ["cat-file", "blob", resolvedBlob], "buffer");
+      const blobBytes = await git(
+        sourceRoot,
+        ["cat-file", "blob", resolvedBlob],
+        "buffer",
+      );
       files[item.path] = blobBytes.toString("utf8");
       verifiedPaths.set(item.path, resolvedBlob);
     }
