@@ -28,6 +28,11 @@ const files = Object.fromEntries(
 );
 
 const plan = buildImportPlan(manifest, files);
+const included = plan.included.map((item) => {
+  const reportItem = { ...item };
+  delete reportItem.exactText;
+  return reportItem;
+});
 const report = {
   mode: "dry-run",
   source: {
@@ -49,7 +54,7 @@ const report = {
         .length,
     ]),
   ),
-  included: plan.included.map(({ exactText: _exactText, ...item }) => item),
+  included,
   excluded: plan.excluded,
   candidateRequests: buildCandidateRequests(plan),
   canonicalWrites: 0,
