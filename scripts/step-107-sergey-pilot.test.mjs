@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import {
   AmbiguousIdentityError,
@@ -79,6 +80,8 @@ describe('Step 107 Sergey pilot planner', () => {
     const world = '11111111-1111-4111-8111-111111111111';
     const rows = buildEvidenceRows(plan, world);
     expect(rows.every((row) => row.observation.world_id === world && row.fragment.world_id === world)).toBe(true);
+    expect(rows[0].observation.local_calendar_date).toBe('2026-08-30');
+    expect(rows[0].fragment).toHaveProperty('content_hash');
     expect(() => buildEvidenceRows(plan, 'not-a-world')).toThrow(SourceValidationError);
   });
 
@@ -88,6 +91,16 @@ describe('Step 107 Sergey pilot planner', () => {
     expect(candidates.every((candidate) => candidate.admissionAuthority === 'none')).toBe(true);
     expect(assertNoCanonicalWrites({ observations: [], source_fragments: [], candidateRequests: candidates })).toBe(true);
     expect(() => assertNoCanonicalWrites({ assertions: [] })).toThrow(SourceValidationError);
+  });
+
+  it('keeps the SQL executor evidence-only and replay-safe', async () => {
+    const sql = await readFile(new URL('./step-107-import-evidence.sql', import.meta.url), 'utf8');
+    expect(sql).toContain('INSERT INTO public.observations');
+    expect(sql).toContain('INSERT INTO public.source_fragments');
+    expect(sql).toContain('ON CONFLICT (id) DO NOTHING');
+    for (const table of ['admission_decisions', 'ontology_nodes', 'ontology_aliases', 'ontology_relationships', 'assertions', 'assertion_evidence']) {
+      expect(sql).not.toMatch(new RegExp(`(?:INSERT\\s+INTO|UPDATE|DELETE\\s+FROM)\\s+public\\.${table}`, 'i'));
+    }
   });
 
   it('fails closed on ambiguous identity mappings', () => {
