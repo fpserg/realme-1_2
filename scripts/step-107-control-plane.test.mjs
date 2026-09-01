@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import approvedManifest from "./step-107-sergey-pilot-manifest.json" with { type: "json" };
 import {
   buildControlPlanePayload,
+  canonicalJson,
   decodeControlPlanePayloadFromSql,
   encodeControlPlanePayload,
   renderControlPlaneSql,
@@ -20,13 +21,12 @@ function approvedShapePlan() {
     "backslash: \\ and unicode: Москва — 家\n",
     "emoji: 🏗️ exact bytes\n",
   ];
-  const classes = ["A", "A", "B", "C", "D"];
   return {
     included: approvedManifest.items
       .filter((item) => item.action === "import")
       .map((item, index) => ({
         id: item.id,
-        authorityClass: classes[index],
+        authorityClass: item.authorityClass,
         sourceKind: item.sourceKind,
         sourceRepository: approvedManifest.sourceRepository,
         sourceCommit: approvedManifest.sourceCommit,
@@ -66,7 +66,13 @@ describe("Step 107 control-plane artifact", () => {
     expect(included.every((item) => item.occurredAt === null)).toBe(true);
   });
 
-  it("builds deterministic byte-identical SQL artifacts", async () => {
+  it("canonicalizes JSON recursively and independently of object insertion order", () => {
+    expect(canonicalJson({ z: 1, a: { y: 2, b: 3 } })).toBe(
+      canonicalJson({ a: { b: 3, y: 2 }, z: 1 }),
+    );
+  });
+
+  it("builds deterministic byte-identical one-statement SQL artifacts", async () => {
     const template = await readFile(
       resolve(
         process.cwd(),
@@ -84,11 +90,14 @@ describe("Step 107 control-plane artifact", () => {
     const second = renderControlPlaneSql(template, payload);
     expect(first).toBe(second);
     expect(first).not.toContain("__STEP107_PAYLOAD_BASE64__");
-    expect(first.match(/DO \$step107\$/g)).toHaveLength(1);
-    expect(first.trim().endsWith("$step107$;")).toBe(true);
+    expect(first).toContain("WITH\npayload AS MATERIALIZED");
+    expect(first).toContain("AS step107_control_plane_result");
+    expect(first).not.toContain("DO $step107$");
+    expect(first.trim().endsWith(";")).toBe(true);
+    expect(first.match(/;/g)).toHaveLength(1);
   });
 
-  it("round-trips arbitrary UTF-8 source text losslessly through nested base64", async () => {
+  it("round-trips quotes, newlines, backslashes and Unicode losslessly through nested base64", async () => {
     const template = await readFile(
       resolve(
         process.cwd(),
@@ -157,7 +166,7 @@ describe("Step 107 control-plane artifact", () => {
     ).toThrow(/occurredAt null/);
   });
 
-  it("contains fail-closed ownership, reconciliation, rollback failpoint and canonical guards", async () => {
+  it("contains exact source-plan, ownership, transaction-local, reconciliation and rollback guards", async () => {
     const sql = await readFile(
       resolve(
         process.cwd(),
@@ -167,15 +176,16 @@ describe("Step 107 control-plane artifact", () => {
     );
     expect(sql).toContain("transactional-v1");
     expect(sql).toContain("auth.users");
-    expect(sql).toContain("initial_owner_id = v_account_id");
-    expect(sql).toContain("count(*)");
+    expect(sql).toContain("initial_owner_id = item_guard.account_id");
+    expect(sql).toContain("STEP107_SOURCE_PLAN_MISMATCH_");
+    expect(sql).toContain("STEP107_BOOTSTRAP_BINDING_MISMATCH_");
+    expect(sql).toContain("STEP107_REPLAY_RECONCILIATION_MISMATCH_");
+    expect(sql).toContain("STEP107_DELIBERATE_POST_OBSERVATION_FAILURE_");
     expect(sql).toContain("ON CONFLICT (id) DO NOTHING");
-    expect(sql).toContain("persisted evidence differs from pinned source plan");
-    expect(sql).toContain("failAfterObservationInsert");
-    expect(sql).toContain("RAISE EXCEPTION");
-    expect(sql).toContain("admissionDecisionsBefore");
-    expect(sql).toContain("ontologyNodesBefore");
-    expect(sql).toContain("assertionsBefore");
+    expect(sql).toContain("effective_observations");
+    expect(sql).toContain("effective_fragments");
+    expect(sql).toContain("reconciliationFingerprint");
+    expect(sql).toContain("canonicalStateUnchanged");
     for (const table of [
       "admission_decisions",
       "ontology_nodes",
