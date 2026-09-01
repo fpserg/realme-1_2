@@ -37,13 +37,42 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: TEMP render formatting
-        run: pnpm exec prettier --write scripts/step-107-control-plane.mjs scripts/step-107-control-plane.test.mjs
+      - name: Audit complete dependency graph
+        run: pnpm audit:security
 
-      - name: TEMP upload formatting
-        uses: actions/upload-artifact@v4
-        with:
-          name: step107-prettier
-          path: |
-            scripts/step-107-control-plane.mjs
-            scripts/step-107-control-plane.test.mjs
+      - name: Verify environment-secret exclusions
+        run: |
+          git check-ignore --no-index --quiet .env.production
+          git check-ignore --no-index --quiet .env.development
+          git check-ignore --no-index --quiet .env.test
+          if git check-ignore --no-index --quiet .env.example; then
+            echo ".env.example must remain tracked"
+            exit 1
+          fi
+
+      - name: Verify formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Verify architecture boundaries
+        run: pnpm check:boundaries
+
+      - name: Verify Drizzle migration artifacts
+        run: pnpm db:check
+
+      - name: Run unit and component tests
+        run: pnpm test:unit
+
+      - name: Build production application
+        run: pnpm build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run mobile smoke test
+        run: pnpm test:e2e
