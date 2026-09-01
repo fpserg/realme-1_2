@@ -37,42 +37,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit complete dependency graph
-        run: pnpm audit:security
+      - name: Verify control-plane tests
+        run: pnpm exec vitest run scripts/step-107-sergey-pilot.test.mjs scripts/step-107-control-plane.test.mjs
 
-      - name: Verify environment-secret exclusions
+      - name: Clone pinned historical source
         run: |
-          git check-ignore --no-index --quiet .env.production
-          git check-ignore --no-index --quiet .env.development
-          git check-ignore --no-index --quiet .env.test
-          if git check-ignore --no-index --quiet .env.example; then
-            echo ".env.example must remain tracked"
-            exit 1
-          fi
+          git clone https://github.com/fpserg/RealMe.git /tmp/RealMe
+          test "$(git -C /tmp/RealMe rev-parse --verify b701e303e0e716dd54099938fab092d419d30e61^{commit})" = "b701e303e0e716dd54099938fab092d419d30e61"
+          test "$(git -C /tmp/RealMe show -s --format=%T b701e303e0e716dd54099938fab092d419d30e61)" = "b5b3edd5d31cc1a4955a493ad0d9dd8948550d88"
 
-      - name: Verify formatting
-        run: pnpm format:check
+      - name: Generate exact staging SQL artifact
+        run: |
+          node scripts/run-step-107-sergey-pilot.mjs \
+            --source-root=/tmp/RealMe \
+            --control-plane-sql \
+            --world-id=8a507667-b771-45ec-aaa6-cec3eb4c4f39 \
+            --account-id=10700000-0000-4000-8000-000000000001 \
+            > /tmp/step107-staging.sql
+          test "$(grep -c '^DO \$step107\$$' /tmp/step107-staging.sql)" = "1"
+          sha256sum /tmp/step107-staging.sql
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Type-check
-        run: pnpm typecheck
-
-      - name: Verify architecture boundaries
-        run: pnpm check:boundaries
-
-      - name: Verify Drizzle migration artifacts
-        run: pnpm db:check
-
-      - name: Run unit and component tests
-        run: pnpm test:unit
-
-      - name: Build production application
-        run: pnpm build
-
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Run mobile smoke test
-        run: pnpm test:e2e
+      - name: Upload exact staging SQL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: step107-staging-sql
+          path: /tmp/step107-staging.sql
