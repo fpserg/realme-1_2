@@ -9,6 +9,22 @@ function requireUuid(value, label) {
   return value;
 }
 
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, canonicalize(value[key])]),
+    );
+  }
+  return value;
+}
+
+export function canonicalJson(value) {
+  return JSON.stringify(canonicalize(value));
+}
+
 export function buildControlPlanePayload(
   manifest,
   plan,
@@ -20,22 +36,19 @@ export function buildControlPlanePayload(
   requireUuid(expectedAccountId, "expected account id");
 
   if (plan.included.length !== 5) {
-    throw new Error(
-      "control-plane payload requires exactly five included items",
-    );
+    throw new Error("control-plane payload requires exactly five included items");
   }
-  if (plan.excluded.length !== 1 || plan.excluded[0].authorityClass !== "E") {
-    throw new Error(
-      "control-plane payload requires exactly one Class E exclusion",
-    );
+  if (
+    plan.excluded.length !== 1 ||
+    plan.excluded[0].authorityClass !== "E"
+  ) {
+    throw new Error("control-plane payload requires exactly one Class E exclusion");
   }
   if (plan.included.some((item) => item.authorityClass === "E")) {
     throw new Error("control-plane payload cannot contain Class E material");
   }
   if (plan.included.some((item) => item.occurredAt !== null)) {
-    throw new Error(
-      "approved Step 107 control-plane items must keep occurredAt null",
-    );
+    throw new Error("approved Step 107 control-plane items must keep occurredAt null");
   }
 
   return {
@@ -75,8 +88,7 @@ export function buildControlPlanePayload(
 }
 
 export function encodeControlPlanePayload(payload) {
-  const canonicalJson = JSON.stringify(payload);
-  const encoded = Buffer.from(canonicalJson, "utf8").toString("base64");
+  const encoded = Buffer.from(canonicalJson(payload), "utf8").toString("base64");
   if (!/^[A-Za-z0-9+/=]+$/.test(encoded)) {
     throw new Error("control-plane payload encoding is not base64-safe");
   }
@@ -86,9 +98,7 @@ export function encodeControlPlanePayload(payload) {
 export function renderControlPlaneSql(template, payload) {
   const first = template.indexOf(PAYLOAD_PLACEHOLDER);
   if (first < 0 || template.indexOf(PAYLOAD_PLACEHOLDER, first + 1) >= 0) {
-    throw new Error(
-      "control-plane SQL template must contain one payload placeholder",
-    );
+    throw new Error("control-plane SQL template must contain one payload placeholder");
   }
   const encoded = encodeControlPlanePayload(payload);
   return template.replace(PAYLOAD_PLACEHOLDER, encoded);
