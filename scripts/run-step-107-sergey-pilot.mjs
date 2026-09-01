@@ -45,9 +45,7 @@ if (controlPlaneSql) {
   const worldId = argument("world-id");
   const accountId = argument("account-id");
   if (!worldId || !accountId) {
-    throw new Error(
-      "--control-plane-sql requires --world-id and --account-id",
-    );
+    throw new Error("--control-plane-sql requires --world-id and --account-id");
   }
   const template = await readFile(
     resolve(
@@ -56,12 +54,7 @@ if (controlPlaneSql) {
     ),
     "utf8",
   );
-  const payload = buildControlPlanePayload(
-    manifest,
-    plan,
-    worldId,
-    accountId,
-  );
+  const payload = buildControlPlanePayload(manifest, plan, worldId, accountId);
   process.stdout.write(renderControlPlaneSql(template, payload));
   process.exit(0);
 }
