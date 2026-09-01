@@ -4,6 +4,7 @@ import type { ObservationHistoryItem } from "@/domain/observation/observation";
 
 import {
   loadTemporalContinuity,
+  saveTimeSetting,
   TemporalAuthenticationError,
   type TemporalRepository,
 } from "./temporal-continuity";
@@ -72,5 +73,28 @@ describe("temporal continuity application flow", () => {
       persistenceState: "saved",
       temporalPlacement: { state: "pending" },
     });
+  });
+
+  it("persists the first setting only after the authenticated user explicitly confirms it", async () => {
+    const temporalRepository = repository();
+    const setting = {
+      effectiveFrom: "-infinity",
+      id: "523e4567-e89b-42d3-a456-426614174000",
+      operationalBoundary: "04:00",
+      timezone: "Europe/Helsinki",
+    };
+    vi.mocked(temporalRepository.saveSetting).mockResolvedValue(setting);
+
+    await expect(
+      saveTimeSetting(
+        "123e4567-e89b-42d3-a456-426614174000",
+        { operationalBoundary: "04:00", timezone: "Europe/Helsinki" },
+        temporalRepository,
+      ),
+    ).resolves.toEqual(setting);
+    expect(temporalRepository.saveSetting).toHaveBeenCalledWith(
+      { userId: "123e4567-e89b-42d3-a456-426614174000" },
+      { operationalBoundary: "04:00", timezone: "Europe/Helsinki" },
+    );
   });
 });

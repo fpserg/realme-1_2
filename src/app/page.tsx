@@ -4,7 +4,7 @@ import {
   listCandidateReviews,
   type CandidateReviewItem,
 } from "@/application/admission/admission";
-import { listOperationalCommitments } from "@/application/commitment/list-operational-commitments";
+import { listOperationalCommitmentsForTemporalContext } from "@/application/commitment/list-operational-commitments";
 import { reconcileObservationInterpretations } from "@/application/interpretation/enqueue-interpretation";
 import { getLivingWorld } from "@/application/living-world/get-living-world";
 import { listObservationHistory } from "@/application/observation/observation-capture";
@@ -270,10 +270,17 @@ export function HomeView({ state }: { state: HomeState }) {
                 </p>
               </div>
             </div>
-            <OperationalProjections
-              horizon={state.horizon}
-              today={state.today}
-            />
+            {state.temporal.setting && state.temporal.currentPeriod ? (
+              <OperationalProjections
+                horizon={state.horizon}
+                today={state.today}
+              />
+            ) : (
+              <p>
+                Confirm your operational time above to activate Today and
+                Horizon. No projection is created before that explicit choice.
+              </p>
+            )}
           </section>
           <section
             id="world"
@@ -364,6 +371,11 @@ export default async function HomePage() {
       userId,
       observationRepository,
     );
+    const temporal = await loadTemporalContinuity(
+      userId,
+      observations,
+      new SupabaseTemporalRepository(supabase),
+    );
     await reconcileObservationInterpretations(
       userId,
       new SupabaseInterpretationEnqueueRepository(supabase),
@@ -376,17 +388,13 @@ export default async function HomePage() {
       access.worldId,
       new SupabaseCanonicalUnderstandingRepository(supabase),
     );
-    const commitments = await listOperationalCommitments(
+    const commitments = await listOperationalCommitmentsForTemporalContext(
+      temporal,
       new SupabaseCommitmentProjectionRepository(supabase),
     );
     const livingWorld = await getLivingWorld(
       access.worldId,
       new SupabaseLivingWorldRepository(supabase),
-    );
-    const temporal = await loadTemporalContinuity(
-      userId,
-      observations,
-      new SupabaseTemporalRepository(supabase),
     );
     state = {
       accountId: userId,

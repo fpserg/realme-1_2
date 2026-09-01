@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/app/_supabase/server";
 import { readSupabasePublicConfig } from "@/infrastructure/supabase/environment";
 
+import { resolveAuthCallbackUrl } from "./callback-url";
+
 function credentials(formData: FormData) {
   const email = formData.get("email");
   const password = formData.get("password");
@@ -23,9 +25,11 @@ function credentials(formData: FormData) {
 }
 
 function requireConfiguredAuth() {
-  if (!readSupabasePublicConfig()) {
+  const configuration = readSupabasePublicConfig();
+  if (!configuration) {
     redirect("/login?notice=Authentication+is+not+configured+for+this+build.");
   }
+  return configuration;
 }
 
 export async function login(formData: FormData) {
@@ -41,17 +45,17 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  requireConfiguredAuth();
+  const configuration = requireConfiguredAuth();
   const input = credentials(formData);
   const supabase = await createSupabaseServerClient();
-  const appUrl =
-    process.env.DEPLOY_PRIME_URL ??
-    process.env.URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://127.0.0.1:3000";
   const { error } = await supabase.auth.signUp({
     ...input,
-    options: { emailRedirectTo: new URL("/auth/callback", appUrl).toString() },
+    options: {
+      emailRedirectTo: resolveAuthCallbackUrl(
+        configuration.environment,
+        process.env,
+      ),
+    },
   });
 
   if (error) redirect("/login?notice=Account+creation+was+not+accepted.");

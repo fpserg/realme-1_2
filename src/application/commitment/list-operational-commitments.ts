@@ -1,3 +1,4 @@
+import type { TemporalContextView } from "@/application/time/temporal-continuity";
 import type {
   CommitmentProjectionItem,
   CommitmentSurface,
@@ -22,4 +23,15 @@ export async function listOperationalCommitments(
   ]);
 
   return { horizon, today };
+}
+
+export function listOperationalCommitmentsForTemporalContext(
+  temporal: TemporalContextView,
+  repository: CommitmentProjectionRepository,
+) {
+  if (!temporal.setting || !temporal.currentPeriod) {
+    return Promise.resolve({ horizon: [], today: [] });
+  }
+
+  return listOperationalCommitments(repository);
 }

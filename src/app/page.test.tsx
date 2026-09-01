@@ -24,8 +24,26 @@ const readyState = {
   kind: "ready" as const,
   livingWorld,
   observations: [],
-  temporal: { currentPeriod: null, setting: null },
+  temporal: {
+    currentPeriod: {
+      endsAt: "2026-09-02T02:00:00.000Z",
+      id: "10500000-0000-4000-8000-000000000010",
+      localDate: "2026-09-01",
+      startsAt: "2026-09-01T02:00:00.000Z",
+    },
+    setting: {
+      effectiveFrom: "-infinity",
+      id: "10500000-0000-4000-8000-000000000011",
+      operationalBoundary: "04:00",
+      timezone: "Europe/Amsterdam",
+    },
+  },
   today: [],
+};
+
+const uninitializedState = {
+  ...readyState,
+  temporal: { currentPeriod: null, setting: null },
 };
 
 afterEach(() => cleanup());
@@ -51,7 +69,7 @@ describe("HomeView", () => {
   });
 
   it("integrates the accepted core loop behind product-language navigation", () => {
-    render(<HomeView state={readyState} />);
+    render(<HomeView state={uninitializedState} />);
 
     const navigation = screen.getByRole("navigation", {
       name: "RealMe core loop",
@@ -89,6 +107,32 @@ describe("HomeView", () => {
     expect(
       screen.getByRole("region", { name: "World understanding" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Your operational time" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Confirm time setting" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Operational day begins")).toHaveValue(
+      "04:00",
+    );
+    expect(
+      screen.getByText(
+        "Confirm your operational time above to activate Today and Horizon. No projection is created before that explicit choice.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Provisioning check failed"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("preserves the genuine provisioning failure surface", () => {
+    render(<HomeView state={{ kind: "provisioning-error" }} />);
+
+    expect(screen.getByText("Provisioning check failed")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Your operational time" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps authority states perceivable without inventing empty truth", () => {
