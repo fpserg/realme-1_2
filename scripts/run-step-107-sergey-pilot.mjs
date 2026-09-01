@@ -8,6 +8,10 @@ import {
   buildImportPlan,
   loadPinnedSourceFiles,
 } from "./step-107-sergey-pilot.mjs";
+import {
+  buildControlPlanePayload,
+  renderControlPlaneSql,
+} from "./step-107-control-plane.mjs";
 
 function argument(name) {
   const prefix = `--${name}=`;
@@ -17,11 +21,16 @@ function argument(name) {
 
 const sourceRoot = argument("source-root");
 const execute = process.argv.includes("--execute");
+const controlPlaneSql = process.argv.includes("--control-plane-sql");
+
 if (!sourceRoot) {
   console.error(
-    "usage: node scripts/run-step-107-sergey-pilot.mjs --source-root=/path/to/RealMe [--execute --world-id=<uuid> --account-id=<uuid>]",
+    "usage: node scripts/run-step-107-sergey-pilot.mjs --source-root=/path/to/RealMe [--execute --world-id=<uuid> --account-id=<uuid> | --control-plane-sql --world-id=<uuid> --account-id=<uuid>]",
   );
   process.exit(2);
+}
+if (execute && controlPlaneSql) {
+  throw new Error("--execute and --control-plane-sql are mutually exclusive");
 }
 
 const files = await loadPinnedSourceFiles(sourceRoot, manifest);
@@ -31,6 +40,31 @@ const included = plan.included.map((item) => {
   delete reportItem.exactText;
   return reportItem;
 });
+
+if (controlPlaneSql) {
+  const worldId = argument("world-id");
+  const accountId = argument("account-id");
+  if (!worldId || !accountId) {
+    throw new Error(
+      "--control-plane-sql requires --world-id and --account-id",
+    );
+  }
+  const template = await readFile(
+    resolve(
+      process.cwd(),
+      "scripts/step-107-import-evidence-control-plane.sql",
+    ),
+    "utf8",
+  );
+  const payload = buildControlPlanePayload(
+    manifest,
+    plan,
+    worldId,
+    accountId,
+  );
+  process.stdout.write(renderControlPlaneSql(template, payload));
+  process.exit(0);
+}
 
 if (execute) {
   const worldId = argument("world-id");
