@@ -1,4 +1,5 @@
-const PAYLOAD_PLACEHOLDER = "__STEP107_PAYLOAD_BASE64__";
+const PAYLOAD_PLACEHOLDER = "__STEP107_PAYLOAD_SQL__";
+const PAYLOAD_CHUNK_SIZE = 800;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -100,6 +101,15 @@ export function encodeControlPlanePayload(payload) {
   return encoded;
 }
 
+export function renderControlPlanePayloadSql(payload) {
+  const encoded = encodeControlPlanePayload(payload);
+  const chunks = [];
+  for (let offset = 0; offset < encoded.length; offset += PAYLOAD_CHUNK_SIZE) {
+    chunks.push(`'${encoded.slice(offset, offset + PAYLOAD_CHUNK_SIZE)}'`);
+  }
+  return chunks.join(" ||\n      ");
+}
+
 export function renderControlPlaneSql(template, payload) {
   const first = template.indexOf(PAYLOAD_PLACEHOLDER);
   if (first < 0 || template.indexOf(PAYLOAD_PLACEHOLDER, first + 1) >= 0) {
@@ -107,12 +117,15 @@ export function renderControlPlaneSql(template, payload) {
       "control-plane SQL template must contain one payload placeholder",
     );
   }
-  const encoded = encodeControlPlanePayload(payload);
-  return template.replace(PAYLOAD_PLACEHOLDER, encoded);
+  return template.replace(PAYLOAD_PLACEHOLDER, renderControlPlanePayloadSql(payload));
 }
 
 export function decodeControlPlanePayloadFromSql(sql) {
-  const match = sql.match(/decode\('([A-Za-z0-9+/=]+)', 'base64'\)/);
-  if (!match) throw new Error("control-plane SQL payload not found");
-  return JSON.parse(Buffer.from(match[1], "base64").toString("utf8"));
+  const decodeCall = sql.match(/decode\(([\s\S]*?),\s*'base64'\)/);
+  if (!decodeCall) throw new Error("control-plane SQL payload not found");
+  const chunks = [...decodeCall[1].matchAll(/'([A-Za-z0-9+/=]+)'/g)].map(
+    (match) => match[1],
+  );
+  if (chunks.length === 0) throw new Error("control-plane SQL chunks missing");
+  return JSON.parse(Buffer.from(chunks.join(""), "base64").toString("utf8"));
 }
