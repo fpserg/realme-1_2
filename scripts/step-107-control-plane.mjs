@@ -40,10 +40,7 @@ export function buildControlPlanePayload(
       "control-plane payload requires exactly five included items",
     );
   }
-  if (
-    plan.excluded.length !== 1 ||
-    plan.excluded[0].authorityClass !== "E"
-  ) {
+  if (plan.excluded.length !== 1 || plan.excluded[0].authorityClass !== "E") {
     throw new Error(
       "control-plane payload requires exactly one Class E exclusion",
     );
