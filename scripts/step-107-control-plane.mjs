@@ -117,7 +117,10 @@ export function renderControlPlaneSql(template, payload) {
       "control-plane SQL template must contain one payload placeholder",
     );
   }
-  return template.replace(PAYLOAD_PLACEHOLDER, renderControlPlanePayloadSql(payload));
+  return template.replace(
+    PAYLOAD_PLACEHOLDER,
+    renderControlPlanePayloadSql(payload),
+  );
 }
 
 export function decodeControlPlanePayloadFromSql(sql) {
