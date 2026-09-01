@@ -20,19 +20,25 @@ export function buildControlPlanePayload(
   requireUuid(expectedAccountId, "expected account id");
 
   if (plan.included.length !== 5) {
-    throw new Error("control-plane payload requires exactly five included items");
+    throw new Error(
+      "control-plane payload requires exactly five included items",
+    );
   }
   if (
     plan.excluded.length !== 1 ||
     plan.excluded[0].authorityClass !== "E"
   ) {
-    throw new Error("control-plane payload requires exactly one Class E exclusion");
+    throw new Error(
+      "control-plane payload requires exactly one Class E exclusion",
+    );
   }
   if (plan.included.some((item) => item.authorityClass === "E")) {
     throw new Error("control-plane payload cannot contain Class E material");
   }
   if (plan.included.some((item) => item.occurredAt !== null)) {
-    throw new Error("approved Step 107 control-plane items must keep occurredAt null");
+    throw new Error(
+      "approved Step 107 control-plane items must keep occurredAt null",
+    );
   }
 
   return {
@@ -83,7 +89,9 @@ export function encodeControlPlanePayload(payload) {
 export function renderControlPlaneSql(template, payload) {
   const first = template.indexOf(PAYLOAD_PLACEHOLDER);
   if (first < 0 || template.indexOf(PAYLOAD_PLACEHOLDER, first + 1) >= 0) {
-    throw new Error("control-plane SQL template must contain one payload placeholder");
+    throw new Error(
+      "control-plane SQL template must contain one payload placeholder",
+    );
   }
   const encoded = encodeControlPlanePayload(payload);
   return template.replace(PAYLOAD_PLACEHOLDER, encoded);
