@@ -1,4 +1,4 @@
-const PAYLOAD_PLACEHOLDER = "__STEP107_PAYLOAD_SQL__";
+const PAYLOAD_PLACEHOLDER = "__STEP107_PAYLOAD_BASE64__";
 const PAYLOAD_CHUNK_SIZE = 800;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -105,9 +105,9 @@ export function renderControlPlanePayloadSql(payload) {
   const encoded = encodeControlPlanePayload(payload);
   const chunks = [];
   for (let offset = 0; offset < encoded.length; offset += PAYLOAD_CHUNK_SIZE) {
-    chunks.push(`'${encoded.slice(offset, offset + PAYLOAD_CHUNK_SIZE)}'`);
+    chunks.push(encoded.slice(offset, offset + PAYLOAD_CHUNK_SIZE));
   }
-  return chunks.join(" ||\n      ");
+  return chunks.join("' ||\n      '");
 }
 
 export function renderControlPlaneSql(template, payload) {
