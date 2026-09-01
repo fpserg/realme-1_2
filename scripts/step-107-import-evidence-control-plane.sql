@@ -1,8 +1,8 @@
 -- Step 107 Sergey pilot control-plane evidence executor.
 -- Exactly one PostgreSQL statement. The runner replaces the payload placeholder
 -- with canonical UTF-8 JSON encoded as base64. Source text is nested base64.
--- Any failed guard raises an uncaught PostgreSQL ERROR from a volatile invalid
--- cast, aborting this statement and therefore rolling back every write it made.
+-- Failed guards use volatile invalid casts so an uncaught PostgreSQL ERROR aborts
+-- the statement and rolls back every write made by it.
 WITH
 payload AS MATERIALIZED (
   SELECT convert_from(
@@ -39,6 +39,7 @@ items AS MATERIALIZED (
     item ->> 'sourceBlobSha' AS source_blob_sha,
     item ->> 'sourceLocator' AS source_locator,
     item ->> 'contentHash' AS content_hash,
+    item ->> 'operationalDay' AS operational_day_text,
     NULLIF(item ->> 'operationalDay', '')::date AS operational_day,
     item -> 'occurredAt' AS occurred_json,
     (item ->> 'observationId')::uuid AS observation_id,
@@ -49,81 +50,37 @@ items AS MATERIALIZED (
   CROSS JOIN LATERAL jsonb_array_elements(guard.body -> 'items') AS item
   WHERE guard.ok = 1
 ),
-approved AS MATERIALIZED (
-  SELECT *
-  FROM (
-    VALUES
-      (
-        'li-2026-08-29', 'A', 'living_input', 'fpserg/RealMe',
-        'b701e303e0e716dd54099938fab092d419d30e61',
-        'b5b3edd5d31cc1a4955a493ad0d9dd8948550d88',
-        'docs/PRODUCT/DAILY/2026/08/2026-08-29/LI.md',
-        'dd29129aed0c80365c59e8f1c206c35051283ec7',
-        'fpserg/RealMe@b701e303e0e716dd54099938fab092d419d30e61:docs/PRODUCT/DAILY/2026/08/2026-08-29/LI.md#whole_file',
-        '443aa583c8663e02af2c383f0182771303bf6e85e425e36e04abcc0ed4f62e58',
-        '2026-08-29'::date,
-        '7f1e82b6-e776-5133-9d5a-b68bedd0fb3c'::uuid,
-        'b55c5605-fc12-501a-a7f7-51a0eccb4a90'::uuid,
-        'ec0f6acb-46c2-5291-b38f-f5a4064dbc6e'::uuid
+plan_fingerprint AS MATERIALIZED (
+  SELECT encode(
+    extensions.digest(
+      convert_to(
+        string_agg(
+          concat_ws(
+            chr(31),
+            source_item_id,
+            authority_class,
+            source_kind,
+            source_repository,
+            source_commit,
+            source_tree,
+            source_path,
+            source_blob_sha,
+            source_locator,
+            content_hash,
+            COALESCE(operational_day_text, ''),
+            observation_id::text,
+            fragment_id::text,
+            capture_idempotency_key::text
+          ),
+          chr(30) ORDER BY source_item_id
+        ),
+        'UTF8'
       ),
-      (
-        'li-2026-08-30', 'A', 'living_input', 'fpserg/RealMe',
-        'b701e303e0e716dd54099938fab092d419d30e61',
-        'b5b3edd5d31cc1a4955a493ad0d9dd8948550d88',
-        'docs/PRODUCT/DAILY/2026/08/2026-08-30/LI.md',
-        '92171a19ded89d4dedce3ba83752a31e18fc2818',
-        'fpserg/RealMe@b701e303e0e716dd54099938fab092d419d30e61:docs/PRODUCT/DAILY/2026/08/2026-08-30/LI.md#whole_file',
-        '22e03cffc37bb51425c76cebc223b4388ae1968e7f82ee986006bf79a9d6b669',
-        '2026-08-30'::date,
-        '59573e7f-d6d8-5e33-96ad-f65d54ec63f4'::uuid,
-        'e709d94f-19f3-5e90-9a94-e61e9da5f727'::uuid,
-        'f34cdcd5-9609-5307-b6bb-5aca1c4ca0ea'::uuid
-      ),
-      (
-        'or-2026-08-30-realme', 'B', 'operational_record', 'fpserg/RealMe',
-        'b701e303e0e716dd54099938fab092d419d30e61',
-        'b5b3edd5d31cc1a4955a493ad0d9dd8948550d88',
-        'docs/PRODUCT/DAILY/2026/08/2026-08-30/OR.md',
-        '114a7d89a2492bcc1cb0c25a4213d2cc5577d1a1',
-        'fpserg/RealMe@b701e303e0e716dd54099938fab092d419d30e61:docs/PRODUCT/DAILY/2026/08/2026-08-30/OR.md#exact_text:7ac8175d400fa524d1402ed2bcf6b312e0346d95723da6dd204b2025b0042d98',
-        '7ac8175d400fa524d1402ed2bcf6b312e0346d95723da6dd204b2025b0042d98',
-        '2026-08-30'::date,
-        'd3f14170-647b-556d-847b-df5e19b4b67b'::uuid,
-        'e526e9dd-209d-5935-a960-45b7d052a721'::uuid,
-        '1660041d-7c0b-5e62-9be7-4c8329c9134b'::uuid
-      ),
-      (
-        'world-household-realm', 'C', 'accepted_product_decision', 'fpserg/RealMe',
-        'b701e303e0e716dd54099938fab092d419d30e61',
-        'b5b3edd5d31cc1a4955a493ad0d9dd8948550d88',
-        'docs/PRODUCT/VISUAL/REALME_WORLD_V1_CANONICAL_FREEZE.md',
-        'c5400b3eb060b78bdfb9c5dd8d6cb94cd65645df',
-        'fpserg/RealMe@b701e303e0e716dd54099938fab092d419d30e61:docs/PRODUCT/VISUAL/REALME_WORLD_V1_CANONICAL_FREEZE.md#exact_text:2e95c12b61a36ecee550ae26d918b840207e3d75570ee089522df27a6afbfa49',
-        '2e95c12b61a36ecee550ae26d918b840207e3d75570ee089522df27a6afbfa49',
-        NULL::date,
-        'bb161234-1a85-5140-b8f3-f9edd4828415'::uuid,
-        'c9291425-e57b-5843-88f5-4c70bcc45e51'::uuid,
-        'c3cefd02-8c25-5a08-8428-f7d39bbd1812'::uuid
-      ),
-      (
-        'wbtd-2026-08-30-realme-roadmap', 'D', 'wbtd_interpretation', 'fpserg/RealMe',
-        'b701e303e0e716dd54099938fab092d419d30e61',
-        'b5b3edd5d31cc1a4955a493ad0d9dd8948550d88',
-        'docs/PRODUCT/DAILY/2026/08/2026-08-30/WBTD.md',
-        'f803e54685925b0db2dd3bf29beb44f1792cd6df',
-        'fpserg/RealMe@b701e303e0e716dd54099938fab092d419d30e61:docs/PRODUCT/DAILY/2026/08/2026-08-30/WBTD.md#exact_text:cf3dfaf9b36527fbfa91757b2b335fe1a3df31d75ba5bc059a7e84a97739805b',
-        'cf3dfaf9b36527fbfa91757b2b335fe1a3df31d75ba5bc059a7e84a97739805b',
-        '2026-08-30'::date,
-        '086f4d72-c5f0-5193-9713-aeea36ae0173'::uuid,
-        'e45a3bcc-d04f-5d72-8b54-9129aac3d6da'::uuid,
-        '53f4e3bd-f53e-5fd7-a0f3-a6c90597adbd'::uuid
-      )
-  ) AS approved(
-    source_item_id, authority_class, source_kind, source_repository,
-    source_commit, source_tree, source_path, source_blob_sha, source_locator,
-    content_hash, operational_day, observation_id, fragment_id,
-    capture_idempotency_key
-  )
+      'sha256'
+    ),
+    'hex'
+  ) AS value
+  FROM items
 ),
 item_set_guard AS MATERIALIZED (
   SELECT
@@ -132,14 +89,10 @@ item_set_guard AS MATERIALIZED (
     shape.world_id,
     CASE
       WHEN (SELECT count(*) FROM items) = 5
-       AND (SELECT count(*) FROM approved) = 5
+       AND (SELECT value FROM plan_fingerprint) = 'b1730e1e60bbc22289c4be89862c645c5461b108fb34dff188cc96c85f488f0a'
+       AND NOT EXISTS (SELECT 1 FROM items WHERE authority_class = 'E')
        AND NOT EXISTS (
-         SELECT 1 FROM items WHERE authority_class = 'E'
-       )
-       AND NOT EXISTS (
-         SELECT 1
-         FROM items
-         WHERE occurred_json IS DISTINCT FROM 'null'::jsonb
+         SELECT 1 FROM items WHERE occurred_json IS DISTINCT FROM 'null'::jsonb
        )
        AND NOT EXISTS (
          SELECT 1
@@ -147,39 +100,6 @@ item_set_guard AS MATERIALIZED (
          WHERE content_hash IS DISTINCT FROM encode(
            extensions.digest(convert_to(exact_text, 'UTF8'), 'sha256'),
            'hex'
-         )
-       )
-       AND NOT EXISTS (
-         (
-           SELECT
-             source_item_id, authority_class, source_kind, source_repository,
-             source_commit, source_tree, source_path, source_blob_sha,
-             source_locator, content_hash, operational_day, observation_id,
-             fragment_id, capture_idempotency_key
-           FROM items
-           EXCEPT
-           SELECT
-             source_item_id, authority_class, source_kind, source_repository,
-             source_commit, source_tree, source_path, source_blob_sha,
-             source_locator, content_hash, operational_day, observation_id,
-             fragment_id, capture_idempotency_key
-           FROM approved
-         )
-         UNION ALL
-         (
-           SELECT
-             source_item_id, authority_class, source_kind, source_repository,
-             source_commit, source_tree, source_path, source_blob_sha,
-             source_locator, content_hash, operational_day, observation_id,
-             fragment_id, capture_idempotency_key
-           FROM approved
-           EXCEPT
-           SELECT
-             source_item_id, authority_class, source_kind, source_repository,
-             source_commit, source_tree, source_path, source_blob_sha,
-             source_locator, content_hash, operational_day, observation_id,
-             fragment_id, capture_idempotency_key
-           FROM items
          )
        )
       THEN 1
@@ -245,8 +165,14 @@ before_counts AS MATERIALIZED (
 ),
 observation_insert AS (
   INSERT INTO public.observations (
-    id, world_id, recorded_by_account_id, source_kind, source_locator,
-    occurred_at, occurred_precision, local_calendar_date,
+    id,
+    world_id,
+    recorded_by_account_id,
+    source_kind,
+    source_locator,
+    occurred_at,
+    occurred_precision,
+    local_calendar_date,
     capture_idempotency_key
   )
   SELECT
@@ -264,8 +190,15 @@ observation_insert AS (
   WHERE context.ok = 1
   ON CONFLICT (id) DO NOTHING
   RETURNING
-    id, world_id, recorded_by_account_id, source_kind, source_locator,
-    source_timezone, occurred_at, occurred_precision, local_calendar_date,
+    id,
+    world_id,
+    recorded_by_account_id,
+    source_kind,
+    source_locator,
+    source_timezone,
+    occurred_at,
+    occurred_precision,
+    local_calendar_date,
     capture_idempotency_key
 ),
 observation_phase_guard AS MATERIALIZED (
@@ -284,7 +217,12 @@ observation_phase_guard AS MATERIALIZED (
 ),
 fragment_insert AS (
   INSERT INTO public.source_fragments (
-    id, world_id, observation_id, ordinal, exact_text, content_hash
+    id,
+    world_id,
+    observation_id,
+    ordinal,
+    exact_text,
+    content_hash
   )
   SELECT
     source.fragment_id,
@@ -301,32 +239,50 @@ fragment_insert AS (
 ),
 effective_observations AS MATERIALIZED (
   SELECT
-    observation.id, observation.world_id, observation.recorded_by_account_id,
-    observation.source_kind, observation.source_locator,
-    observation.source_timezone, observation.occurred_at,
-    observation.occurred_precision, observation.local_calendar_date,
+    observation.id,
+    observation.world_id,
+    observation.recorded_by_account_id,
+    observation.source_kind,
+    observation.source_locator,
+    observation.source_timezone,
+    observation.occurred_at,
+    observation.occurred_precision,
+    observation.local_calendar_date,
     observation.capture_idempotency_key
   FROM public.observations AS observation
   JOIN items AS source ON source.observation_id = observation.id
   UNION ALL
   SELECT
-    inserted.id, inserted.world_id, inserted.recorded_by_account_id,
-    inserted.source_kind, inserted.source_locator,
-    inserted.source_timezone, inserted.occurred_at,
-    inserted.occurred_precision, inserted.local_calendar_date,
+    inserted.id,
+    inserted.world_id,
+    inserted.recorded_by_account_id,
+    inserted.source_kind,
+    inserted.source_locator,
+    inserted.source_timezone,
+    inserted.occurred_at,
+    inserted.occurred_precision,
+    inserted.local_calendar_date,
     inserted.capture_idempotency_key
   FROM observation_insert AS inserted
 ),
 effective_fragments AS MATERIALIZED (
   SELECT
-    fragment.id, fragment.world_id, fragment.observation_id,
-    fragment.ordinal, fragment.exact_text, fragment.content_hash
+    fragment.id,
+    fragment.world_id,
+    fragment.observation_id,
+    fragment.ordinal,
+    fragment.exact_text,
+    fragment.content_hash
   FROM public.source_fragments AS fragment
   JOIN items AS source ON source.fragment_id = fragment.id
   UNION ALL
   SELECT
-    inserted.id, inserted.world_id, inserted.observation_id,
-    inserted.ordinal, inserted.exact_text, inserted.content_hash
+    inserted.id,
+    inserted.world_id,
+    inserted.observation_id,
+    inserted.ordinal,
+    inserted.exact_text,
+    inserted.content_hash
   FROM fragment_insert AS inserted
 ),
 reconciliation_guard AS MATERIALIZED (
@@ -413,8 +369,6 @@ postcondition_guard AS MATERIALIZED (
     CASE
       WHEN reconcile.observations_inserted BETWEEN 0 AND 5
        AND reconcile.fragments_inserted BETWEEN 0 AND 5
-       AND (before.observation_count + reconcile.observations_inserted) >= before.observation_count
-       AND (before.fragment_count + reconcile.fragments_inserted) >= before.fragment_count
       THEN 1
       ELSE ('STEP107_POSTCONDITION_MISMATCH_' || pg_backend_pid()::text)::integer
     END AS ok
