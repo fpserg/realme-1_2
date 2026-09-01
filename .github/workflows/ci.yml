@@ -38,14 +38,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: TEMP render formatting
-        run: |
-          pnpm exec prettier --write scripts/step-107-control-plane.mjs scripts/step-107-control-plane.test.mjs
-          echo FORMAT_BUILDER_BEGIN
-          base64 -w0 scripts/step-107-control-plane.mjs
-          echo
-          echo FORMAT_BUILDER_END
-          echo FORMAT_TEST_BEGIN
-          base64 -w0 scripts/step-107-control-plane.test.mjs
-          echo
-          echo FORMAT_TEST_END
-          exit 1
+        run: pnpm exec prettier --write scripts/step-107-control-plane.mjs scripts/step-107-control-plane.test.mjs
+
+      - name: TEMP upload formatting
+        uses: actions/upload-artifact@v4
+        with:
+          name: step107-prettier
+          path: |
+            scripts/step-107-control-plane.mjs
+            scripts/step-107-control-plane.test.mjs
