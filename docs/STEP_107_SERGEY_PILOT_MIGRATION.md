@@ -1,6 +1,6 @@
 # Step 107 — Sergey Pilot Migration
 
-Status: **OPEN / CORRECTED IMPLEMENTATION CANDIDATE / NOT ACCEPTED**
+Status: **OPEN / PRODUCTION EVIDENCE IMPORT COMPLETE / INTERPRETATION NOT YET AUTHORIZED / NOT ACCEPTED**
 
 Authorized base: `02a2d813c5555ad27ead319993cc1f5402dc6a6d`  
 Base tree: `f1dff960fe103eedd8ff12acca8b802ca25cd010`
@@ -130,6 +130,26 @@ Only after those checks does the statement establish the transaction-local `tran
 
 The approved manifest itself is unchanged by this adaptation.
 
+## Reconciliation fingerprint invariant
+
+The source-plan fingerprint is portable across authorized fixtures because it is derived only from the approved source plan. Its required value is:
+
+`b1730e1e60bbc22289c4be89862c645c5461b108fb34dff188cc96c85f488f0a`
+
+The persisted reconciliation fingerprint is intentionally **fixture-bound**. Its algorithm includes the instantiated account ID and World ID together with the persisted evidence fields. Therefore the same approved five-item evidence plan is expected to produce different reconciliation fingerprints when instantiated into different authorized account/World fixtures.
+
+The durable invariant is:
+
+```text
+persisted-state fingerprint for fixture X
+==
+plan-derived fingerprint instantiated for the same account/World fixture X
+```
+
+It is explicitly **not** a cross-fixture equality requirement between staging and production.
+
+Portable invariants that must remain identical across staging and production are the pinned source repository, source commit, source tree, source blob identities, five included source items, one Class E exclusion, evidence text/content hashes, deterministic source locators, `occurredAt = null` semantics, and the source-plan fingerprint above.
+
 ## Temporal treatment
 
 Historical source operational day is stored separately as `local_calendar_date` when the source establishes that day.
@@ -153,7 +173,7 @@ REVOKE EXECUTE ON FUNCTION public.rls_auto_enable()
 FROM PUBLIC, anon, authenticated, service_role;
 ```
 
-No function body, owner, `SECURITY DEFINER` property, `search_path`, event trigger, trigger owner, trigger enabled state, tags or automatic-RLS behavior was changed by Step 107. The accepted RealMe production foundation through Step 104 and the Warden Auth/account/World binding are present, but **no Step 107 historical evidence has been imported into production** as part of this implementation/staging packet.
+No function body, owner, `SECURITY DEFINER` property, `search_path`, event trigger, trigger owner, trigger enabled state, tags or automatic-RLS behavior was changed by Step 107. The accepted RealMe production foundation through Step 104 and the Warden Auth/account/World binding remain the production prerequisite for the completed Phase 3A evidence import.
 
 ## Earlier representative staging rehearsal
 
@@ -206,7 +226,7 @@ The normal deterministic artifact was then submitted from the same clean fixture
 - ontology nodes: 0 → 0;
 - assertions: 0 → 0;
 - canonical/admission state unchanged: true;
-- reconciliation fingerprint: `431f1cc28af057690410cd74b2a0f3e48b3d4e00bfd39c7dc59eaf96a81326aa`.
+- staging reconciliation fingerprint: `431f1cc28af057690410cd74b2a0f3e48b3d4e00bfd39c7dc59eaf96a81326aa`.
 
 ### Byte-identical replay
 
@@ -218,9 +238,34 @@ The exact same normal SQL statement was submitted again byte-for-byte through on
 - ontology nodes: 0 → 0;
 - assertions: 0 → 0;
 - canonical/admission state unchanged: true;
-- reconciliation fingerprint unchanged at `431f1cc28af057690410cd74b2a0f3e48b3d4e00bfd39c7dc59eaf96a81326aa`.
+- staging reconciliation fingerprint unchanged at `431f1cc28af057690410cd74b2a0f3e48b3d4e00bfd39c7dc59eaf96a81326aa`.
 
-This staging proof changes no schema. Production was not used for rollback, first-run or replay testing and remains untouched by the Step 107 evidence import.
+This staging proof changed no schema. At the time of this staging proof, production was not used for rollback, first-run or replay testing. No new staging execution was required for the later documentation-only reconciliation clarification.
+
+## Production Phase 3A evidence import
+
+Production Phase 3A is classified **PASS / EVIDENCE IMPORT COMPLETE / INTERPRETATION NOT YET AUTHORIZED**.
+
+The authorized production execution was performed once only. It returned:
+
+- source-plan item count: 5;
+- observations: 0 → 5; inserted = 5;
+- source fragments: 0 → 5; inserted = 5;
+- admission decisions: 0;
+- ontology nodes: 0;
+- assertions: 0;
+- `canonicalStateUnchanged`: true.
+
+Independent production reconciliation then instantiated the same approved source plan with the authorized production account/World identities and compared it with the persisted production evidence state. The result was:
+
+- exact plan rows: 5;
+- row mismatches: 0;
+- persisted production reconciliation fingerprint: `ba9121d62d53c8a1dac628c3794eeca35c2c2bb1db58c9dfbb648dc43c2a73e8`;
+- plan-derived production reconciliation fingerprint: `ba9121d62d53c8a1dac628c3794eeca35c2c2bb1db58c9dfbb648dc43c2a73e8`.
+
+The production fingerprint differs from the staging fingerprint because the reconciliation algorithm includes account/World identity. This difference is expected and does not represent an evidence mismatch.
+
+No production replay was performed. The five imported production observations and five source fragments must not be modified or replayed by this documentation correction.
 
 ## Scope boundary
 
@@ -234,4 +279,4 @@ Step 107 does not authorize or implement:
 - production execution without a separate Architect authorization;
 - Step 108.
 
-Step 107 remains **OPEN / CORRECTED IMPLEMENTATION CANDIDATE / NOT ACCEPTED** pending independent Inspector exact-head review and Warden acceptance. Step 108 remains unauthorized.
+Step 107 remains **OPEN / PRODUCTION EVIDENCE IMPORT COMPLETE / INTERPRETATION NOT YET AUTHORIZED / NOT ACCEPTED** pending independent Inspector acceptance-delta review and Warden acceptance. Step 108 remains unauthorized.
