@@ -181,7 +181,7 @@ describe("Step 107 control-plane artifact", () => {
     expect(sql).toContain("STEP107_BOOTSTRAP_BINDING_MISMATCH_");
     expect(sql).toContain("STEP107_REPLAY_RECONCILIATION_MISMATCH_");
     expect(sql).toContain("STEP107_DELIBERATE_POST_OBSERVATION_FAILURE_");
-    expect(sql).toContain("ON CONFLICT (id) DO NOTHING");
+    expect(sql).toMatch(/ON\s+CONFLICT\s*\(\s*id\s*\)\s+DO\s+NOTHING/);
     expect(sql).toContain("effective_observations");
     expect(sql).toContain("effective_fragments");
     expect(sql).toContain("reconciliationFingerprint");
