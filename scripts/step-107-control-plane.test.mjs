@@ -176,7 +176,7 @@ describe("Step 107 control-plane artifact", () => {
     );
     expect(sql).toContain("transactional-v1");
     expect(sql).toContain("auth.users");
-    expect(sql).toContain("initial_owner_id = item_guard.account_id");
+    expect(sql).toMatch(/initial_owner_id\s*=\s*item_guard\.account_id/);
     expect(sql).toContain("STEP107_SOURCE_PLAN_MISMATCH_");
     expect(sql).toContain("STEP107_BOOTSTRAP_BINDING_MISMATCH_");
     expect(sql).toContain("STEP107_REPLAY_RECONCILIATION_MISMATCH_");
