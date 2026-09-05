@@ -92,9 +92,8 @@ describe("POST /api/internal/interpretation/dispatch", () => {
     const databaseUrl =
       "postgresql://user:database-password@db.example.invalid/postgres";
     const authorization = "Bearer dispatch-authorization-secret";
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+    const consoleError = vi.spyOn(console, "error");
+    consoleError.mockImplementation(() => {});
     mocks.createProvider.mockImplementationOnce(() => {
       throw new Error(
         `unsafe ${providerSecret} ${databaseUrl} ${authorization}`,
@@ -146,12 +145,10 @@ describe("POST /api/internal/interpretation/dispatch", () => {
   });
 
   it("classifies delegated provider failures without adding provider calls", async () => {
-    const providerInterpret = vi
-      .fn()
-      .mockRejectedValue(new Error("provider"));
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+    const providerInterpret = vi.fn();
+    providerInterpret.mockRejectedValue(new Error("provider"));
+    const consoleError = vi.spyOn(console, "error");
+    consoleError.mockImplementation(() => {});
     mocks.createProvider.mockReturnValue({
       interpret: providerInterpret,
       modelId: "test-model",
