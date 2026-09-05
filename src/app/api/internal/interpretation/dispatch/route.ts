@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 
-import { processNextInterpretationJob } from "@/application/interpretation/interpret-observation";
+import {
+  type InterpretationJobRepository,
+  type InterpretationProvider,
+  processNextInterpretationJob,
+} from "@/application/interpretation/interpret-observation";
 import { createInterpretationProvider } from "@/infrastructure/ai/interpretation-provider-factory";
 import {
   createInterpretationDatabaseClient,
@@ -15,6 +19,57 @@ const noStore = {
   Expires: "0",
   Pragma: "no-cache",
 };
+
+type DispatchDiagnosticStage =
+  | "provider_config"
+  | "database_config"
+  | "worker_runtime_configuration"
+  | "database_connect_or_claim"
+  | "provider_call"
+  | "persistence"
+  | "other";
+
+function diagnosticProvider(
+  provider: InterpretationProvider,
+  setStage: (stage: DispatchDiagnosticStage) => void,
+): InterpretationProvider {
+  return {
+    get modelId() {
+      return provider.modelId;
+    },
+    get providerId() {
+      return provider.providerId;
+    },
+    interpret(input, options) {
+      setStage("provider_call");
+      return provider.interpret(input, options);
+    },
+  };
+}
+
+function diagnosticRepository(
+  repository: InterpretationJobRepository,
+  setStage: (stage: DispatchDiagnosticStage) => void,
+): InterpretationJobRepository {
+  return {
+    claim(workerId) {
+      setStage("database_connect_or_claim");
+      return repository.claim(workerId);
+    },
+    complete(input) {
+      setStage("persistence");
+      return repository.complete(input);
+    },
+    fail(input) {
+      setStage("persistence");
+      return repository.fail(input);
+    },
+    startRun(input) {
+      setStage("persistence");
+      return repository.startRun(input);
+    },
+  };
+}
 
 export async function POST(request: Request) {
   if (
@@ -32,17 +87,30 @@ export async function POST(request: Request) {
   let database:
     | ReturnType<typeof createInterpretationDatabaseClient>
     | undefined;
+  let diagnosticStage: DispatchDiagnosticStage = "other";
   try {
+    diagnosticStage = "provider_config";
     const provider = createInterpretationProvider();
+    diagnosticStage = "database_config";
     database = createInterpretationDatabaseClient();
+    const repository = new PostgresInterpretationJobRepository(database);
+    const setDiagnosticStage = (stage: DispatchDiagnosticStage) => {
+      diagnosticStage = stage;
+    };
+    diagnosticStage = "worker_runtime_configuration";
+    const workerId = randomUUID();
     const result = await processNextInterpretationJob({
-      provider,
-      repository: new PostgresInterpretationJobRepository(database),
+      provider: diagnosticProvider(provider, setDiagnosticStage),
+      repository: diagnosticRepository(repository, setDiagnosticStage),
       signal: request.signal,
-      workerId: randomUUID(),
+      workerId,
     });
     return Response.json(result, { headers: noStore });
   } catch {
+    console.error({
+      event: "interpretation_dispatch_unavailable",
+      stage: diagnosticStage,
+    });
     return Response.json(
       { error: "Interpretation dispatch is unavailable." },
       { headers: noStore, status: 503 },
