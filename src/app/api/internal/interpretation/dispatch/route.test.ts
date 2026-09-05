@@ -87,105 +87,96 @@ describe("POST /api/internal/interpretation/dispatch", () => {
     expect(mocks.processNext).not.toHaveBeenCalled();
   });
 
-  it(
-    "keeps the 503 response contract unchanged and logs only a safe initialization stage",
-    async () => {
-      const providerSecret = "sk-provider-secret-value";
-      const databaseUrl =
-        "postgresql://user:database-password@db.example.invalid/postgres";
-      const authorization = "Bearer dispatch-authorization-secret";
-      const consoleError = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-      mocks.createProvider.mockImplementationOnce(() => {
-        throw new Error(
-          `unsafe ${providerSecret} ${databaseUrl} ${authorization}`,
-        );
-      });
-
-      const response = await POST(
-        new Request("http://localhost/api/internal/interpretation/dispatch", {
-          headers: { Authorization: authorization },
-          method: "POST",
-        }),
+  it("keeps the 503 response contract unchanged and logs only a safe initialization stage", async () => {
+    const providerSecret = "sk-provider-secret-value";
+    const databaseUrl =
+      "postgresql://user:database-password@db.example.invalid/postgres";
+    const authorization = "Bearer dispatch-authorization-secret";
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    mocks.createProvider.mockImplementationOnce(() => {
+      throw new Error(
+        `unsafe ${providerSecret} ${databaseUrl} ${authorization}`,
       );
+    });
 
-      expect(response.status).toBe(503);
-      await expect(response.text()).resolves.toBe(
-        '{"error":"Interpretation dispatch is unavailable."}',
+    const response = await POST(
+      new Request("http://localhost/api/internal/interpretation/dispatch", {
+        headers: { Authorization: authorization },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.text()).resolves.toBe(
+      '{"error":"Interpretation dispatch is unavailable."}',
+    );
+    expect(consoleError).toHaveBeenCalledTimes(1);
+    expect(consoleError).toHaveBeenCalledWith({
+      event: "interpretation_dispatch_unavailable",
+      stage: "provider_config",
+    });
+    const logged = JSON.stringify(consoleError.mock.calls);
+    expect(logged).not.toContain(providerSecret);
+    expect(logged).not.toContain(databaseUrl);
+    expect(logged).not.toContain(authorization);
+    expect(logged).not.toContain(process.env.JOB_DISPATCH_SECRET);
+    expect(mocks.createProvider).toHaveBeenCalledTimes(1);
+    expect(mocks.createDatabase).not.toHaveBeenCalled();
+    expect(mocks.processNext).not.toHaveBeenCalled();
+  });
+
+  it("keeps successful dispatch behavior and operation cardinality unchanged", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/internal/interpretation/dispatch", {
+        headers: { Authorization: "Bearer accepted" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.text()).resolves.toBe('{"state":"idle"}');
+    expect(mocks.authorizeDispatch).toHaveBeenCalledTimes(1);
+    expect(mocks.createProvider).toHaveBeenCalledTimes(1);
+    expect(mocks.createDatabase).toHaveBeenCalledTimes(1);
+    expect(mocks.repositoryConstructor).toHaveBeenCalledTimes(1);
+    expect(mocks.processNext).toHaveBeenCalledTimes(1);
+    expect(databaseEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it("classifies delegated provider failures without adding provider calls", async () => {
+    const providerInterpret = vi
+      .fn()
+      .mockRejectedValue(new Error("provider"));
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    mocks.createProvider.mockReturnValue({
+      interpret: providerInterpret,
+      modelId: "test-model",
+      providerId: "openai",
+    });
+    mocks.processNext.mockImplementationOnce(async ({ provider }) => {
+      await provider.interpret(
+        { evidence: [], promptVersion: "v", schemaVersion: "v" },
+        { signal: new AbortController().signal },
       );
-      expect(consoleError).toHaveBeenCalledTimes(1);
-      expect(consoleError).toHaveBeenCalledWith({
-        event: "interpretation_dispatch_unavailable",
-        stage: "provider_config",
-      });
-      const logged = JSON.stringify(consoleError.mock.calls);
-      expect(logged).not.toContain(providerSecret);
-      expect(logged).not.toContain(databaseUrl);
-      expect(logged).not.toContain(authorization);
-      expect(logged).not.toContain(process.env.JOB_DISPATCH_SECRET);
-      expect(mocks.createProvider).toHaveBeenCalledTimes(1);
-      expect(mocks.createDatabase).not.toHaveBeenCalled();
-      expect(mocks.processNext).not.toHaveBeenCalled();
-    },
-  );
+    });
 
-  it(
-    "keeps successful dispatch behavior and operation cardinality unchanged",
-    async () => {
-      const response = await POST(
-        new Request("http://localhost/api/internal/interpretation/dispatch", {
-          headers: { Authorization: "Bearer accepted" },
-          method: "POST",
-        }),
-      );
+    const response = await POST(
+      new Request("http://localhost/api/internal/interpretation/dispatch", {
+        headers: { Authorization: "Bearer accepted" },
+        method: "POST",
+      }),
+    );
 
-      expect(response.status).toBe(200);
-      await expect(response.text()).resolves.toBe('{"state":"idle"}');
-      expect(mocks.authorizeDispatch).toHaveBeenCalledTimes(1);
-      expect(mocks.createProvider).toHaveBeenCalledTimes(1);
-      expect(mocks.createDatabase).toHaveBeenCalledTimes(1);
-      expect(mocks.repositoryConstructor).toHaveBeenCalledTimes(1);
-      expect(mocks.processNext).toHaveBeenCalledTimes(1);
-      expect(databaseEnd).toHaveBeenCalledTimes(1);
-    },
-  );
-
-  it(
-    "classifies delegated provider failures without adding provider calls",
-    async () => {
-      const providerInterpret = vi
-        .fn()
-        .mockRejectedValue(new Error("provider"));
-      const consoleError = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-      mocks.createProvider.mockReturnValue({
-        interpret: providerInterpret,
-        modelId: "test-model",
-        providerId: "openai",
-      });
-      mocks.processNext.mockImplementationOnce(async ({ provider }) => {
-        await provider.interpret(
-          { evidence: [], promptVersion: "v", schemaVersion: "v" },
-          { signal: new AbortController().signal },
-        );
-      });
-
-      const response = await POST(
-        new Request("http://localhost/api/internal/interpretation/dispatch", {
-          headers: { Authorization: "Bearer accepted" },
-          method: "POST",
-        }),
-      );
-
-      expect(response.status).toBe(503);
-      expect(providerInterpret).toHaveBeenCalledTimes(1);
-      expect(mocks.processNext).toHaveBeenCalledTimes(1);
-      expect(consoleError).toHaveBeenCalledWith({
-        event: "interpretation_dispatch_unavailable",
-        stage: "provider_call",
-      });
-    },
-  );
+    expect(response.status).toBe(503);
+    expect(providerInterpret).toHaveBeenCalledTimes(1);
+    expect(mocks.processNext).toHaveBeenCalledTimes(1);
+    expect(consoleError).toHaveBeenCalledWith({
+      event: "interpretation_dispatch_unavailable",
+      stage: "provider_call",
+    });
+  });
 });
