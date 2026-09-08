@@ -8,6 +8,7 @@ import {
 import { createInterpretationProvider } from "@/infrastructure/ai/interpretation-provider-factory";
 import {
   createInterpretationDatabaseClient,
+  type InterpretationDatabaseDiagnosticStage,
   PostgresInterpretationJobRepository,
 } from "@/infrastructure/postgres/interpretation-job-repository";
 import { authorizeDispatch } from "@/infrastructure/security/dispatch-authorization";
@@ -22,7 +23,7 @@ const noStore = {
 
 type DispatchDiagnosticStage =
   | "provider_config"
-  | "database_config"
+  | InterpretationDatabaseDiagnosticStage
   | "worker_runtime_configuration"
   | "database_connect_or_claim"
   | "provider_call"
@@ -88,15 +89,15 @@ export async function POST(request: Request) {
     | ReturnType<typeof createInterpretationDatabaseClient>
     | undefined;
   let diagnosticStage: DispatchDiagnosticStage = "other";
+  const setDiagnosticStage = (stage: DispatchDiagnosticStage) => {
+    diagnosticStage = stage;
+  };
   try {
     diagnosticStage = "provider_config";
     const provider = createInterpretationProvider();
-    diagnosticStage = "database_config";
-    database = createInterpretationDatabaseClient();
+    diagnosticStage = "database_url_presence";
+    database = createInterpretationDatabaseClient(undefined, setDiagnosticStage);
     const repository = new PostgresInterpretationJobRepository(database);
-    const setDiagnosticStage = (stage: DispatchDiagnosticStage) => {
-      diagnosticStage = stage;
-    };
     diagnosticStage = "worker_runtime_configuration";
     const workerId = randomUUID();
     const result = await processNextInterpretationJob({
