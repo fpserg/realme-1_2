@@ -96,7 +96,10 @@ export async function POST(request: Request) {
     diagnosticStage = "provider_config";
     const provider = createInterpretationProvider();
     diagnosticStage = "database_url_presence";
-    database = createInterpretationDatabaseClient(undefined, setDiagnosticStage);
+    database = createInterpretationDatabaseClient(
+      undefined,
+      setDiagnosticStage,
+    );
     const repository = new PostgresInterpretationJobRepository(database);
     diagnosticStage = "worker_runtime_configuration";
     const workerId = randomUUID();
