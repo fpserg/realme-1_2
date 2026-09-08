@@ -16,6 +16,20 @@ interface InterpretationDatabaseEnvironment {
   REALME_INTERPRETATION_DATABASE_URL?: string;
 }
 
+export type InterpretationDatabaseDiagnosticStage =
+  | "database_url_presence"
+  | "database_url_parse"
+  | "database_protocol"
+  | "database_host"
+  | "database_username_or_project_ref"
+  | "database_tls"
+  | "database_environment_boundary"
+  | "database_client_construction";
+
+type SetInterpretationDatabaseDiagnosticStage = (
+  stage: InterpretationDatabaseDiagnosticStage,
+) => void;
+
 interface ClaimedRow {
   attempts: number;
   id: string;
@@ -33,20 +47,22 @@ interface EvidenceRow {
 
 export function interpretationDatabaseUrl(
   environment: InterpretationDatabaseEnvironment = process.env,
+  setDiagnosticStage?: SetInterpretationDatabaseDiagnosticStage,
 ) {
+  setDiagnosticStage?.("database_url_presence");
   const value = environment.REALME_INTERPRETATION_DATABASE_URL;
   if (!value) throw new Error("Interpretation database is not configured.");
+
+  setDiagnosticStage?.("database_url_parse");
   const url = new URL(value);
+
+  setDiagnosticStage?.("database_protocol");
   if (url.protocol !== "postgres:" && url.protocol !== "postgresql:") {
     throw new Error("Interpretation database is not configured.");
   }
 
+  setDiagnosticStage?.("database_host");
   const hostname = url.hostname.toLowerCase();
-  const username = decodeURIComponent(url.username);
-  const directMatch = hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/);
-  const poolerMatch = hostname.endsWith(".pooler.supabase.com")
-    ? username.match(/^postgres\.([a-z0-9]+)$/)
-    : null;
   const localHost = ["127.0.0.1", "localhost", "[::1]", "::1"].includes(
     hostname,
   );
@@ -55,6 +71,13 @@ export function interpretationDatabaseUrl(
       "Local interpretation databases require explicit local development.",
     );
   }
+
+  setDiagnosticStage?.("database_username_or_project_ref");
+  const username = decodeURIComponent(url.username);
+  const directMatch = hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/);
+  const poolerMatch = hostname.endsWith(".pooler.supabase.com")
+    ? username.match(/^postgres\.([a-z0-9]+)$/)
+    : null;
   const projectRef = localHost
     ? "local"
     : (directMatch?.[1] ?? poolerMatch?.[1] ?? null);
@@ -68,6 +91,8 @@ export function interpretationDatabaseUrl(
     ) {
       throw new Error("Interpretation database does not match its context.");
     }
+
+    setDiagnosticStage?.("database_tls");
     if (
       !["require", "verify-ca", "verify-full"].includes(
         url.searchParams.get("sslmode") ?? "",
@@ -76,6 +101,8 @@ export function interpretationDatabaseUrl(
       throw new Error("Managed interpretation databases require TLS.");
     }
   }
+
+  setDiagnosticStage?.("database_environment_boundary");
   if (
     (environment.REALME_ENVIRONMENT === "preview" ||
       environment.REALME_ENVIRONMENT === "staging") &&
@@ -97,9 +124,13 @@ export function interpretationDatabaseUrl(
 }
 
 export function createInterpretationDatabaseClient(
-  url = interpretationDatabaseUrl(),
+  url?: string,
+  setDiagnosticStage?: SetInterpretationDatabaseDiagnosticStage,
 ) {
-  return postgres(url, {
+  const resolvedUrl =
+    url ?? interpretationDatabaseUrl(process.env, setDiagnosticStage);
+  setDiagnosticStage?.("database_client_construction");
+  return postgres(resolvedUrl, {
     idle_timeout: 2,
     max: 1,
     max_lifetime: 60,
