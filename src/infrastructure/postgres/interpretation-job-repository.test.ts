@@ -95,6 +95,25 @@ describe("interpretation worker database environment", () => {
     }
   });
 
+  it("preserves username decoding failure before localhost rejection", () => {
+    let stage: InterpretationDatabaseDiagnosticStage | undefined;
+    const invoke = () =>
+      interpretationDatabaseUrl(
+        {
+          REALME_ENVIRONMENT: "production",
+          REALME_INTERPRETATION_DATABASE_URL:
+            "postgresql://postgres%ZZ:secret@localhost:5432/postgres",
+        },
+        (value) => {
+          stage = value;
+        },
+      );
+
+    expect(invoke).toThrow(URIError);
+    expect(invoke).toThrow("URI malformed");
+    expect(stage).toBe("database_username_or_project_ref");
+  });
+
   it.each([
     {
       environment: {},
@@ -180,6 +199,8 @@ describe("interpretation worker database environment", () => {
       "database_url_presence",
       "database_url_parse",
       "database_protocol",
+      "database_host",
+      "database_username_or_project_ref",
       "database_host",
       "database_username_or_project_ref",
       "database_tls",

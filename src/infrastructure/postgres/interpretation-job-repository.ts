@@ -63,6 +63,15 @@ export function interpretationDatabaseUrl(
 
   setDiagnosticStage?.("database_host");
   const hostname = url.hostname.toLowerCase();
+
+  setDiagnosticStage?.("database_username_or_project_ref");
+  const username = decodeURIComponent(url.username);
+  const directMatch = hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/);
+  const poolerMatch = hostname.endsWith(".pooler.supabase.com")
+    ? username.match(/^postgres\.([a-z0-9]+)$/)
+    : null;
+
+  setDiagnosticStage?.("database_host");
   const localHost = ["127.0.0.1", "localhost", "[::1]", "::1"].includes(
     hostname,
   );
@@ -73,11 +82,6 @@ export function interpretationDatabaseUrl(
   }
 
   setDiagnosticStage?.("database_username_or_project_ref");
-  const username = decodeURIComponent(url.username);
-  const directMatch = hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/);
-  const poolerMatch = hostname.endsWith(".pooler.supabase.com")
-    ? username.match(/^postgres\.([a-z0-9]+)$/)
-    : null;
   const projectRef = localHost
     ? "local"
     : (directMatch?.[1] ?? poolerMatch?.[1] ?? null);
