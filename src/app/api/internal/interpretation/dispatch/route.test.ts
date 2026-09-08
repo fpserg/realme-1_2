@@ -126,6 +126,46 @@ describe("POST /api/internal/interpretation/dispatch", () => {
     expect(mocks.processNext).not.toHaveBeenCalled();
   });
 
+  it.each(["database_tls", "database_environment_boundary"] as const)(
+    "logs the refined %s database stage without logging a secret-bearing exception",
+    async (stage) => {
+      const unsafeDatabaseUrl =
+        "postgresql://postgres.project:database-password@aws-0.pooler.supabase.com/postgres?sslmode=require";
+      const consoleError = vi.spyOn(console, "error");
+      consoleError.mockImplementation(() => {});
+      mocks.createDatabase.mockImplementationOnce(
+        (_url: unknown, setStage: (value: typeof stage) => void) => {
+          setStage(stage);
+          throw new Error(`unsafe ${unsafeDatabaseUrl}`);
+        },
+      );
+
+      const response = await POST(
+        new Request("http://localhost/api/internal/interpretation/dispatch", {
+          headers: { Authorization: "Bearer accepted" },
+          method: "POST",
+        }),
+      );
+
+      expect(response.status).toBe(503);
+      await expect(response.text()).resolves.toBe(
+        '{"error":"Interpretation dispatch is unavailable."}',
+      );
+      expect(consoleError).toHaveBeenCalledTimes(1);
+      expect(consoleError).toHaveBeenCalledWith({
+        event: "interpretation_dispatch_unavailable",
+        stage,
+      });
+      expect(JSON.stringify(consoleError.mock.calls)).not.toContain(
+        unsafeDatabaseUrl,
+      );
+      expect(mocks.createProvider).toHaveBeenCalledTimes(1);
+      expect(mocks.createDatabase).toHaveBeenCalledTimes(1);
+      expect(mocks.repositoryConstructor).not.toHaveBeenCalled();
+      expect(mocks.processNext).not.toHaveBeenCalled();
+    },
+  );
+
   it("keeps successful dispatch behavior and operation cardinality unchanged", async () => {
     const response = await POST(
       new Request("http://localhost/api/internal/interpretation/dispatch", {
