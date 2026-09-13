@@ -11,38 +11,59 @@ permissions:
   contents: read
 
 jobs:
-  phase-4h-format-normalization:
+  phase-4h-minimal-execution-gate:
     runs-on: ubuntu-latest
     steps:
       - name: Check out immutable Step 107 Phase 4H head
         uses: actions/checkout@v4
         with:
-          ref: 7410f9d31c723eda7df60313159d25fb233eca15
+          ref: ec2e9e7cd330e647b126d8e3be04049d7fd5133e
           persist-credentials: false
 
       - name: Prove immutable target identity
+        shell: bash
         run: |
-          test "$(git rev-parse HEAD)" = "7410f9d31c723eda7df60313159d25fb233eca15"
-          test "$(git rev-parse 'HEAD^{tree}')" = "33ba76566e88af09ab15d118f7e57749b06fc2af"
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "ec2e9e7cd330e647b126d8e3be04049d7fd5133e"
+          test "$(git rev-parse 'HEAD^{tree}')" = "6c7656d26a90e448f08714e2247ea52dc3678fdb"
           test "$(git rev-parse HEAD:pnpm-lock.yaml)" = "733da16a0a446f06befe2d4a6a76d51c7723d09c"
+          test -z "$(git status --short)"
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "TREE=$(git rev-parse 'HEAD^{tree}')"
+          echo "LOCKFILE_BLOB=$(git rev-parse HEAD:pnpm-lock.yaml)"
 
-      - uses: actions/setup-node@v4
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - uses: pnpm/action-setup@v4
+      - name: Set up pnpm 11.19.0
+        uses: pnpm/action-setup@v4
         with:
           version: 11.19.0
           run_install: false
-      - run: pnpm install --frozen-lockfile
-      - name: Normalize touched source with repository Prettier
-        run: pnpm exec prettier --write src/application/interpretation/interpret-observation.ts src/application/interpretation/interpret-observation.test.ts src/infrastructure/postgres/interpretation-job-repository.ts src/infrastructure/db/schema/operations.ts scripts/step-107-version-authority.test.mjs
-      - name: Emit normalized files
-        uses: actions/upload-artifact@v4
-        with:
-          name: phase-4h-prettier-normalized
-          path: |
-            src/application/interpretation/interpret-observation.ts
-            src/application/interpretation/interpret-observation.test.ts
-            src/infrastructure/postgres/interpretation-job-repository.ts
-            src/infrastructure/db/schema/operations.ts
-            scripts/step-107-version-authority.test.mjs
+      - name: Report tool versions
+        run: |
+          node --version
+          pnpm --version
+      - name: Install unchanged frozen dependency graph
+        run: pnpm install --frozen-lockfile
+      - name: Check formatting for Phase 4H source
+        run: pnpm exec prettier --check src/application/interpretation/interpret-observation.ts src/application/interpretation/interpret-observation.test.ts src/infrastructure/postgres/interpretation-job-repository.ts src/infrastructure/db/schema/operations.ts scripts/step-107-version-authority.test.mjs
+      - name: Run interpretation application suite
+        run: pnpm exec vitest run src/application/interpretation/interpret-observation.test.ts
+      - name: Run provider version-selection suite
+        run: pnpm exec vitest run src/infrastructure/ai/openai-interpretation-provider.test.ts
+      - name: Run PostgreSQL repository suite
+        run: pnpm exec vitest run src/infrastructure/postgres/interpretation-job-repository.test.ts
+      - name: Run Supabase enqueue adapter suite
+        run: pnpm exec vitest run src/infrastructure/supabase/interpretation-enqueue-repository.test.ts
+      - name: Run Phase 4H migration contract test
+        run: node --test scripts/step-107-version-authority.test.mjs
+      - name: Run existing Step 102 migration contract test
+        run: node --test scripts/step-102-migration.test.mjs
+      - name: Run TypeScript validation
+        run: pnpm typecheck
+      - name: Confirm checkout remained clean
+        run: |
+          test -z "$(git status --short)"
+          git status --short
