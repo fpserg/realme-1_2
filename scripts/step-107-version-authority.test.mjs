@@ -14,10 +14,7 @@ test("durable job constraint accepts prompt v1 and v2 with candidate-set-v1 only
     migration,
     /payload"->>'prompt_version' in \('interpret-observation-v1', 'interpret-observation-v2'\)/i,
   );
-  assert.match(
-    migration,
-    /payload"->>'schema_version' = 'candidate-set-v1'/i,
-  );
+  assert.match(migration, /payload"->>'schema_version' = 'candidate-set-v1'/i);
   assert.doesNotMatch(migration, /interpret-observation-v999/);
 });
 
