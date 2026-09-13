@@ -1,5 +1,7 @@
 export const interpretObservationJobKind = "interpret_observation";
-export const interpretationPromptVersion = "interpret-observation-v1";
+export const interpretationPromptVersionV1 = "interpret-observation-v1";
+export const interpretationPromptVersionV2 = "interpret-observation-v2";
+export const interpretationPromptVersion = interpretationPromptVersionV2;
 export const interpretationSchemaVersion = "candidate-set-v1";
 export const interpretationCandidateLimit = 8;
 export const interpretationEvidenceLimit = 8;
@@ -28,6 +30,8 @@ export interface ClaimedInterpretationJob {
   id: string;
   lockToken: string;
   observationId: string;
+  promptVersion: string;
+  schemaVersion: string;
   worldId: string;
 }
 
@@ -140,46 +144,38 @@ function validateCandidate(value: unknown): RawCandidate {
     throw new InterpretationValidationError();
   }
   if (value.kind !== "proposition") throw new InterpretationValidationError();
-  if (!boundedString(value.subject, 160)) {
+  if (!boundedString(value.subject, 160))
     throw new InterpretationValidationError();
-  }
   if (
     !boundedString(value.predicate, 64) ||
     !/^[a-z][a-z0-9_]*$/.test(value.predicate as string)
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
-  if (!boundedString(value.explanation, 500)) {
+  if (!boundedString(value.explanation, 500))
     throw new InterpretationValidationError();
-  }
   if (
     !["boolean", "number", "string"].includes(typeof value.object) ||
     (typeof value.object === "string" && value.object.length > 500) ||
     (typeof value.object === "number" && !Number.isFinite(value.object))
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
   if (
     typeof value.confidence !== "number" ||
     !Number.isFinite(value.confidence) ||
     value.confidence < 0 ||
     value.confidence > 1
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
   if (
     !Array.isArray(value.evidenceReferences) ||
     value.evidenceReferences.length === 0 ||
     value.evidenceReferences.length > interpretationEvidenceLimit ||
-    !value.evidenceReferences.every((reference) => boundedString(reference, 32))
-  ) {
-    throw new InterpretationValidationError();
-  }
-  if (
+    !value.evidenceReferences.every((reference) =>
+      boundedString(reference, 32),
+    ) ||
     new Set(value.evidenceReferences).size !== value.evidenceReferences.length
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
   return value as unknown as RawCandidate;
 }
 
@@ -190,9 +186,8 @@ export function validateCandidateSet(value: unknown) {
   ) {
     throw new InterpretationValidationError();
   }
-  if (value.schemaVersion !== interpretationSchemaVersion) {
+  if (value.schemaVersion !== interpretationSchemaVersion)
     throw new InterpretationValidationError();
-  }
   if (
     !Array.isArray(value.candidates) ||
     value.candidates.length > interpretationCandidateLimit
@@ -223,13 +218,24 @@ export async function sha256Hex(value: string) {
   ).join("");
 }
 
+function assertSupportedJobVersions(job: ClaimedInterpretationJob) {
+  if (
+    ![interpretationPromptVersionV1, interpretationPromptVersionV2].includes(
+      job.promptVersion,
+    ) ||
+    job.schemaVersion !== interpretationSchemaVersion
+  ) {
+    throw new InterpretationProviderError("configuration_error");
+  }
+}
+
 export function buildInterpretationInput(job: ClaimedInterpretationJob) {
+  assertSupportedJobVersions(job);
   const evidence = [...job.evidence].sort(
     (left, right) => left.ordinal - right.ordinal,
   );
-  if (evidence.length === 0 || evidence.length > interpretationEvidenceLimit) {
+  if (evidence.length === 0 || evidence.length > interpretationEvidenceLimit)
     throw new InterpretationValidationError();
-  }
   if (
     evidence.some(
       (fragment, index) =>
@@ -239,9 +245,8 @@ export function buildInterpretationInput(job: ClaimedInterpretationJob) {
     ) ||
     evidence.reduce((total, fragment) => total + fragment.exactText.length, 0) >
       interpretationEvidenceCharacterLimit
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
 
   return {
     hashContract: {
@@ -252,16 +257,16 @@ export function buildInterpretationInput(job: ClaimedInterpretationJob) {
         ordinal: fragment.ordinal,
       })),
       observationId: job.observationId,
-      promptVersion: interpretationPromptVersion,
-      schemaVersion: interpretationSchemaVersion,
+      promptVersion: job.promptVersion,
+      schemaVersion: job.schemaVersion,
     },
     providerInput: {
       evidence: evidence.map((fragment, index) => ({
         exactText: fragment.exactText,
         reference: `evidence-${index}`,
       })),
-      promptVersion: interpretationPromptVersion,
-      schemaVersion: interpretationSchemaVersion,
+      promptVersion: job.promptVersion,
+      schemaVersion: job.schemaVersion,
     } satisfies InterpretationProviderInput,
   };
 }
@@ -278,7 +283,6 @@ async function prepareCandidates(
   );
   const prepared: PersistableCandidate[] = [];
   const keys = new Set<string>();
-
   for (const candidate of raw) {
     const evidenceFragmentIds = candidate.evidenceReferences.map(
       (reference) => {
@@ -312,9 +316,8 @@ function failure(error: unknown): {
   code: InterpretationFailureCode;
   retryable: boolean;
 } {
-  if (error instanceof InterpretationValidationError) {
+  if (error instanceof InterpretationValidationError)
     return { code: "validation_failed", retryable: false };
-  }
   if (error instanceof InterpretationProviderError) {
     return {
       code: error.code,
@@ -341,9 +344,9 @@ export async function processNextInterpretationJob(input: {
       inputHash,
       job,
       model: input.provider.modelId,
-      promptVersion: interpretationPromptVersion,
+      promptVersion: job.promptVersion,
       provider: input.provider.providerId,
-      schemaVersion: interpretationSchemaVersion,
+      schemaVersion: job.schemaVersion,
     });
     const output = await input.provider.interpret(prepared.providerInput, {
       signal: input.signal,
@@ -357,11 +360,7 @@ export async function processNextInterpretationJob(input: {
     };
   } catch (error) {
     const normalized = failure(error);
-    const jobState = await input.repository.fail({
-      ...normalized,
-      job,
-      runId,
-    });
+    const jobState = await input.repository.fail({ ...normalized, job, runId });
     return { code: normalized.code, jobId: job.id, state: jobState };
   }
 }

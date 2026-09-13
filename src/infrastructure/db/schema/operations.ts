@@ -101,7 +101,7 @@ export const jobs = pgTable(
     ),
     check(
       "jobs_interpret_observation_input_check",
-      sql`${table.jobKind} <> 'interpret_observation' or (${table.observationId} is not null and ${table.payload} ?& array['prompt_version', 'schema_version'] and (${table.payload} - array['prompt_version', 'schema_version']) = '{}'::jsonb and jsonb_typeof(${table.payload}->'prompt_version') = 'string' and jsonb_typeof(${table.payload}->'schema_version') = 'string' and ${table.payload}->>'prompt_version' = 'interpret-observation-v1' and ${table.payload}->>'schema_version' = 'candidate-set-v1')`,
+      sql`${table.jobKind} <> 'interpret_observation' or (${table.observationId} is not null and ${table.payload} ?& array['prompt_version', 'schema_version'] and (${table.payload} - array['prompt_version', 'schema_version']) = '{}'::jsonb and jsonb_typeof(${table.payload}->'prompt_version') = 'string' and jsonb_typeof(${table.payload}->'schema_version') = 'string' and ${table.payload}->>'prompt_version' in ('interpret-observation-v1', 'interpret-observation-v2') and ${table.payload}->>'schema_version' = 'candidate-set-v1')`,
     ),
     check(
       "jobs_last_failure_code_check",
