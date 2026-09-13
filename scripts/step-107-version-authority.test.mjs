@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const migrationUrl = new URL(
-  "../supabase/migrations/20260913060000_step_107_interpretation_job_version_authority.sql",
+  "../supabase/migrations/20260913054404_lazy_absorbing_man.sql",
   import.meta.url,
 );
 
@@ -12,9 +12,12 @@ const migration = await readFile(migrationUrl, "utf8");
 test("durable job constraint accepts prompt v1 and v2 with candidate-set-v1 only", () => {
   assert.match(
     migration,
-    /payload->>'prompt_version' IN \([\s\S]*'interpret-observation-v1',[\s\S]*'interpret-observation-v2'[\s\S]*\)/,
+    /payload"->>'prompt_version' in \('interpret-observation-v1', 'interpret-observation-v2'\)/i,
   );
-  assert.match(migration, /payload->>'schema_version' = 'candidate-set-v1'/);
+  assert.match(
+    migration,
+    /payload"->>'schema_version' = 'candidate-set-v1'/i,
+  );
   assert.doesNotMatch(migration, /interpret-observation-v999/);
 });
 
