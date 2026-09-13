@@ -29,7 +29,9 @@ export type InterpretationDatabaseDiagnosticStage =
   | "database_environment_boundary"
   | "database_client_construction";
 
-type SetInterpretationDatabaseDiagnosticStage = (stage: InterpretationDatabaseDiagnosticStage) => void;
+type SetInterpretationDatabaseDiagnosticStage = (
+  stage: InterpretationDatabaseDiagnosticStage,
+) => void;
 
 interface ClaimedRow {
   attempts: number;
@@ -58,52 +60,97 @@ export function interpretationDatabaseUrl(
   setDiagnosticStage?.("database_url_parse");
   const url = new URL(value);
   setDiagnosticStage?.("database_protocol");
-  if (url.protocol !== "postgres:" && url.protocol !== "postgresql:") throw new Error("Interpretation database is not configured.");
+  if (url.protocol !== "postgres:" && url.protocol !== "postgresql:")
+    throw new Error("Interpretation database is not configured.");
   setDiagnosticStage?.("database_host");
   const hostname = url.hostname.toLowerCase();
   setDiagnosticStage?.("database_username_or_project_ref");
   const username = decodeURIComponent(url.username);
   const directMatch = hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/);
-  const poolerMatch = hostname.endsWith(".pooler.supabase.com") ? username.match(/^postgres\.([a-z0-9]+)$/) : null;
+  const poolerMatch = hostname.endsWith(".pooler.supabase.com")
+    ? username.match(/^postgres\.([a-z0-9]+)$/)
+    : null;
   setDiagnosticStage?.("database_host");
-  const localHost = ["127.0.0.1", "localhost", "[::1]", "::1"].includes(hostname);
-  if (localHost && environment.REALME_ENVIRONMENT !== "local") throw new Error("Local interpretation databases require explicit local development.");
+  const localHost = ["127.0.0.1", "localhost", "[::1]", "::1"].includes(
+    hostname,
+  );
+  if (localHost && environment.REALME_ENVIRONMENT !== "local")
+    throw new Error(
+      "Local interpretation databases require explicit local development.",
+    );
   setDiagnosticStage?.("database_username_or_project_ref");
-  const projectRef = localHost ? "local" : (directMatch?.[1] ?? poolerMatch?.[1] ?? null);
-  if (!projectRef) throw new Error("Interpretation database host is not approved.");
+  const projectRef = localHost
+    ? "local"
+    : (directMatch?.[1] ?? poolerMatch?.[1] ?? null);
+  if (!projectRef)
+    throw new Error("Interpretation database host is not approved.");
   if (projectRef !== "local") {
-    if (!environment.REALME_EXPECTED_SUPABASE_PROJECT_REF || projectRef !== environment.REALME_EXPECTED_SUPABASE_PROJECT_REF) {
+    if (
+      !environment.REALME_EXPECTED_SUPABASE_PROJECT_REF ||
+      projectRef !== environment.REALME_EXPECTED_SUPABASE_PROJECT_REF
+    ) {
       throw new Error("Interpretation database does not match its context.");
     }
     setDiagnosticStage?.("database_tls");
-    if (!["require", "verify-ca", "verify-full"].includes(url.searchParams.get("sslmode") ?? "")) throw new Error("Managed interpretation databases require TLS.");
+    if (
+      !["require", "verify-ca", "verify-full"].includes(
+        url.searchParams.get("sslmode") ?? "",
+      )
+    )
+      throw new Error("Managed interpretation databases require TLS.");
   }
   setDiagnosticStage?.("database_environment_boundary");
-  if ((environment.REALME_ENVIRONMENT === "preview" || environment.REALME_ENVIRONMENT === "staging") && environment.REALME_DATA_CLASSIFICATION !== "synthetic") {
-    throw new Error("Preview and staging interpretation must be synthetic-only.");
+  if (
+    (environment.REALME_ENVIRONMENT === "preview" ||
+      environment.REALME_ENVIRONMENT === "staging") &&
+    environment.REALME_DATA_CLASSIFICATION !== "synthetic"
+  ) {
+    throw new Error(
+      "Preview and staging interpretation must be synthetic-only.",
+    );
   }
-  if (environment.REALME_ENVIRONMENT === "production" && environment.REALME_DATA_CLASSIFICATION !== "personal") {
-    throw new Error("Production interpretation requires its personal-data boundary.");
+  if (
+    environment.REALME_ENVIRONMENT === "production" &&
+    environment.REALME_DATA_CLASSIFICATION !== "personal"
+  ) {
+    throw new Error(
+      "Production interpretation requires its personal-data boundary.",
+    );
   }
   return value;
 }
 
-export function createInterpretationDatabaseClient(url?: string, setDiagnosticStage?: SetInterpretationDatabaseDiagnosticStage) {
-  const resolvedUrl = url ?? interpretationDatabaseUrl(process.env, setDiagnosticStage);
+export function createInterpretationDatabaseClient(
+  url?: string,
+  setDiagnosticStage?: SetInterpretationDatabaseDiagnosticStage,
+) {
+  const resolvedUrl =
+    url ?? interpretationDatabaseUrl(process.env, setDiagnosticStage);
   setDiagnosticStage?.("database_client_construction");
-  return postgres(resolvedUrl, { idle_timeout: 2, max: 1, max_lifetime: 60, prepare: false });
+  return postgres(resolvedUrl, {
+    idle_timeout: 2,
+    max: 1,
+    max_lifetime: 60,
+    prepare: false,
+  });
 }
 
 function assertClaimedVersions(row: ClaimedRow) {
   if (
-    ![interpretationPromptVersionV1, interpretationPromptVersionV2].includes(row.prompt_version) ||
+    ![interpretationPromptVersionV1, interpretationPromptVersionV2].includes(
+      row.prompt_version,
+    ) ||
     row.schema_version !== interpretationSchemaVersion
   ) {
-    throw new Error("Interpretation job carries an unsupported persisted version.");
+    throw new Error(
+      "Interpretation job carries an unsupported persisted version.",
+    );
   }
 }
 
-export class PostgresInterpretationJobRepository implements InterpretationJobRepository {
+export class PostgresInterpretationJobRepository
+  implements InterpretationJobRepository
+{
   constructor(private readonly sql: SqlClient) {}
 
   async claim(workerId: string): Promise<ClaimedInterpretationJob | null> {
@@ -147,7 +194,12 @@ export class PostgresInterpretationJobRepository implements InterpretationJobRep
       `;
       return {
         attemptNumber: row.attempts,
-        evidence: evidence.map((fragment) => ({ contentHash: fragment.content_hash, exactText: fragment.exact_text, id: fragment.id, ordinal: fragment.ordinal })),
+        evidence: evidence.map((fragment) => ({
+          contentHash: fragment.content_hash,
+          exactText: fragment.exact_text,
+          id: fragment.id,
+          ordinal: fragment.ordinal,
+        })),
         id: row.id,
         lockToken: row.lock_token,
         observationId: row.observation_id,
@@ -158,8 +210,21 @@ export class PostgresInterpretationJobRepository implements InterpretationJobRep
     });
   }
 
-  async startRun(input: { inputHash: string; job: ClaimedInterpretationJob; model: string; promptVersion: string; provider: string; schemaVersion: string }) {
-    if (input.promptVersion !== input.job.promptVersion || input.schemaVersion !== input.job.schemaVersion) throw new Error("Interpretation run versions must match the durable job.");
+  async startRun(input: {
+    inputHash: string;
+    job: ClaimedInterpretationJob;
+    model: string;
+    promptVersion: string;
+    provider: string;
+    schemaVersion: string;
+  }) {
+    if (
+      input.promptVersion !== input.job.promptVersion ||
+      input.schemaVersion !== input.job.schemaVersion
+    )
+      throw new Error(
+        "Interpretation run versions must match the durable job.",
+      );
     const rows = await this.sql<{ id: string }[]>`
       insert into public.interpretation_runs (
         world_id, job_id, observation_id, attempt_number, status,
@@ -178,11 +243,14 @@ export class PostgresInterpretationJobRepository implements InterpretationJobRep
       returning id
     `;
     const row = rows[0];
-    if (!row) throw new Error("Interpretation claim is no longer authoritative.");
+    if (!row)
+      throw new Error("Interpretation claim is no longer authoritative.");
     return row.id;
   }
 
-  async complete(input: Parameters<InterpretationJobRepository["complete"]>[0]) {
+  async complete(
+    input: Parameters<InterpretationJobRepository["complete"]>[0],
+  ) {
     await this.sql.begin(async (transaction) => {
       const claims = await transaction<{ id: string }[]>`
         select id from public.jobs
@@ -225,19 +293,28 @@ export class PostgresInterpretationJobRepository implements InterpretationJobRep
         update public.interpretation_runs set status = 'succeeded', completed_at = clock_timestamp(), failure_code = null
         where id = ${input.runId}::uuid and status = 'running'
       `;
-      if (completedRuns.count !== 1) throw new Error("Interpretation run completion failed.");
+      if (completedRuns.count !== 1)
+        throw new Error("Interpretation run completion failed.");
       const completedJobs = await transaction`
         update public.jobs set status = 'succeeded', locked_at = null, lock_token = null,
             last_failure_code = null, updated_at = clock_timestamp()
         where id = ${input.job.id}::uuid and status = 'running' and lock_token = ${input.job.lockToken}::uuid
       `;
-      if (completedJobs.count !== 1) throw new Error("Interpretation job completion failed.");
+      if (completedJobs.count !== 1)
+        throw new Error("Interpretation job completion failed.");
     });
   }
 
-  async fail(input: { code: InterpretationFailureCode; job: ClaimedInterpretationJob; retryable: boolean; runId: string | null }) {
+  async fail(input: {
+    code: InterpretationFailureCode;
+    job: ClaimedInterpretationJob;
+    retryable: boolean;
+    runId: string | null;
+  }) {
     return this.sql.begin(async (transaction) => {
-      const jobs = await transaction<{ attempts: number; max_attempts: number }[]>`
+      const jobs = await transaction<
+        { attempts: number; max_attempts: number }[]
+      >`
         select attempts, max_attempts from public.jobs
         where id = ${input.job.id}::uuid and world_id = ${input.job.worldId}::uuid
           and status = 'running' and lock_token = ${input.job.lockToken}::uuid
@@ -252,7 +329,8 @@ export class PostgresInterpretationJobRepository implements InterpretationJobRep
         `;
       }
       const retry = input.retryable && job.attempts < job.max_attempts;
-      const terminalCode = job.attempts >= job.max_attempts ? "exhausted" : input.code;
+      const terminalCode =
+        job.attempts >= job.max_attempts ? "exhausted" : input.code;
       await transaction`
         update public.jobs
         set status = ${retry ? "queued" : "failed"},
