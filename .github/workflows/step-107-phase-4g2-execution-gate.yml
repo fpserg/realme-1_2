@@ -1,0 +1,68 @@
+name: Step 107 Phase 4G2 Supplemental Execution Gate
+
+# Supplemental execution evidence only. This workflow does not alter, waive,
+# suppress, or reinterpret the canonical dependency-security audit failure.
+on:
+  push:
+    branches:
+      - agent/step-107-phase-4g2-execution-gate
+    paths:
+      - .github/workflows/step-107-phase-4g2-execution-gate.yml
+
+permissions:
+  contents: read
+
+jobs:
+  phase-4g2-minimal-execution-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out immutable approved Step 107 head
+        uses: actions/checkout@v4
+        with:
+          ref: 9555e5bdc3084f5d3f4a3a0aa2580beb7d02db58
+          persist-credentials: false
+
+      - name: Prove immutable target identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9555e5bdc3084f5d3f4a3a0aa2580beb7d02db58"
+          test "$(git rev-parse 'HEAD^{tree}')" = "8126407215a080d4fdc4b7e8b831651ebd7bf127"
+          test "$(git rev-parse HEAD:pnpm-lock.yaml)" = "733da16a0a446f06befe2d4a6a76d51c7723d09c"
+          test -z "$(git status --short)"
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "TREE=$(git rev-parse 'HEAD^{tree}')"
+          echo "LOCKFILE_BLOB=$(git rev-parse HEAD:pnpm-lock.yaml)"
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up pnpm 11.19.0
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Report tool versions
+        run: |
+          node --version
+          pnpm --version
+
+      - name: Install unchanged frozen dependency graph
+        run: pnpm install --frozen-lockfile
+
+      - name: Run provider and prompt-version focused suite
+        run: pnpm exec vitest run src/infrastructure/ai/openai-interpretation-provider.test.ts
+
+      - name: Run interpretation application suite
+        run: pnpm exec vitest run src/application/interpretation/interpret-observation.test.ts
+
+      - name: Run repository TypeScript validation
+        run: pnpm typecheck
+
+      - name: Confirm checkout remained clean
+        run: |
+          test -z "$(git status --short)"
+          git status --short
