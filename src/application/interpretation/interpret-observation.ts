@@ -1,5 +1,7 @@
 export const interpretObservationJobKind = "interpret_observation";
-export const interpretationPromptVersion = "interpret-observation-v1";
+export const interpretationPromptVersionV1 = "interpret-observation-v1";
+export const interpretationPromptVersionV2 = "interpret-observation-v2";
+export const interpretationPromptVersion = interpretationPromptVersionV1;
 export const interpretationSchemaVersion = "candidate-set-v1";
 export const interpretationCandidateLimit = 8;
 export const interpretationEvidenceLimit = 8;
