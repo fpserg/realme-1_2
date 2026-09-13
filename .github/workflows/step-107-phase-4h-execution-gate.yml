@@ -60,7 +60,7 @@ jobs:
       - name: Run Phase 4H migration contract test
         run: node --test scripts/step-107-version-authority.test.mjs
       - name: Run existing Step 102 migration contract test
-        run: node --test scripts/step-102-migration.test.mjs
+        run: pnpm exec vitest run scripts/step-102-migration.test.mjs
       - name: Run TypeScript validation
         run: pnpm typecheck
       - name: Confirm checkout remained clean
