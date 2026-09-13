@@ -17,14 +17,14 @@ jobs:
       - name: Check out immutable Step 107 Phase 4H head
         uses: actions/checkout@v4
         with:
-          ref: 4f0576d18753a338aa9442998fd1e89ece8f30d5
+          ref: ad62482f218274a6377e89edc355781b7f78eaa4
           persist-credentials: false
       - name: Prove immutable target identity
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "4f0576d18753a338aa9442998fd1e89ece8f30d5"
-          test "$(git rev-parse 'HEAD^{tree}')" = "601a28e85ffbc30f41420896b10e82dcab4fadfa"
+          test "$(git rev-parse HEAD)" = "ad62482f218274a6377e89edc355781b7f78eaa4"
+          test "$(git rev-parse 'HEAD^{tree}')" = "1636078bd6820d6b80b2933b54a6aa6514efc71f"
           test "$(git rev-parse HEAD:pnpm-lock.yaml)" = "733da16a0a446f06befe2d4a6a76d51c7723d09c"
           test -z "$(git status --short)"
           echo "HEAD=$(git rev-parse HEAD)"
