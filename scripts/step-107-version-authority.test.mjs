@@ -61,7 +61,10 @@ test("current-version presence suppresses queued, running, failed, cancelled, an
 
 test("failed or cancelled v1 without v2 history remains eligible for one v2 job", () => {
   assert.doesNotMatch(reconciliation, /successful_job\.status IN/i);
-  assert.doesNotMatch(currentVersionPresencePredicate, /interpret-observation-v1/);
+  assert.doesNotMatch(
+    currentVersionPresencePredicate,
+    /interpret-observation-v1/,
+  );
   assert.doesNotMatch(reconciliation, /status IN \('failed', 'cancelled'\)/);
 });
 
