@@ -130,7 +130,6 @@ BEGIN
         WHERE active_job.world_id = observation.world_id
           AND active_job.observation_id = observation.id
           AND active_job.job_kind = 'interpret_observation'
-          AND active_job.status IN ('queued', 'running')
           AND active_job.payload->>'prompt_version' = 'interpret-observation-v2'
           AND active_job.payload->>'schema_version' = 'candidate-set-v1'
       )
@@ -153,4 +152,4 @@ GRANT EXECUTE ON FUNCTION public.reconcile_observation_interpretations()
   TO authenticated;
 
 COMMENT ON FUNCTION public.reconcile_observation_interpretations() IS
-  'Authenticated bounded oldest-missing repair: enqueue the active interpretation version only when no successful interpretation exists and no queued/running active-version job already exists.';
+  'Authenticated bounded oldest-missing repair: enqueue the active interpretation version only when no successful interpretation exists and no active-version job of any status already exists.';
