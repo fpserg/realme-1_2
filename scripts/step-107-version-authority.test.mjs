@@ -9,6 +9,17 @@ const migrationUrl = new URL(
 
 const migration = await readFile(migrationUrl, "utf8");
 
+const reconciliation = migration.slice(
+  migration.indexOf(
+    "CREATE OR REPLACE FUNCTION public.reconcile_observation_interpretations",
+  ),
+);
+
+const currentVersionPresencePredicate = reconciliation.slice(
+  reconciliation.indexOf("FROM public.jobs AS active_job"),
+  reconciliation.indexOf(")\n    ORDER BY observation.recorded_at"),
+);
+
 test("durable job constraint accepts prompt v1 and v2 with candidate-set-v1 only", () => {
   assert.match(
     migration,
@@ -24,19 +35,44 @@ test("enqueue activates v2 without rewriting historical jobs", () => {
   assert.doesNotMatch(migration, /UPDATE public\.jobs[\s\S]*prompt_version/);
 });
 
-test("reconciliation skips any succeeded interpretation regardless of prompt version", () => {
-  assert.match(migration, /successful_job\.status = 'succeeded'/);
-  assert.match(migration, /successful_job\.observation_id = observation\.id/);
-  assert.doesNotMatch(migration, /successful_job\.payload->>'prompt_version'/);
+test("reconciliation suppresses succeeded interpretation regardless of prompt version", () => {
+  assert.match(reconciliation, /successful_job\.status = 'succeeded'/);
+  assert.match(
+    reconciliation,
+    /successful_job\.observation_id = observation\.id/,
+  );
+  assert.doesNotMatch(
+    reconciliation,
+    /successful_job\.payload->>'prompt_version'/,
+  );
 });
 
-test("reconciliation blocks duplicate queued or running v2 and permits failed or cancelled v1 history", () => {
-  assert.match(migration, /active_job\.status IN \('queued', 'running'\)/);
+test("current-version presence suppresses queued, running, failed, cancelled, and succeeded v2", () => {
   assert.match(
-    migration,
+    currentVersionPresencePredicate,
     /active_job\.payload->>'prompt_version' = 'interpret-observation-v2'/,
   );
-  assert.doesNotMatch(migration, /status IN \('failed', 'cancelled'\)/);
+  assert.match(
+    currentVersionPresencePredicate,
+    /active_job\.payload->>'schema_version' = 'candidate-set-v1'/,
+  );
+  assert.doesNotMatch(currentVersionPresencePredicate, /active_job\.status/);
+});
+
+test("failed or cancelled v1 without v2 history remains eligible for one v2 job", () => {
+  assert.doesNotMatch(reconciliation, /successful_job\.status IN/i);
+  assert.doesNotMatch(currentVersionPresencePredicate, /interpret-observation-v1/);
+  assert.doesNotMatch(reconciliation, /status IN \('failed', 'cancelled'\)/);
+});
+
+test("no-history observation remains eligible and terminal v2 cannot loop as processed", () => {
+  assert.match(reconciliation, /AND NOT EXISTS \([\s\S]*successful_job/);
+  assert.match(reconciliation, /AND NOT EXISTS \([\s\S]*active_job/);
+  assert.doesNotMatch(currentVersionPresencePredicate, /active_job\.status/);
+  assert.match(
+    reconciliation,
+    /PERFORM \*[\s\S]*enqueue_observation_interpretation\(v_observation_id\)[\s\S]*v_processed := v_processed \+ 1/,
+  );
 });
 
 test("migration adds no pilot-specific ids or cancellation surface", () => {
