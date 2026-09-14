@@ -10,7 +10,7 @@ const migrationPath = `supabase/migrations/${pipelineTag}.sql`;
 const correctionPath = `supabase/migrations/${correctionTag}.sql`;
 
 describe("Step 102 interpretation pipeline migration", () => {
-  it("keeps the accepted Step 102 migration, journal and snapshot identities aligned", async () => {
+  it("keeps the accepted Step 102 migration and snapshot identities aligned", async () => {
     const [journal, snapshot, correctionSnapshot, migrations] =
       await Promise.all([
         readFile("supabase/migrations/meta/_journal.json", "utf8"),
@@ -34,7 +34,7 @@ describe("Step 102 interpretation pipeline migration", () => {
     expect(JSON.parse(correctionSnapshot)).toMatchObject({
       prevId: pipelineSnapshot.id,
     });
-    expect(migrations.filter((name) => name.endsWith(".sql"))).toHaveLength(14);
+    expect(migrations.filter((name) => name.endsWith(".sql"))).toHaveLength(15);
   });
 
   it("adds durable job, run and candidate identities without new tables", async () => {
