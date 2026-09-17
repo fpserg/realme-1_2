@@ -1,7 +1,8 @@
 export const interpretObservationJobKind = "interpret_observation";
 export const interpretationPromptVersionV1 = "interpret-observation-v1";
 export const interpretationPromptVersionV2 = "interpret-observation-v2";
-export const interpretationPromptVersion = interpretationPromptVersionV2;
+export const interpretationPromptVersionV3 = "interpret-observation-v3";
+export const interpretationPromptVersion = interpretationPromptVersionV3;
 export const interpretationSchemaVersion = "candidate-set-v1";
 export const interpretationCandidateLimit = 8;
 export const interpretationEvidenceLimit = 8;
@@ -220,9 +221,11 @@ export async function sha256Hex(value: string) {
 
 function assertSupportedJobVersions(job: ClaimedInterpretationJob) {
   if (
-    ![interpretationPromptVersionV1, interpretationPromptVersionV2].includes(
-      job.promptVersion,
-    ) ||
+    ![
+      interpretationPromptVersionV1,
+      interpretationPromptVersionV2,
+      interpretationPromptVersionV3,
+    ].includes(job.promptVersion) ||
     job.schemaVersion !== interpretationSchemaVersion
   ) {
     throw new InterpretationProviderError("configuration_error");

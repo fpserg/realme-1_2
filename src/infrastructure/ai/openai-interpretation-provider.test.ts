@@ -4,6 +4,7 @@ import {
   interpretationInstructions,
   interpretationPromptV1,
   interpretationPromptV2,
+  interpretationPromptV3,
   OpenAIInterpretationProvider,
 } from "./openai-interpretation-provider";
 
@@ -13,6 +14,13 @@ Return zero or more bounded non-canonical proposition candidates.
 Each candidate must cite one or more supplied evidenceReferences exactly.
 Do not claim admission, ontology mutation, assertion creation, commitment, projection, or any other canonical change.
 Use simple lower_snake_case predicates. Do not invent database actions or table names.`;
+
+const historicalV2Prompt = `${historicalV1Prompt}
+Preserve explicitly named participants or meaningful relation objects from the evidence; do not replace them with boolean true unless the proposition is genuinely boolean.
+When one statement contains material dimensions that cannot all fit faithfully in one subject/predicate/scalar-object tuple, emit multiple bounded atomic candidates rather than dropping a participant, object, quantity, or other material dimension.
+Preserve the evidence's epistemic character: feelings, beliefs, impressions, uncertainty, and speculation must not become unqualified objective facts.
+Preserve historical scope: historical or dated evidence must not be presented as necessarily current, persistent, or timeless without support.
+Pronoun or entity resolution may be proposed when strongly supported, but remains interpretation rather than canonical identity binding.`;
 
 const input = {
   evidence: [
@@ -48,9 +56,7 @@ describe("OpenAI interpretation adapter", () => {
   });
 
   it("defines v2 as the v1 contract plus generic semantic completeness laws", () => {
-    expect(interpretationPromptV2.startsWith(`${historicalV1Prompt}\n`)).toBe(
-      true,
-    );
+    expect(interpretationPromptV2).toBe(historicalV2Prompt);
     expect(interpretationInstructions("interpret-observation-v2")).toBe(
       interpretationPromptV2,
     );
@@ -72,6 +78,25 @@ describe("OpenAI interpretation adapter", () => {
     );
     expect(interpretationPromptV2).toContain(
       "Pronoun or entity resolution may be proposed when strongly supported, but remains interpretation rather than canonical identity binding",
+    );
+  });
+
+  it("defines v3 as exact historical v2 plus generic event/state preservation", () => {
+    expect(interpretationPromptV3.startsWith(`${historicalV2Prompt}\n`)).toBe(
+      true,
+    );
+    expect(interpretationInstructions("interpret-observation-v3")).toBe(
+      interpretationPromptV3,
+    );
+    expect(interpretationPromptV3).toContain(
+      "event or change versus a state or property",
+    );
+    expect(interpretationPromptV3).toContain("preserve grammatical role");
+    expect(interpretationPromptV3).toContain(
+      "Do not convert a bounded action or change into a persistent attribute, level, capability, or status",
+    );
+    expect(interpretationPromptV3).not.toMatch(
+      /RealMe app development|Production failure|Sergey|pilot/i,
     );
   });
 

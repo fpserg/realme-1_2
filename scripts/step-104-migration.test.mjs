@@ -18,7 +18,7 @@ describe("Step 104 commitment projections", () => {
     expect(entries[13]).toMatchObject({ idx: 13, tag: step104Tag });
     expect(entries).toHaveLength(14);
     expect(metadata).not.toContain("20260829195000_snapshot.json");
-    expect(migrations.filter((name) => name.endsWith(".sql"))).toHaveLength(14);
+    expect(migrations.filter((name) => name.endsWith(".sql"))).toHaveLength(16);
   });
 
   it("projects canonical commitment facts while aliases remain presentation-only", async () => {

@@ -230,4 +230,86 @@ describe("interpretation worker database environment", () => {
     );
     expect(statements[1]).toContain("job.attempts < job.max_attempts");
   });
+
+  it.each([
+    "interpret-observation-v1",
+    "interpret-observation-v2",
+    "interpret-observation-v3",
+  ])(
+    "claims a durable %s job without applying the active default",
+    async (promptVersion) => {
+      let call = 0;
+      const transaction = vi.fn(() => {
+        call += 1;
+        if (call === 2)
+          return Promise.resolve([
+            {
+              attempts: 1,
+              id: "11111111-1111-4111-8111-111111111111",
+              lock_token: "33333333-3333-4333-8333-333333333333",
+              observation_id: "22222222-2222-4222-8222-222222222222",
+              prompt_version: promptVersion,
+              schema_version: "candidate-set-v1",
+              world_id: "44444444-4444-4444-8444-444444444444",
+            },
+          ]);
+        if (call === 4)
+          return Promise.resolve([
+            {
+              content_hash: "sha256-evidence",
+              exact_text: "Persisted evidence.",
+              id: "55555555-5555-4555-8555-555555555555",
+              ordinal: 0,
+            },
+          ]);
+        return Promise.resolve([]);
+      });
+      const sql = {
+        begin: vi.fn(
+          (callback: (input: typeof transaction) => Promise<unknown>) =>
+            callback(transaction),
+        ),
+      };
+      const repository = new PostgresInterpretationJobRepository(sql as never);
+
+      await expect(
+        repository.claim("33333333-3333-4333-8333-333333333333"),
+      ).resolves.toMatchObject({
+        promptVersion,
+        schemaVersion: "candidate-set-v1",
+      });
+    },
+  );
+
+  it("rejects an unknown durable prompt before loading evidence", async () => {
+    let call = 0;
+    const transaction = vi.fn(() => {
+      call += 1;
+      if (call === 2)
+        return Promise.resolve([
+          {
+            attempts: 1,
+            id: "11111111-1111-4111-8111-111111111111",
+            lock_token: "33333333-3333-4333-8333-333333333333",
+            observation_id: "22222222-2222-4222-8222-222222222222",
+            prompt_version: "interpret-observation-v999",
+            schema_version: "candidate-set-v1",
+            world_id: "44444444-4444-4444-8444-444444444444",
+          },
+        ]);
+      return Promise.resolve([]);
+    });
+    const sql = {
+      begin: vi.fn(
+        (callback: (input: typeof transaction) => Promise<unknown>) =>
+          callback(transaction),
+      ),
+    };
+    const repository = new PostgresInterpretationJobRepository(sql as never);
+
+    await expect(
+      repository.claim("33333333-3333-4333-8333-333333333333"),
+    ).rejects.toThrow("unsupported persisted version");
+    expect(call).toBe(2);
+  });
 });

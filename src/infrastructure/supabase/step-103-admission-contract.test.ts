@@ -38,7 +38,7 @@ describe("Step 103 admission database contract", () => {
     const sqlMigrations = readdirSync(
       join(process.cwd(), "supabase/migrations"),
     ).filter((name) => name.endsWith(".sql"));
-    expect(sqlMigrations).toHaveLength(14);
+    expect(sqlMigrations).toHaveLength(16);
     expect(journal.entries).toHaveLength(14);
     expect(journal.entries.map((entry: { idx: number }) => entry.idx)).toEqual(
       Array.from({ length: 14 }, (_, index) => index),

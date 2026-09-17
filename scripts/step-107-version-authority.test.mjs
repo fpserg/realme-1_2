@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import test from "node:test";
+import { join } from "node:path";
+import { test } from "vitest";
 
-const migrationUrl = new URL(
-  "../supabase/migrations/20260913054404_lazy_absorbing_man.sql",
-  import.meta.url,
+const migration = await readFile(
+  join(
+    process.cwd(),
+    "supabase/migrations/20260913054404_lazy_absorbing_man.sql",
+  ),
+  "utf8",
 );
-
-const migration = await readFile(migrationUrl, "utf8");
 
 const reconciliation = migration.slice(
   migration.indexOf(

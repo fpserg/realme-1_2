@@ -4,6 +4,7 @@ import {
   InterpretationProviderError,
   InterpretationValidationError,
   buildInterpretationInput,
+  interpretationPromptVersion,
   processNextInterpretationJob,
   sha256Hex,
   type ClaimedInterpretationJob,
@@ -121,7 +122,7 @@ describe("Step 102 interpretation pipeline", () => {
     ).toThrow(InterpretationValidationError);
   });
 
-  it("executes a persisted v1 job as v1 even though new jobs use v2", async () => {
+  it("executes a persisted v1 job as v1 even though new jobs use v3", async () => {
     const transport = vi.fn().mockResolvedValue(output);
     const { repository, result } = await run(baseJob, transport);
     expect(result).toMatchObject({ candidateCount: 1, state: "succeeded" });
@@ -152,18 +153,39 @@ describe("Step 102 interpretation pipeline", () => {
     });
   });
 
+  it("executes a persisted v3 job as v3", async () => {
+    const v3Job = { ...baseJob, promptVersion: "interpret-observation-v3" };
+    const transport = vi.fn().mockResolvedValue(output);
+    const { repository } = await run(v3Job, transport);
+    expect(transport).toHaveBeenCalledWith(
+      expect.objectContaining({ promptVersion: "interpret-observation-v3" }),
+      expect.anything(),
+    );
+    expect(repository.started[0]).toMatchObject({
+      promptVersion: "interpret-observation-v3",
+      schemaVersion: "candidate-set-v1",
+    });
+    expect(interpretationPromptVersion).toBe("interpret-observation-v3");
+  });
+
   it("includes the persisted prompt and schema versions in the input hash contract", async () => {
     const v1 = buildInterpretationInput(baseJob).hashContract;
     const v2 = buildInterpretationInput({
       ...baseJob,
       promptVersion: "interpret-observation-v2",
     }).hashContract;
+    const v3 = buildInterpretationInput({
+      ...baseJob,
+      promptVersion: "interpret-observation-v3",
+    }).hashContract;
     expect(v1.promptVersion).toBe("interpret-observation-v1");
     expect(v2.promptVersion).toBe("interpret-observation-v2");
+    expect(v3.promptVersion).toBe("interpret-observation-v3");
     expect(v1.schemaVersion).toBe("candidate-set-v1");
-    expect(await sha256Hex(JSON.stringify(v1))).not.toBe(
-      await sha256Hex(JSON.stringify(v2)),
+    const hashes = await Promise.all(
+      [v1, v2, v3].map((contract) => sha256Hex(JSON.stringify(contract))),
     );
+    expect(new Set(hashes)).toHaveLength(3);
   });
 
   it("fails closed for an unsupported persisted version before provider transport", async () => {

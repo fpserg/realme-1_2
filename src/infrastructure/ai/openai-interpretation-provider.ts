@@ -72,12 +72,17 @@ Preserve the evidence's epistemic character: feelings, beliefs, impressions, unc
 Preserve historical scope: historical or dated evidence must not be presented as necessarily current, persistent, or timeless without support.
 Pronoun or entity resolution may be proposed when strongly supported, but remains interpretation rather than canonical identity binding.`;
 
+export const interpretationPromptV3 = `${interpretationPromptV2}
+Preserve whether the evidence describes an event or change versus a state or property, and preserve grammatical role when that distinction changes the proposition's truth conditions. Do not convert a bounded action or change into a persistent attribute, level, capability, or status unless the evidence supports that reading.`;
+
 export function interpretationInstructions(promptVersion: string) {
   switch (promptVersion) {
     case "interpret-observation-v1":
       return interpretationPromptV1;
     case "interpret-observation-v2":
       return interpretationPromptV2;
+    case "interpret-observation-v3":
+      return interpretationPromptV3;
     default:
       throw new InterpretationProviderError("configuration_error");
   }

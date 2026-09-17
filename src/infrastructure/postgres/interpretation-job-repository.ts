@@ -3,6 +3,7 @@ import postgres from "postgres";
 import {
   interpretationPromptVersionV1,
   interpretationPromptVersionV2,
+  interpretationPromptVersionV3,
   interpretationSchemaVersion,
   type ClaimedInterpretationJob,
   type InterpretationFailureCode,
@@ -137,9 +138,11 @@ export function createInterpretationDatabaseClient(
 
 function assertClaimedVersions(row: ClaimedRow) {
   if (
-    ![interpretationPromptVersionV1, interpretationPromptVersionV2].includes(
-      row.prompt_version,
-    ) ||
+    ![
+      interpretationPromptVersionV1,
+      interpretationPromptVersionV2,
+      interpretationPromptVersionV3,
+    ].includes(row.prompt_version) ||
     row.schema_version !== interpretationSchemaVersion
   ) {
     throw new Error(
