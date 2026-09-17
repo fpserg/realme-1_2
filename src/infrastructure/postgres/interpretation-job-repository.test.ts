@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   interpretationDatabaseUrl,
+  type InterpretationDatabaseDiagnosticStage,
   PostgresInterpretationJobRepository,
 } from "./interpretation-job-repository";
 
@@ -94,6 +95,119 @@ describe("interpretation worker database environment", () => {
     }
   });
 
+  it("preserves username decoding failure before localhost rejection", () => {
+    let stage: InterpretationDatabaseDiagnosticStage | undefined;
+    const invoke = () =>
+      interpretationDatabaseUrl(
+        {
+          REALME_ENVIRONMENT: "production",
+          REALME_INTERPRETATION_DATABASE_URL:
+            "postgresql://postgres%ZZ:secret@localhost:5432/postgres",
+        },
+        (value) => {
+          stage = value;
+        },
+      );
+
+    expect(invoke).toThrow(URIError);
+    expect(invoke).toThrow("URI malformed");
+    expect(stage).toBe("database_username_or_project_ref");
+  });
+
+  it.each([
+    {
+      environment: {},
+      expected: "database_url_presence",
+    },
+    {
+      environment: {
+        REALME_INTERPRETATION_DATABASE_URL: "not a url",
+      },
+      expected: "database_url_parse",
+    },
+    {
+      environment: {
+        REALME_INTERPRETATION_DATABASE_URL:
+          "https://postgres:secret@db.project.supabase.co/postgres",
+      },
+      expected: "database_protocol",
+    },
+    {
+      environment: {
+        REALME_ENVIRONMENT: "production",
+        REALME_INTERPRETATION_DATABASE_URL:
+          "postgresql://postgres:secret@localhost:5432/postgres",
+      },
+      expected: "database_host",
+    },
+    {
+      environment: {
+        REALME_INTERPRETATION_DATABASE_URL:
+          "postgresql://postgres:secret@database.example/postgres",
+      },
+      expected: "database_username_or_project_ref",
+    },
+    {
+      environment: {
+        REALME_DATA_CLASSIFICATION: "synthetic",
+        REALME_ENVIRONMENT: "preview",
+        REALME_EXPECTED_SUPABASE_PROJECT_REF: "stagingref",
+        REALME_INTERPRETATION_DATABASE_URL:
+          "postgresql://postgres.stagingref:secret@aws-0-eu-central-1.pooler.supabase.com:6543/postgres",
+      },
+      expected: "database_tls",
+    },
+    {
+      environment: {
+        REALME_DATA_CLASSIFICATION: "personal",
+        REALME_ENVIRONMENT: "preview",
+        REALME_EXPECTED_SUPABASE_PROJECT_REF: "stagingref",
+        REALME_INTERPRETATION_DATABASE_URL:
+          "postgresql://postgres.stagingref:secret@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
+      },
+      expected: "database_environment_boundary",
+    },
+  ] as const)(
+    "reports $expected immediately before the existing failing database gate",
+    ({ environment, expected }) => {
+      let stage: InterpretationDatabaseDiagnosticStage | undefined;
+      expect(() =>
+        interpretationDatabaseUrl(environment, (value) => {
+          stage = value;
+        }),
+      ).toThrow();
+      expect(stage).toBe(expected);
+    },
+  );
+
+  it("reports the unchanged successful validation sequence without altering the returned URL", () => {
+    const stages: InterpretationDatabaseDiagnosticStage[] = [];
+    const url =
+      "postgresql://postgres.stagingref:secret@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require";
+    expect(
+      interpretationDatabaseUrl(
+        {
+          REALME_DATA_CLASSIFICATION: "synthetic",
+          REALME_ENVIRONMENT: "preview",
+          REALME_EXPECTED_SUPABASE_PROJECT_REF: "stagingref",
+          REALME_INTERPRETATION_DATABASE_URL: url,
+        },
+        (stage) => stages.push(stage),
+      ),
+    ).toBe(url);
+    expect(stages).toEqual([
+      "database_url_presence",
+      "database_url_parse",
+      "database_protocol",
+      "database_host",
+      "database_username_or_project_ref",
+      "database_host",
+      "database_username_or_project_ref",
+      "database_tls",
+      "database_environment_boundary",
+    ]);
+  });
+
   it("runs stale-final terminalization before ordinary claim selection", async () => {
     const statements: string[] = [];
     const transaction = vi.fn((strings: TemplateStringsArray) => {
@@ -115,5 +229,87 @@ describe("interpretation worker database environment", () => {
       "public.terminalize_stale_final_interpretation_job()",
     );
     expect(statements[1]).toContain("job.attempts < job.max_attempts");
+  });
+
+  it.each([
+    "interpret-observation-v1",
+    "interpret-observation-v2",
+    "interpret-observation-v3",
+  ])(
+    "claims a durable %s job without applying the active default",
+    async (promptVersion) => {
+      let call = 0;
+      const transaction = vi.fn(() => {
+        call += 1;
+        if (call === 2)
+          return Promise.resolve([
+            {
+              attempts: 1,
+              id: "11111111-1111-4111-8111-111111111111",
+              lock_token: "33333333-3333-4333-8333-333333333333",
+              observation_id: "22222222-2222-4222-8222-222222222222",
+              prompt_version: promptVersion,
+              schema_version: "candidate-set-v1",
+              world_id: "44444444-4444-4444-8444-444444444444",
+            },
+          ]);
+        if (call === 4)
+          return Promise.resolve([
+            {
+              content_hash: "sha256-evidence",
+              exact_text: "Persisted evidence.",
+              id: "55555555-5555-4555-8555-555555555555",
+              ordinal: 0,
+            },
+          ]);
+        return Promise.resolve([]);
+      });
+      const sql = {
+        begin: vi.fn(
+          (callback: (input: typeof transaction) => Promise<unknown>) =>
+            callback(transaction),
+        ),
+      };
+      const repository = new PostgresInterpretationJobRepository(sql as never);
+
+      await expect(
+        repository.claim("33333333-3333-4333-8333-333333333333"),
+      ).resolves.toMatchObject({
+        promptVersion,
+        schemaVersion: "candidate-set-v1",
+      });
+    },
+  );
+
+  it("rejects an unknown durable prompt before loading evidence", async () => {
+    let call = 0;
+    const transaction = vi.fn(() => {
+      call += 1;
+      if (call === 2)
+        return Promise.resolve([
+          {
+            attempts: 1,
+            id: "11111111-1111-4111-8111-111111111111",
+            lock_token: "33333333-3333-4333-8333-333333333333",
+            observation_id: "22222222-2222-4222-8222-222222222222",
+            prompt_version: "interpret-observation-v999",
+            schema_version: "candidate-set-v1",
+            world_id: "44444444-4444-4444-8444-444444444444",
+          },
+        ]);
+      return Promise.resolve([]);
+    });
+    const sql = {
+      begin: vi.fn(
+        (callback: (input: typeof transaction) => Promise<unknown>) =>
+          callback(transaction),
+      ),
+    };
+    const repository = new PostgresInterpretationJobRepository(sql as never);
+
+    await expect(
+      repository.claim("33333333-3333-4333-8333-333333333333"),
+    ).rejects.toThrow("unsupported persisted version");
+    expect(call).toBe(2);
   });
 });
