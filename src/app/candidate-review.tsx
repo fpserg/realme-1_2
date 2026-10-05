@@ -11,6 +11,19 @@ import type {
 } from "@/application/admission/admission";
 
 import styles from "./candidate-review.module.css";
+import {
+  epistemicModes,
+  isEpistemicMode,
+  type EpistemicMode,
+} from "@/domain/interpretation/candidate-v2";
+
+const modeLabels: Record<EpistemicMode, string> = {
+  estimate: "estimates",
+  belief: "believes",
+  assessment: "assesses",
+  report: "reports",
+  feeling: "feels",
+};
 
 function displayObject(value: CandidateReviewItem["object"]) {
   return typeof value === "string" ? value : String(value);
@@ -128,24 +141,47 @@ export function CandidateReview({
           const isPending = pending === candidate.id;
           return (
             <article className={styles.card} key={candidate.id}>
+              {candidate.epistemic ? (
+                <h3>
+                  {candidate.epistemic.actor}{" "}
+                  {modeLabels[candidate.epistemic.mode]}:
+                </h3>
+              ) : null}
               <div className={styles.proposal}>
                 <strong>{candidate.subject}</strong>
                 <span>{candidate.predicate.replaceAll("_", " ")}</span>
                 <strong>{displayObject(candidate.object)}</strong>
               </div>
               <p className={styles.explanation}>{candidate.explanation}</p>
-              <details className={styles.evidence}>
-                <summary>Evidence · {candidate.evidence.length}</summary>
-                {candidate.evidence.map((evidence) => (
-                  <blockquote key={evidence.sourceFragmentId}>
-                    {evidence.exactText}
-                  </blockquote>
-                ))}
-              </details>
+              {candidate.epistemic ? (
+                <div className={styles.evidence} aria-label="Exact evidence">
+                  <strong>Evidence · {candidate.evidence.length}</strong>
+                  {candidate.evidence.map((evidence) => (
+                    <blockquote key={evidence.sourceFragmentId}>
+                      {evidence.exactText}
+                    </blockquote>
+                  ))}
+                </div>
+              ) : (
+                <details className={styles.evidence}>
+                  <summary>Evidence · {candidate.evidence.length}</summary>
+                  {candidate.evidence.map((evidence) => (
+                    <blockquote key={evidence.sourceFragmentId}>
+                      {evidence.exactText}
+                    </blockquote>
+                  ))}
+                </details>
+              )}
               <p className={styles.change}>
-                Accepting creates one versioned canonical assertion. A
-                classification proposal may create or reclassify the same stable
-                ontology identity; prior versions remain preserved.
+                {candidate.epistemic ? (
+                  "Accepting admits the attributed proposition as a whole, not its embedded content as objective truth."
+                ) : (
+                  <>
+                    Accepting creates one versioned canonical assertion. A
+                    classification proposal may create or reclassify the same
+                    stable ontology identity; prior versions remain preserved.
+                  </>
+                )}
               </p>
 
               {isEditing ? (
@@ -223,6 +259,12 @@ function CorrectionForm({
     displayObject(candidate.object),
   );
   const [valueError, setValueError] = useState("");
+  const [kind, setKind] = useState(candidate.kind ?? "proposition");
+  const [actor, setActor] = useState(candidate.epistemic?.actor ?? "");
+  const [mode, setMode] = useState<EpistemicMode>(
+    candidate.epistemic?.mode ?? "assessment",
+  );
+  const [predecessor, setPredecessor] = useState("");
 
   return (
     <form
@@ -232,7 +274,25 @@ function CorrectionForm({
         try {
           const object = parseScalar(objectKind, objectValue);
           setValueError("");
-          onSubmit({ object, predicate, subject });
+          onSubmit(
+            candidate.schemaVersion === "candidate-set-v2"
+              ? {
+                  object,
+                  predicate,
+                  subject,
+                  schema_version: "candidate-set-v2",
+                  ...(kind === "epistemic_proposition"
+                    ? {
+                        kind,
+                        epistemic: { actor, mode },
+                        ...(predecessor
+                          ? { supersedes_epistemic_assertion_id: predecessor }
+                          : {}),
+                      }
+                    : { kind: "proposition" }),
+                }
+              : { object, predicate, subject },
+          );
         } catch (error) {
           setValueError(
             error instanceof Error
@@ -242,6 +302,77 @@ function CorrectionForm({
         }
       }}
     >
+      {candidate.schemaVersion === "candidate-set-v2" ? (
+        <>
+          <label>
+            Meaning type
+            <select
+              disabled={disabled}
+              value={kind}
+              onChange={(e) =>
+                setKind(
+                  e.target.value === "epistemic_proposition"
+                    ? "epistemic_proposition"
+                    : "proposition",
+                )
+              }
+            >
+              <option value="proposition">
+                Ordinary proposition (unqualified)
+              </option>
+              <option value="epistemic_proposition">
+                Attributed epistemic proposition
+              </option>
+            </select>
+          </label>
+          {kind === "epistemic_proposition" ? (
+            <>
+              <label>
+                Epistemic actor
+                <input
+                  value={actor}
+                  onChange={(e) => setActor(e.target.value)}
+                  disabled={disabled}
+                  maxLength={160}
+                  required
+                />
+              </label>
+              <label>
+                Epistemic mode
+                <select
+                  value={mode}
+                  disabled={disabled}
+                  onChange={(e) => {
+                    if (isEpistemicMode(e.target.value))
+                      setMode(e.target.value);
+                  }}
+                >
+                  {epistemicModes.map((m) => (
+                    <option key={m} value={m}>
+                      {modeLabels[m]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Explicit predecessor assertion UUID (optional)
+                <input
+                  value={predecessor}
+                  onChange={(e) => setPredecessor(e.target.value)}
+                  disabled={disabled}
+                  pattern="[0-9a-fA-F-]{36}"
+                />
+              </label>
+            </>
+          ) : null}
+          <p role="status">
+            {kind === "epistemic_proposition"
+              ? `${actor} ${modeLabels[mode]}: `
+              : "Ordinary unqualified proposition: "}
+            {subject} {predicate.replaceAll("_", " ")} {objectValue}
+          </p>
+        </>
+      ) : null}
       <label>
         Subject
         <input

@@ -9,6 +9,7 @@ import type {
 } from "@/application/admission/admission";
 
 import type { RealMeDatabase } from "./database.types";
+import { parseCandidateMeaningV2 } from "@/domain/interpretation/candidate-v2";
 
 type CandidateReviewRow = {
   candidate_claim_id: string;
@@ -53,6 +54,17 @@ function readEvidence(value: unknown): CandidateEvidence[] {
 
 function mapCandidate(row: CandidateReviewRow): CandidateReviewItem {
   const payload = row.candidate_payload;
+  const meaning =
+    payload.schema_version === "candidate-set-v2"
+      ? parseCandidateMeaningV2(
+          Object.fromEntries(
+            Object.entries(payload).filter(
+              ([key]) =>
+                !["schema_version", "confidence", "explanation"].includes(key),
+            ),
+          ),
+        )
+      : null;
   if (
     typeof payload.subject !== "string" ||
     typeof payload.predicate !== "string" ||
@@ -70,6 +82,11 @@ function mapCandidate(row: CandidateReviewRow): CandidateReviewItem {
     predicate: payload.predicate,
     proposedSubjectNodeId: row.proposed_subject_node_id,
     subject: payload.subject,
+    kind: meaning?.kind ?? "proposition",
+    schemaVersion: meaning ? "candidate-set-v2" : "candidate-set-v1",
+    ...(meaning?.kind === "epistemic_proposition"
+      ? { epistemic: meaning.epistemic }
+      : {}),
   };
 }
 
@@ -91,13 +108,7 @@ export class SupabaseAdmissionRepository implements AdmissionRepository {
     const { data, error } = await this.client.rpc("decide_candidate", {
       p_action: action,
       p_candidate_claim_id: candidateClaimId,
-      p_correction_payload: correction
-        ? {
-            object: correction.object,
-            predicate: correction.predicate,
-            subject: correction.subject,
-          }
-        : null,
+      p_correction_payload: correction ? { ...correction } : null,
     });
     if (error) throw error;
     const row = data[0];
@@ -106,6 +117,7 @@ export class SupabaseAdmissionRepository implements AdmissionRepository {
     return {
       action: row.decision_action as AdmissionAction,
       canonicalAssertionId: row.canonical_assertion_id,
+      canonicalEpistemicAssertionId: row.canonical_epistemic_assertion_id,
       canonicalNodeId: row.canonical_node_id,
       candidateClaimId: row.candidate_claim_id,
       decisionId: row.decision_id,
