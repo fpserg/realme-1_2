@@ -33,6 +33,17 @@ const candidate: CandidateReviewItem = {
   subject: "Football",
 };
 
+const epistemicCandidate: CandidateReviewItem = {
+  ...candidate,
+  epistemic: { actor: "Warden", mode: "estimate" },
+  id: "candidate-epistemic",
+  kind: "epistemic_proposition",
+  object: "approximately one to two days",
+  predicate: "requires_remaining_time",
+  schemaVersion: "candidate-set-v2",
+  subject: "roadmap",
+};
+
 function withObject(
   object: CandidateReviewItem["object"],
 ): CandidateReviewItem {
@@ -181,5 +192,61 @@ describe("CandidateReview", () => {
 
     await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
     expect(submittedBody().correction.object).toBe("42");
+  });
+
+  it("presents attribution as the primary semantic unit and preserves it on accept", async () => {
+    render(<CandidateReview initialCandidates={[epistemicCandidate]} />);
+    expect(
+      screen.getByRole("heading", { name: "Warden estimates:" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/attributed proposition as a whole/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(epistemicCandidate.evidence[0]!.exactText),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(submittedBody()).toEqual({
+      action: "accept",
+      candidateId: "candidate-epistemic",
+    });
+  });
+
+  it("submits complete epistemic correction and permits explicit conversion to simple", async () => {
+    const { unmount } = render(
+      <CandidateReview initialCandidates={[epistemicCandidate]} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Correct" }));
+    fireEvent.change(screen.getByLabelText("Epistemic mode"), {
+      target: { value: "belief" },
+    });
+    fireEvent.change(
+      screen.getByLabelText("Explicit predecessor assertion UUID (optional)"),
+      { target: { value: "123e4567-e89b-42d3-a456-426614174000" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Admit correction" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(submittedBody().correction).toMatchObject({
+      epistemic: { actor: "Warden", mode: "belief" },
+      kind: "epistemic_proposition",
+      schema_version: "candidate-set-v2",
+      supersedes_epistemic_assertion_id: "123e4567-e89b-42d3-a456-426614174000",
+    });
+
+    unmount();
+    vi.mocked(fetch).mockClear();
+    render(<CandidateReview initialCandidates={[epistemicCandidate]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Correct" }));
+    fireEvent.change(screen.getByLabelText("Meaning type"), {
+      target: { value: "proposition" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Admit correction" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    expect(submittedBody().correction).toMatchObject({
+      kind: "proposition",
+      schema_version: "candidate-set-v2",
+    });
+    expect(submittedBody().correction).not.toHaveProperty("epistemic");
   });
 });

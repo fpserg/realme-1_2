@@ -122,7 +122,7 @@ describe("Step 102 interpretation pipeline", () => {
     ).toThrow(InterpretationValidationError);
   });
 
-  it("executes a persisted v1 job as v1 even though new jobs use v3", async () => {
+  it("executes a persisted v1 job as v1 even though new jobs use v4/v2", async () => {
     const transport = vi.fn().mockResolvedValue(output);
     const { repository, result } = await run(baseJob, transport);
     expect(result).toMatchObject({ candidateCount: 1, state: "succeeded" });
@@ -165,7 +165,119 @@ describe("Step 102 interpretation pipeline", () => {
       promptVersion: "interpret-observation-v3",
       schemaVersion: "candidate-set-v1",
     });
-    expect(interpretationPromptVersion).toBe("interpret-observation-v3");
+    expect(interpretationPromptVersion).toBe("interpret-observation-v4");
+  });
+
+  it("executes and persists a durable v4/v2 epistemic candidate without flattening attribution", async () => {
+    const epistemicOutput = {
+      candidates: [
+        {
+          confidence: 0.91,
+          epistemic: { actor: "Warden", mode: "estimate" },
+          evidenceReferences: ["evidence-0"],
+          explanation: "The estimate is explicitly attributed.",
+          kind: "epistemic_proposition",
+          object: "approximately one to two days",
+          predicate: "requires_remaining_time",
+          subject: "roadmap",
+        },
+      ],
+      schemaVersion: "candidate-set-v2",
+    };
+    const job = {
+      ...baseJob,
+      promptVersion: "interpret-observation-v4",
+      schemaVersion: "candidate-set-v2",
+    };
+    const { repository, result, transport } = await run(
+      job,
+      vi.fn().mockResolvedValue(epistemicOutput),
+    );
+    expect(result).toMatchObject({ candidateCount: 1, state: "succeeded" });
+    expect(transport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        promptVersion: "interpret-observation-v4",
+        schemaVersion: "candidate-set-v2",
+      }),
+      expect.anything(),
+    );
+    expect(repository.candidates[0]?.payload).toMatchObject({
+      kind: "epistemic_proposition",
+      epistemic: { actor: "Warden", mode: "estimate" },
+      schema_version: "candidate-set-v2",
+    });
+  });
+
+  it("validates candidate-set-v2 as a closed non-recursive two-form union", () => {
+    const simple = {
+      candidates: [
+        {
+          confidence: 1,
+          evidenceReferences: ["evidence-0"],
+          explanation: "Grounded.",
+          kind: "proposition",
+          object: true,
+          predicate: "progressed",
+          subject: "roadmap",
+        },
+      ],
+      schemaVersion: "candidate-set-v2",
+    };
+    const epistemic = {
+      candidates: [
+        {
+          ...simple.candidates[0],
+          kind: "epistemic_proposition",
+          epistemic: { actor: "Warden", mode: "estimate" },
+        },
+      ],
+      schemaVersion: "candidate-set-v2",
+    };
+    expect(validateCandidateSet(simple, "candidate-set-v2")).toHaveLength(1);
+    expect(validateCandidateSet(epistemic, "candidate-set-v2")).toHaveLength(1);
+    for (const mode of [
+      "estimate",
+      "belief",
+      "assessment",
+      "report",
+      "feeling",
+    ]) {
+      expect(
+        validateCandidateSet(
+          {
+            candidates: [
+              {
+                ...epistemic.candidates[0],
+                epistemic: { actor: "Warden", mode },
+              },
+            ],
+            schemaVersion: "candidate-set-v2",
+          },
+          "candidate-set-v2",
+        ),
+      ).toHaveLength(1);
+    }
+    for (const candidate of [
+      {
+        ...epistemic.candidates[0],
+        epistemic: { actor: "Warden", mode: "other" },
+      },
+      { ...epistemic.candidates[0], participant: "Maksim" },
+      {
+        ...epistemic.candidates[0],
+        epistemic: {
+          actor: "Warden",
+          mode: "estimate",
+          proposition: simple.candidates[0],
+        },
+      },
+    ])
+      expect(() =>
+        validateCandidateSet(
+          { candidates: [candidate], schemaVersion: "candidate-set-v2" },
+          "candidate-set-v2",
+        ),
+      ).toThrow(InterpretationValidationError);
   });
 
   it("includes the persisted prompt and schema versions in the input hash contract", async () => {
@@ -178,14 +290,21 @@ describe("Step 102 interpretation pipeline", () => {
       ...baseJob,
       promptVersion: "interpret-observation-v3",
     }).hashContract;
+    const v4 = buildInterpretationInput({
+      ...baseJob,
+      promptVersion: "interpret-observation-v4",
+      schemaVersion: "candidate-set-v2",
+    }).hashContract;
     expect(v1.promptVersion).toBe("interpret-observation-v1");
     expect(v2.promptVersion).toBe("interpret-observation-v2");
     expect(v3.promptVersion).toBe("interpret-observation-v3");
+    expect(v4.promptVersion).toBe("interpret-observation-v4");
+    expect(v4.schemaVersion).toBe("candidate-set-v2");
     expect(v1.schemaVersion).toBe("candidate-set-v1");
     const hashes = await Promise.all(
-      [v1, v2, v3].map((contract) => sha256Hex(JSON.stringify(contract))),
+      [v1, v2, v3, v4].map((contract) => sha256Hex(JSON.stringify(contract))),
     );
-    expect(new Set(hashes)).toHaveLength(3);
+    expect(new Set(hashes)).toHaveLength(4);
   });
 
   it("fails closed for an unsupported persisted version before provider transport", async () => {

@@ -2,8 +2,10 @@ export const interpretObservationJobKind = "interpret_observation";
 export const interpretationPromptVersionV1 = "interpret-observation-v1";
 export const interpretationPromptVersionV2 = "interpret-observation-v2";
 export const interpretationPromptVersionV3 = "interpret-observation-v3";
-export const interpretationPromptVersion = interpretationPromptVersionV3;
-export const interpretationSchemaVersion = "candidate-set-v1";
+export const interpretationPromptVersionV4 = "interpret-observation-v4";
+export const interpretationPromptVersion = interpretationPromptVersionV4;
+export const interpretationSchemaVersionV1 = "candidate-set-v1";
+export const interpretationSchemaVersion = "candidate-set-v2";
 export const interpretationCandidateLimit = 8;
 export const interpretationEvidenceLimit = 8;
 export const interpretationEvidenceCharacterLimit = 16_000;
@@ -69,6 +71,11 @@ export interface PersistableCandidate {
   evidenceFragmentIds: string[];
   logicalKey: string;
   payload: {
+    kind?: CandidateMeaningV2["kind"];
+    epistemic?: {
+      actor: string;
+      mode: import("@/domain/interpretation/candidate-v2").EpistemicMode;
+    };
     confidence: number;
     explanation: string;
     object: boolean | number | string;
@@ -180,14 +187,22 @@ function validateCandidate(value: unknown): RawCandidate {
   return value as unknown as RawCandidate;
 }
 
-export function validateCandidateSet(value: unknown) {
+export function validateCandidateSet(
+  value: unknown,
+  schemaVersion = interpretationSchemaVersionV1,
+) {
   if (
     !isRecord(value) ||
     !hasExactKeys(value, ["candidates", "schemaVersion"])
   ) {
     throw new InterpretationValidationError();
   }
-  if (value.schemaVersion !== interpretationSchemaVersion)
+  if (
+    value.schemaVersion !== schemaVersion ||
+    ![interpretationSchemaVersionV1, interpretationSchemaVersion].includes(
+      schemaVersion,
+    )
+  )
     throw new InterpretationValidationError();
   if (
     !Array.isArray(value.candidates) ||
@@ -195,7 +210,38 @@ export function validateCandidateSet(value: unknown) {
   ) {
     throw new InterpretationValidationError();
   }
-  return value.candidates.map(validateCandidate);
+  return value.candidates.map(
+    (
+      candidate,
+    ): RawCandidate | (Omit<RawCandidate, "kind"> & CandidateMeaningV2) => {
+      if (schemaVersion === interpretationSchemaVersionV1)
+        return validateCandidate(candidate);
+      if (!isRecord(candidate)) throw new InterpretationValidationError();
+      const { confidence, evidenceReferences, explanation, ...meaning } =
+        candidate;
+      try {
+        const parsed = parseCandidateMeaningV2(meaning);
+        // Reuse the historical metadata/evidence limits, not its semantic discriminator.
+        validateCandidate({
+          confidence,
+          evidenceReferences,
+          explanation,
+          kind: "proposition",
+          subject: parsed.subject,
+          predicate: parsed.predicate,
+          object: parsed.object,
+        });
+        return {
+          ...parsed,
+          confidence,
+          evidenceReferences,
+          explanation,
+        } as Omit<RawCandidate, "kind"> & CandidateMeaningV2;
+      } catch {
+        throw new InterpretationValidationError();
+      }
+    },
+  );
 }
 
 function canonicalJson(value: unknown): string {
@@ -219,14 +265,20 @@ export async function sha256Hex(value: string) {
   ).join("");
 }
 
-function assertSupportedJobVersions(job: ClaimedInterpretationJob) {
+export function assertSupportedJobVersions(
+  job: Pick<ClaimedInterpretationJob, "promptVersion" | "schemaVersion">,
+) {
   if (
-    ![
-      interpretationPromptVersionV1,
-      interpretationPromptVersionV2,
-      interpretationPromptVersionV3,
-    ].includes(job.promptVersion) ||
-    job.schemaVersion !== interpretationSchemaVersion
+    !(
+      ([
+        interpretationPromptVersionV1,
+        interpretationPromptVersionV2,
+        interpretationPromptVersionV3,
+      ].includes(job.promptVersion) &&
+        job.schemaVersion === interpretationSchemaVersionV1) ||
+      (job.promptVersion === interpretationPromptVersionV4 &&
+        job.schemaVersion === interpretationSchemaVersion)
+    )
   ) {
     throw new InterpretationProviderError("configuration_error");
   }
@@ -277,8 +329,9 @@ export function buildInterpretationInput(job: ClaimedInterpretationJob) {
 async function prepareCandidates(
   output: unknown,
   evidence: InterpretationEvidenceFragment[],
+  schemaVersion: string,
 ) {
-  const raw = validateCandidateSet(output);
+  const raw = validateCandidateSet(output, schemaVersion);
   const fragmentByReference = new Map(
     [...evidence]
       .sort((left, right) => left.ordinal - right.ordinal)
@@ -299,8 +352,14 @@ async function prepareCandidates(
       explanation: candidate.explanation,
       object: candidate.object,
       predicate: candidate.predicate,
-      schema_version: interpretationSchemaVersion,
+      schema_version: schemaVersion,
       subject: candidate.subject,
+      ...(schemaVersion === interpretationSchemaVersion
+        ? { kind: candidate.kind }
+        : {}),
+      ...(candidate.kind === "epistemic_proposition"
+        ? { epistemic: candidate.epistemic }
+        : {}),
     };
     const logicalKey = await sha256Hex(
       canonicalJson({
@@ -354,7 +413,11 @@ export async function processNextInterpretationJob(input: {
     const output = await input.provider.interpret(prepared.providerInput, {
       signal: input.signal,
     });
-    const candidates = await prepareCandidates(output, job.evidence);
+    const candidates = await prepareCandidates(
+      output,
+      job.evidence,
+      job.schemaVersion,
+    );
     await input.repository.complete({ candidates, job, runId });
     return {
       candidateCount: candidates.length,
@@ -367,3 +430,7 @@ export async function processNextInterpretationJob(input: {
     return { code: normalized.code, jobId: job.id, state: jobState };
   }
 }
+import {
+  parseCandidateMeaningV2,
+  type CandidateMeaningV2,
+} from "@/domain/interpretation/candidate-v2";

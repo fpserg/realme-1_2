@@ -232,12 +232,13 @@ describe("interpretation worker database environment", () => {
   });
 
   it.each([
-    "interpret-observation-v1",
-    "interpret-observation-v2",
-    "interpret-observation-v3",
+    ["interpret-observation-v1", "candidate-set-v1"],
+    ["interpret-observation-v2", "candidate-set-v1"],
+    ["interpret-observation-v3", "candidate-set-v1"],
+    ["interpret-observation-v4", "candidate-set-v2"],
   ])(
-    "claims a durable %s job without applying the active default",
-    async (promptVersion) => {
+    "claims a durable %s/%s job without applying the active default",
+    async (promptVersion, schemaVersion) => {
       let call = 0;
       const transaction = vi.fn(() => {
         call += 1;
@@ -249,7 +250,7 @@ describe("interpretation worker database environment", () => {
               lock_token: "33333333-3333-4333-8333-333333333333",
               observation_id: "22222222-2222-4222-8222-222222222222",
               prompt_version: promptVersion,
-              schema_version: "candidate-set-v1",
+              schema_version: schemaVersion,
               world_id: "44444444-4444-4444-8444-444444444444",
             },
           ]);
@@ -276,7 +277,7 @@ describe("interpretation worker database environment", () => {
         repository.claim("33333333-3333-4333-8333-333333333333"),
       ).resolves.toMatchObject({
         promptVersion,
-        schemaVersion: "candidate-set-v1",
+        schemaVersion,
       });
     },
   );

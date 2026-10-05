@@ -1,10 +1,7 @@
 import postgres from "postgres";
 
 import {
-  interpretationPromptVersionV1,
-  interpretationPromptVersionV2,
-  interpretationPromptVersionV3,
-  interpretationSchemaVersion,
+  assertSupportedJobVersions,
   type ClaimedInterpretationJob,
   type InterpretationFailureCode,
   type InterpretationJobRepository,
@@ -137,14 +134,12 @@ export function createInterpretationDatabaseClient(
 }
 
 function assertClaimedVersions(row: ClaimedRow) {
-  if (
-    ![
-      interpretationPromptVersionV1,
-      interpretationPromptVersionV2,
-      interpretationPromptVersionV3,
-    ].includes(row.prompt_version) ||
-    row.schema_version !== interpretationSchemaVersion
-  ) {
+  try {
+    assertSupportedJobVersions({
+      promptVersion: row.prompt_version,
+      schemaVersion: row.schema_version,
+    });
+  } catch {
     throw new Error(
       "Interpretation job carries an unsupported persisted version.",
     );
@@ -274,13 +269,15 @@ export class PostgresInterpretationJobRepository
       `;
       if (!runs[0]) throw new Error("Interpretation run is not completable.");
       for (const candidate of input.candidates) {
+        if (candidate.payload.schema_version !== input.job.schemaVersion)
+          throw new Error("Candidate schema must match the durable job.");
         const candidates = await transaction<{ id: string }[]>`
           insert into public.candidate_claims (
             world_id, interpretation_run_id, job_id, logical_key,
             proposed_subject_node_id, claim_kind, payload
           ) values (
             ${input.job.worldId}::uuid, ${input.runId}::uuid, ${input.job.id}::uuid,
-            ${candidate.logicalKey}, null, 'proposition', ${transaction.json(candidate.payload)}
+            ${candidate.logicalKey}, null, ${candidate.payload.kind ?? "proposition"}, ${transaction.json(candidate.payload)}
           ) returning id
         `;
         const candidateId = candidates[0]?.id;

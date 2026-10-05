@@ -5,6 +5,8 @@ import {
   interpretationPromptV1,
   interpretationPromptV2,
   interpretationPromptV3,
+  interpretationPromptV4,
+  interpretationOutputSchemaV2,
   OpenAIInterpretationProvider,
 } from "./openai-interpretation-provider";
 
@@ -100,6 +102,37 @@ describe("OpenAI interpretation adapter", () => {
     );
   });
 
+  it("keeps v1-v3 immutable and defines v4 as the closed candidate-set-v2 contract", () => {
+    expect(interpretationPromptV1).toBe(historicalV1Prompt);
+    expect(interpretationPromptV2).toBe(historicalV2Prompt);
+    expect(interpretationPromptV3.startsWith(`${historicalV2Prompt}\n`)).toBe(
+      true,
+    );
+    expect(interpretationInstructions("interpret-observation-v4")).toBe(
+      interpretationPromptV4,
+    );
+    expect(interpretationPromptV4).toContain("exactly two forms");
+    expect(interpretationPromptV4).toContain("epistemic actor and mode");
+    expect(interpretationPromptV4).toContain(
+      "Never transfer an actor or authority from an adjacent clause",
+    );
+    expect(interpretationPromptV4).toContain(
+      "Abstain if material participant/event semantics cannot be represented safely",
+    );
+    expect(interpretationPromptV4).toContain(
+      "event/change versus state/property",
+    );
+    expect(interpretationPromptV4).toContain(
+      "uncertainty, partial agreement and contrast",
+    );
+    expect(interpretationOutputSchemaV2.properties.schemaVersion.enum).toEqual([
+      "candidate-set-v2",
+    ]);
+    expect(
+      interpretationOutputSchemaV2.properties.candidates.items.anyOf,
+    ).toHaveLength(2);
+  });
+
   it("governs representative semantic cases without prescribing exact model output", () => {
     const prompt = interpretationInstructions("interpret-observation-v2");
     const representativeEvidence = [
@@ -163,6 +196,58 @@ describe("OpenAI interpretation adapter", () => {
     expect(String(options.body)).not.toContain("fragment_id");
     expect(String(options.body)).not.toContain("world_id");
   });
+
+  it("selects the strict v2 schema only for the durable v4/v2 pair", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        response({ candidates: [], schemaVersion: "candidate-set-v2" }),
+      );
+    const provider = new OpenAIInterpretationProvider(
+      "test-only-key",
+      "fixture-model",
+      "https://gateway.example/v1",
+      fetchMock as typeof fetch,
+    );
+    await provider.interpret(
+      {
+        ...input,
+        promptVersion: "interpret-observation-v4",
+        schemaVersion: "candidate-set-v2",
+      },
+      { signal: new AbortController().signal },
+    );
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.text.format).toMatchObject({
+      name: "realme_interpretation_candidate_set_v2",
+      schema: interpretationOutputSchemaV2,
+      strict: true,
+    });
+    expect(body.instructions).toBe(interpretationPromptV4);
+  });
+
+  it.each([
+    ["interpret-observation-v4", "candidate-set-v1"],
+    ["interpret-observation-v3", "candidate-set-v2"],
+  ])(
+    "rejects unsupported durable pair %s/%s before transport",
+    async (promptVersion, schemaVersion) => {
+      const fetchMock = vi.fn();
+      const provider = new OpenAIInterpretationProvider(
+        "test-only-key",
+        "fixture-model",
+        "https://gateway.example/v1",
+        fetchMock as typeof fetch,
+      );
+      await expect(
+        provider.interpret(
+          { ...input, promptVersion, schemaVersion },
+          { signal: new AbortController().signal },
+        ),
+      ).rejects.toMatchObject({ code: "configuration_error" });
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
 
   it.each([
     { status: 401, code: "configuration_error" },
