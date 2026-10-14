@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "advisory": "GHSA-vfj7-8cjw-p6xm",
+  "cve": "CVE-2026-93687",
+  "package": "braces",
+  "installed_version": "3.0.3",
+  "affected_range": "<=3.0.3",
+  "patched_range": null,
+  "patched_versions_unpublished": true,
+  "severity": "high",
+  "dependency_ancestry": [
+    ".>eslint-config-next>@next/eslint-plugin-next>fast-glob>micromatch>braces"
+  ],
+  "classification": "build_tooling_only",
+  "production_reachable": false,
+  "reachability_rationale": "The exact lockfile path begins at the eslint-config-next development dependency and is absent from the pnpm --prod dependency audit. It is executed only by repository-controlled lint tooling.",
+  "impact_rationale": "The vulnerable recursive parser can terminate the lint process through deeply nested brace patterns. Repository lint inputs and glob configuration are review-controlled; no untrusted application or Production request input reaches this parser.",
+  "lockfile": {
+    "algorithm": "sha256",
+    "digest": "d0675b0e1ebb13075756eb80476d64e8d538f42ac7928619e7e8cb16fd0e779b",
+    "git_blob": "54f3b5541391da03686e6de120f0386419d7d78e"
+  },
+  "inspector_disposition": "APPROVE SPLIT SECURITY GATE",
+  "reviewed_at": "2026-10-14",
+  "expires_at": "2026-11-05",
+  "supported_fix": {
+    "minimum_safe_version": "3.0.4",
+    "available_at_review": false
+  },
+  "invalidation_conditions": [
+    "supported_fix_available",
+    "advisory_changed",
+    "package_version_or_path_changed",
+    "lockfile_changed",
+    "runtime_reachable",
+    "untrusted_input_reachable",
+    "upstream_path_removed"
+  ]
+}

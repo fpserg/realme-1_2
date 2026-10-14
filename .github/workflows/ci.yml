@@ -37,8 +37,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit complete dependency graph
+      - name: Audit complete graph and enforce split security gate
         run: pnpm audit:security
+
+      - name: Retain complete dependency audit evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: dependency-security-audit
+          path: artifacts/security-audit/
+          if-no-files-found: error
 
       - name: Verify environment-secret exclusions
         run: |
