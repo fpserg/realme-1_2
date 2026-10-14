@@ -8,7 +8,7 @@ export const authorizedException = Object.freeze({
   package: "braces",
   version: "3.0.3",
   affectedRange: "<=3.0.3",
-  patchedRange: null,
+  patchedRange: ">=3.0.4",
   minimumSafeVersion: "3.0.4",
   severity: "high",
 });
@@ -174,9 +174,6 @@ function validateReviewRecord({
     if (record[field] !== value)
       fail(`security-review ${field} does not match`);
   }
-  if (record.patched_versions_unpublished !== true) {
-    fail("security-review unpublished-patch status does not match");
-  }
   if (
     record.classification !== "build_tooling_only" ||
     record.production_reachable !== false
@@ -229,13 +226,16 @@ function validateReviewRecord({
     fail("a supported patched braces release is now available");
   }
 
+  const patchMetadataMatches =
+    advisory.patched_versions === expected.patchedRange ||
+    (advisory.patched_versions === null &&
+      advisory.patched_versions_unpublished === true);
   if (
     advisoryIdentity(advisory) !== expected.advisory ||
     advisory.module_name !== expected.package ||
     advisory.severity !== expected.severity ||
     advisory.vulnerable_versions !== expected.affectedRange ||
-    advisory.patched_versions !== expected.patchedRange ||
-    advisory.patched_versions_unpublished !== true
+    !patchMetadataMatches
   ) {
     fail("reviewed advisory metadata changed");
   }

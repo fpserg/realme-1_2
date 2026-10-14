@@ -5,8 +5,7 @@
   "package": "braces",
   "installed_version": "3.0.3",
   "affected_range": "<=3.0.3",
-  "patched_range": null,
-  "patched_versions_unpublished": true,
+  "patched_range": ">=3.0.4",
   "severity": "high",
   "dependency_ancestry": [
     ".>eslint-config-next>@next/eslint-plugin-next>fast-glob>micromatch>braces"

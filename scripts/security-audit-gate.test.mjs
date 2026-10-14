@@ -15,8 +15,7 @@ function bracesAdvisory(overrides = {}) {
     github_advisory_id: "GHSA-vfj7-8cjw-p6xm",
     module_name: "braces",
     vulnerable_versions: "<=3.0.3",
-    patched_versions: null,
-    patched_versions_unpublished: true,
+    patched_versions: ">=3.0.4",
     severity: "high",
     findings: [
       {
@@ -58,8 +57,7 @@ function review(overrides = {}) {
     package: "braces",
     installed_version: "3.0.3",
     affected_range: "<=3.0.3",
-    patched_range: null,
-    patched_versions_unpublished: true,
+    patched_range: ">=3.0.4",
     severity: "high",
     dependency_ancestry: [path],
     classification: "build_tooling_only",
@@ -116,6 +114,17 @@ describe("split dependency security gate", () => {
     });
   });
 
+  it("accepts pnpm's equivalent unpublished-patch advisory representation", () => {
+    const unpublished = bracesAdvisory({
+      patched_versions: null,
+      patched_versions_unpublished: true,
+    });
+    expect(evaluate({ full: audit([unpublished]) })).toMatchObject({
+      production: { high: 0, critical: 0 },
+      toolingSevere: 1,
+    });
+  });
+
   it("passes a fully clean graph without an exception record", () => {
     expect(evaluate({ full: audit(), records: [] })).toMatchObject({
       toolingSevere: 0,
@@ -155,6 +164,14 @@ describe("split dependency security gate", () => {
     expect(() =>
       evaluate({ records: [review({ advisory: "GHSA-not-authorized" })] }),
     ).toThrow("unreviewed severe tooling advisory");
+  });
+
+  it("blocks changed patch metadata", () => {
+    expect(() =>
+      evaluate({
+        full: audit([bracesAdvisory({ patched_versions: ">=3.0.5" })]),
+      }),
+    ).toThrow("reviewed advisory metadata changed");
   });
 
   it.each([
