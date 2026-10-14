@@ -162,7 +162,7 @@ export const candidateClaims = pgTable(
     ),
     check(
       "candidate_claims_step_102_kind_check",
-      sql`${table.claimKind} = 'proposition'`,
+      sql`${table.claimKind} in ('proposition', 'epistemic_proposition')`,
     ),
     check(
       "candidate_claims_logical_key_not_blank",
@@ -174,7 +174,7 @@ export const candidateClaims = pgTable(
     ),
     check(
       "candidate_claims_step_102_payload_check",
-      sql`${table.payload} ?& array['subject', 'predicate', 'object', 'explanation', 'confidence', 'schema_version'] and (${table.payload} - array['subject', 'predicate', 'object', 'explanation', 'confidence', 'schema_version']) = '{}'::jsonb and jsonb_typeof(${table.payload}->'subject') = 'string' and length(${table.payload}->>'subject') between 1 and 160 and jsonb_typeof(${table.payload}->'predicate') = 'string' and ${table.payload}->>'predicate' ~ '^[a-z][a-z0-9_]*$' and length(${table.payload}->>'predicate') <= 64 and jsonb_typeof(${table.payload}->'object') in ('string', 'number', 'boolean') and (jsonb_typeof(${table.payload}->'object') <> 'string' or length(${table.payload}->>'object') <= 500) and jsonb_typeof(${table.payload}->'explanation') = 'string' and length(${table.payload}->>'explanation') between 1 and 500 and jsonb_typeof(${table.payload}->'confidence') = 'number' and (${table.payload}->>'confidence')::numeric between 0 and 1 and ${table.payload}->>'schema_version' = 'candidate-set-v1'`,
+      sql`(${table.claimKind} = 'proposition' and ${table.payload} ?& array['subject', 'predicate', 'object', 'explanation', 'confidence', 'schema_version'] and (${table.payload} - array['subject', 'predicate', 'object', 'explanation', 'confidence', 'schema_version']) = '{}'::jsonb and jsonb_typeof(${table.payload}->'subject') = 'string' and length(${table.payload}->>'subject') between 1 and 160 and jsonb_typeof(${table.payload}->'predicate') = 'string' and ${table.payload}->>'predicate' ~ '^[a-z][a-z0-9_]*$' and length(${table.payload}->>'predicate') <= 64 and jsonb_typeof(${table.payload}->'object') in ('string', 'number', 'boolean') and (jsonb_typeof(${table.payload}->'object') <> 'string' or length(${table.payload}->>'object') <= 500) and jsonb_typeof(${table.payload}->'explanation') = 'string' and length(${table.payload}->>'explanation') between 1 and 500 and jsonb_typeof(${table.payload}->'confidence') = 'number' and (${table.payload}->>'confidence')::numeric between 0 and 1 and ${table.payload}->>'schema_version' = 'candidate-set-v1') or (${table.payload}->>'schema_version' = 'candidate-set-v2' and ${table.claimKind} = ${table.payload}->>'kind' and private.valid_candidate_meaning_v2(${table.payload} - array['schema_version','confidence','explanation']) and ${table.payload} ?& array['schema_version','explanation','confidence','kind'] and jsonb_typeof(${table.payload}->'explanation') = 'string' and length(${table.payload}->>'explanation') between 1 and 500 and jsonb_typeof(${table.payload}->'confidence') = 'number' and (${table.payload}->>'confidence')::numeric between 0 and 1)`,
     ),
   ],
 );

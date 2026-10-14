@@ -1,0 +1,83 @@
+{
+  "sourceRepository": "fpserg/RealMe",
+  "sourceCommit": "b701e303e0e716dd54099938fab092d419d30e61",
+  "sourceTree": "b5b3edd5d31cc1a4955a493ad0d9dd8948550d88",
+  "provider": "openai",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "promptVersion": "interpret-observation-v4",
+  "schemaVersion": "candidate-set-v2",
+  "cases": [
+    {
+      "id": "E1",
+      "semanticClass": "participant_quantity",
+      "sourcePath": "docs/PRODUCT/DAILY/2026/08/2026-08-29/LI.md",
+      "sourceBlob": "dd29129aed0c80365c59e8f1c206c35051283ec7",
+      "byteOffset": 718,
+      "byteLength": 127,
+      "excerptSha256": "037d81d939c506a56a0634aaed066c117744e28ddc6c97e8b81c197d3755cffe"
+    },
+    {
+      "id": "E2",
+      "semanticClass": "subjective_epistemic_content",
+      "sourcePath": "docs/PRODUCT/DAILY/2026/08/2026-08-30/LI.md",
+      "sourceBlob": "92171a19ded89d4dedce3ba83752a31e18fc2818",
+      "byteOffset": 873,
+      "byteLength": 185,
+      "excerptSha256": "705d48c0eeb0cffd473d5c0ea52cc1ed7042b73dcb32d1c5586c668f61e12394"
+    },
+    {
+      "id": "E3",
+      "semanticClass": "event_change_versus_state",
+      "sourcePath": "docs/PRODUCT/DAILY/2026/08/2026-08-30/OR.md",
+      "sourceBlob": "114a7d89a2492bcc1cb0c25a4213d2cc5577d1a1",
+      "byteOffset": 2161,
+      "byteLength": 34,
+      "excerptSha256": "7ac8175d400fa524d1402ed2bcf6b312e0346d95723da6dd204b2025b0042d98"
+    },
+    {
+      "id": "E4",
+      "semanticClass": "clause_scoped_estimate",
+      "sourcePath": "docs/PRODUCT/DAILY/2026/08/2026-08-30/WBTD.md",
+      "sourceBlob": "f803e54685925b0db2dd3bf29beb44f1792cd6df",
+      "byteOffset": 6181,
+      "byteLength": 124,
+      "excerptSha256": "cf3dfaf9b36527fbfa91757b2b335fe1a3df31d75ba5bc059a7e84a97739805b"
+    },
+    {
+      "id": "E5",
+      "semanticClass": "attributed_third_party_account",
+      "sourcePath": "docs/PRODUCT/DAILY/2026/08/2026-08-30/LI.md",
+      "sourceBlob": "92171a19ded89d4dedce3ba83752a31e18fc2818",
+      "byteOffset": 92,
+      "byteLength": 220,
+      "excerptSha256": "4d39f24478192fcd5081012886d310b884bfd0ca4ad46e80fae0fb65c4488804"
+    },
+    {
+      "id": "E6",
+      "semanticClass": "partial_contrastive_assessment",
+      "sourcePath": "docs/PRODUCT/DAILY/2026/08/2026-08-30/LI.md",
+      "sourceBlob": "92171a19ded89d4dedce3ba83752a31e18fc2818",
+      "byteOffset": 557,
+      "byteLength": 105,
+      "excerptSha256": "887cebd8c29e3fadf252576a51e4a6d6fb6effd09a0fe60e5ffecfc719c4c0f7"
+    },
+    {
+      "id": "E7",
+      "semanticClass": "straightforward_historical_fact",
+      "sourcePath": "docs/PRODUCT/DAILY/2026/08/2026-08-30/LI.md",
+      "sourceBlob": "92171a19ded89d4dedce3ba83752a31e18fc2818",
+      "byteOffset": 873,
+      "byteLength": 73,
+      "excerptSha256": "1631d279a35566140933b51afd4d868fa40b3217fb967de17ef4b3ea121e19ea"
+    },
+    {
+      "id": "E8",
+      "semanticClass": "event_forecast_estimate_boundary",
+      "sourcePath": "docs/PRODUCT/DAILY/2026/08/2026-08-30/LI.md",
+      "sourceBlob": "92171a19ded89d4dedce3ba83752a31e18fc2818",
+      "byteOffset": 1585,
+      "byteLength": 84,
+      "excerptSha256": "52fe91f980dbb2b92392047f3db335566b6d9b500efdd0019f0cf63ac4df72bc"
+    }
+  ]
+}

@@ -253,6 +253,7 @@ export type RealMeDatabase = {
           decision_id: string;
           decision_action: string;
           canonical_assertion_id: string | null;
+          canonical_epistemic_assertion_id: string | null;
           canonical_node_id: string | null;
           superseded_assertion_id: string | null;
           was_replay: boolean;

@@ -1,6 +1,11 @@
 export const interpretObservationJobKind = "interpret_observation";
-export const interpretationPromptVersion = "interpret-observation-v1";
-export const interpretationSchemaVersion = "candidate-set-v1";
+export const interpretationPromptVersionV1 = "interpret-observation-v1";
+export const interpretationPromptVersionV2 = "interpret-observation-v2";
+export const interpretationPromptVersionV3 = "interpret-observation-v3";
+export const interpretationPromptVersionV4 = "interpret-observation-v4";
+export const interpretationPromptVersion = interpretationPromptVersionV4;
+export const interpretationSchemaVersionV1 = "candidate-set-v1";
+export const interpretationSchemaVersion = "candidate-set-v2";
 export const interpretationCandidateLimit = 8;
 export const interpretationEvidenceLimit = 8;
 export const interpretationEvidenceCharacterLimit = 16_000;
@@ -28,6 +33,8 @@ export interface ClaimedInterpretationJob {
   id: string;
   lockToken: string;
   observationId: string;
+  promptVersion: string;
+  schemaVersion: string;
   worldId: string;
 }
 
@@ -64,6 +71,11 @@ export interface PersistableCandidate {
   evidenceFragmentIds: string[];
   logicalKey: string;
   payload: {
+    kind?: CandidateMeaningV2["kind"];
+    epistemic?: {
+      actor: string;
+      mode: import("@/domain/interpretation/candidate-v2").EpistemicMode;
+    };
     confidence: number;
     explanation: string;
     object: boolean | number | string;
@@ -140,66 +152,96 @@ function validateCandidate(value: unknown): RawCandidate {
     throw new InterpretationValidationError();
   }
   if (value.kind !== "proposition") throw new InterpretationValidationError();
-  if (!boundedString(value.subject, 160)) {
+  if (!boundedString(value.subject, 160))
     throw new InterpretationValidationError();
-  }
   if (
     !boundedString(value.predicate, 64) ||
     !/^[a-z][a-z0-9_]*$/.test(value.predicate as string)
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
-  if (!boundedString(value.explanation, 500)) {
+  if (!boundedString(value.explanation, 500))
     throw new InterpretationValidationError();
-  }
   if (
     !["boolean", "number", "string"].includes(typeof value.object) ||
     (typeof value.object === "string" && value.object.length > 500) ||
     (typeof value.object === "number" && !Number.isFinite(value.object))
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
   if (
     typeof value.confidence !== "number" ||
     !Number.isFinite(value.confidence) ||
     value.confidence < 0 ||
     value.confidence > 1
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
   if (
     !Array.isArray(value.evidenceReferences) ||
     value.evidenceReferences.length === 0 ||
     value.evidenceReferences.length > interpretationEvidenceLimit ||
-    !value.evidenceReferences.every((reference) => boundedString(reference, 32))
-  ) {
-    throw new InterpretationValidationError();
-  }
-  if (
+    !value.evidenceReferences.every((reference) =>
+      boundedString(reference, 32),
+    ) ||
     new Set(value.evidenceReferences).size !== value.evidenceReferences.length
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
   return value as unknown as RawCandidate;
 }
 
-export function validateCandidateSet(value: unknown) {
+export function validateCandidateSet(
+  value: unknown,
+  schemaVersion = interpretationSchemaVersionV1,
+) {
   if (
     !isRecord(value) ||
     !hasExactKeys(value, ["candidates", "schemaVersion"])
   ) {
     throw new InterpretationValidationError();
   }
-  if (value.schemaVersion !== interpretationSchemaVersion) {
+  if (
+    value.schemaVersion !== schemaVersion ||
+    ![interpretationSchemaVersionV1, interpretationSchemaVersion].includes(
+      schemaVersion,
+    )
+  )
     throw new InterpretationValidationError();
-  }
   if (
     !Array.isArray(value.candidates) ||
     value.candidates.length > interpretationCandidateLimit
   ) {
     throw new InterpretationValidationError();
   }
-  return value.candidates.map(validateCandidate);
+  return value.candidates.map(
+    (
+      candidate,
+    ): RawCandidate | (Omit<RawCandidate, "kind"> & CandidateMeaningV2) => {
+      if (schemaVersion === interpretationSchemaVersionV1)
+        return validateCandidate(candidate);
+      if (!isRecord(candidate)) throw new InterpretationValidationError();
+      const { confidence, evidenceReferences, explanation, ...meaning } =
+        candidate;
+      try {
+        const parsed = parseCandidateMeaningV2(meaning);
+        // Reuse the historical metadata/evidence limits, not its semantic discriminator.
+        validateCandidate({
+          confidence,
+          evidenceReferences,
+          explanation,
+          kind: "proposition",
+          subject: parsed.subject,
+          predicate: parsed.predicate,
+          object: parsed.object,
+        });
+        return {
+          ...parsed,
+          confidence,
+          evidenceReferences,
+          explanation,
+        } as Omit<RawCandidate, "kind"> & CandidateMeaningV2;
+      } catch {
+        throw new InterpretationValidationError();
+      }
+    },
+  );
 }
 
 function canonicalJson(value: unknown): string {
@@ -223,13 +265,32 @@ export async function sha256Hex(value: string) {
   ).join("");
 }
 
+export function assertSupportedJobVersions(
+  job: Pick<ClaimedInterpretationJob, "promptVersion" | "schemaVersion">,
+) {
+  if (
+    !(
+      ([
+        interpretationPromptVersionV1,
+        interpretationPromptVersionV2,
+        interpretationPromptVersionV3,
+      ].includes(job.promptVersion) &&
+        job.schemaVersion === interpretationSchemaVersionV1) ||
+      (job.promptVersion === interpretationPromptVersionV4 &&
+        job.schemaVersion === interpretationSchemaVersion)
+    )
+  ) {
+    throw new InterpretationProviderError("configuration_error");
+  }
+}
+
 export function buildInterpretationInput(job: ClaimedInterpretationJob) {
+  assertSupportedJobVersions(job);
   const evidence = [...job.evidence].sort(
     (left, right) => left.ordinal - right.ordinal,
   );
-  if (evidence.length === 0 || evidence.length > interpretationEvidenceLimit) {
+  if (evidence.length === 0 || evidence.length > interpretationEvidenceLimit)
     throw new InterpretationValidationError();
-  }
   if (
     evidence.some(
       (fragment, index) =>
@@ -239,9 +300,8 @@ export function buildInterpretationInput(job: ClaimedInterpretationJob) {
     ) ||
     evidence.reduce((total, fragment) => total + fragment.exactText.length, 0) >
       interpretationEvidenceCharacterLimit
-  ) {
+  )
     throw new InterpretationValidationError();
-  }
 
   return {
     hashContract: {
@@ -252,16 +312,16 @@ export function buildInterpretationInput(job: ClaimedInterpretationJob) {
         ordinal: fragment.ordinal,
       })),
       observationId: job.observationId,
-      promptVersion: interpretationPromptVersion,
-      schemaVersion: interpretationSchemaVersion,
+      promptVersion: job.promptVersion,
+      schemaVersion: job.schemaVersion,
     },
     providerInput: {
       evidence: evidence.map((fragment, index) => ({
         exactText: fragment.exactText,
         reference: `evidence-${index}`,
       })),
-      promptVersion: interpretationPromptVersion,
-      schemaVersion: interpretationSchemaVersion,
+      promptVersion: job.promptVersion,
+      schemaVersion: job.schemaVersion,
     } satisfies InterpretationProviderInput,
   };
 }
@@ -269,8 +329,9 @@ export function buildInterpretationInput(job: ClaimedInterpretationJob) {
 async function prepareCandidates(
   output: unknown,
   evidence: InterpretationEvidenceFragment[],
+  schemaVersion: string,
 ) {
-  const raw = validateCandidateSet(output);
+  const raw = validateCandidateSet(output, schemaVersion);
   const fragmentByReference = new Map(
     [...evidence]
       .sort((left, right) => left.ordinal - right.ordinal)
@@ -278,7 +339,6 @@ async function prepareCandidates(
   );
   const prepared: PersistableCandidate[] = [];
   const keys = new Set<string>();
-
   for (const candidate of raw) {
     const evidenceFragmentIds = candidate.evidenceReferences.map(
       (reference) => {
@@ -292,8 +352,14 @@ async function prepareCandidates(
       explanation: candidate.explanation,
       object: candidate.object,
       predicate: candidate.predicate,
-      schema_version: interpretationSchemaVersion,
+      schema_version: schemaVersion,
       subject: candidate.subject,
+      ...(schemaVersion === interpretationSchemaVersion
+        ? { kind: candidate.kind }
+        : {}),
+      ...(candidate.kind === "epistemic_proposition"
+        ? { epistemic: candidate.epistemic }
+        : {}),
     };
     const logicalKey = await sha256Hex(
       canonicalJson({
@@ -312,9 +378,8 @@ function failure(error: unknown): {
   code: InterpretationFailureCode;
   retryable: boolean;
 } {
-  if (error instanceof InterpretationValidationError) {
+  if (error instanceof InterpretationValidationError)
     return { code: "validation_failed", retryable: false };
-  }
   if (error instanceof InterpretationProviderError) {
     return {
       code: error.code,
@@ -341,14 +406,18 @@ export async function processNextInterpretationJob(input: {
       inputHash,
       job,
       model: input.provider.modelId,
-      promptVersion: interpretationPromptVersion,
+      promptVersion: job.promptVersion,
       provider: input.provider.providerId,
-      schemaVersion: interpretationSchemaVersion,
+      schemaVersion: job.schemaVersion,
     });
     const output = await input.provider.interpret(prepared.providerInput, {
       signal: input.signal,
     });
-    const candidates = await prepareCandidates(output, job.evidence);
+    const candidates = await prepareCandidates(
+      output,
+      job.evidence,
+      job.schemaVersion,
+    );
     await input.repository.complete({ candidates, job, runId });
     return {
       candidateCount: candidates.length,
@@ -357,11 +426,11 @@ export async function processNextInterpretationJob(input: {
     };
   } catch (error) {
     const normalized = failure(error);
-    const jobState = await input.repository.fail({
-      ...normalized,
-      job,
-      runId,
-    });
+    const jobState = await input.repository.fail({ ...normalized, job, runId });
     return { code: normalized.code, jobId: job.id, state: jobState };
   }
 }
+import {
+  parseCandidateMeaningV2,
+  type CandidateMeaningV2,
+} from "@/domain/interpretation/candidate-v2";

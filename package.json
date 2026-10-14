@@ -16,7 +16,8 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "audit:security": "pnpm audit --audit-level high",
+    "audit:security": "node scripts/security-audit-gate.mjs",
+    "test:security-gate": "vitest run scripts/security-audit-gate.test.mjs",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "test": "vitest",
     "test:unit": "vitest run",
@@ -29,7 +30,7 @@
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.3",
     "drizzle-orm": "0.45.2",
-    "next": "16.2.11",
+    "next": "16.3.8",
     "postgres": "3.4.7",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -46,11 +47,11 @@
     "dotenv": "17.2.1",
     "drizzle-kit": "0.31.10",
     "eslint": "^9.39.0",
-    "eslint-config-next": "16.2.11",
-    "jsdom": "27.0.0",
+    "eslint-config-next": "16.3.8",
+    "jsdom": "27.4.0",
     "prettier": "3.6.2",
     "typescript": "^5.9.0",
     "vite-tsconfig-paths": "5.1.4",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   }
 }

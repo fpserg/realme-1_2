@@ -1,3 +1,8 @@
+import {
+  parseCandidateMeaningV2,
+  type CandidateMeaningV2,
+} from "@/domain/interpretation/candidate-v2";
+
 export type AdmissionAction = "accept" | "reject" | "correct" | "defer";
 
 export type CandidateScalar = boolean | number | string;
@@ -8,6 +13,12 @@ export type CandidateEvidence = {
 };
 
 export type CandidateReviewItem = {
+  kind?: CandidateMeaningV2["kind"];
+  schemaVersion?: "candidate-set-v1" | "candidate-set-v2";
+  epistemic?: {
+    actor: string;
+    mode: import("@/domain/interpretation/candidate-v2").EpistemicMode;
+  };
   createdAt: string;
   evidence: CandidateEvidence[];
   explanation: string;
@@ -18,13 +29,19 @@ export type CandidateReviewItem = {
   subject: string;
 };
 
-export type CandidateCorrection = {
-  object: CandidateScalar;
-  predicate: string;
-  subject: string;
-};
+export type CandidateCorrection =
+  | {
+      object: CandidateScalar;
+      predicate: string;
+      subject: string;
+    }
+  | (CandidateMeaningV2 & {
+      schema_version: "candidate-set-v2";
+      supersedes_epistemic_assertion_id?: string;
+    });
 
 export type AdmissionResult = {
+  canonicalEpistemicAssertionId?: string | null;
   action: AdmissionAction;
   canonicalAssertionId: string | null;
   canonicalNodeId: string | null;
@@ -72,6 +89,21 @@ export async function decideCandidate(
   }
   if (action !== "correct" && correction) {
     throw new Error("Only correction accepts corrected durable meaning.");
+  }
+  if (correction && "schema_version" in correction) {
+    const { schema_version, supersedes_epistemic_assertion_id, ...meaning } =
+      correction;
+    if (schema_version !== "candidate-set-v2")
+      throw new Error("Unsupported correction schema.");
+    parseCandidateMeaningV2(meaning);
+    if (
+      supersedes_epistemic_assertion_id !== undefined &&
+      (meaning.kind !== "epistemic_proposition" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          supersedes_epistemic_assertion_id,
+        ))
+    )
+      throw new Error("Invalid explicit epistemic predecessor.");
   }
   return repository.decide({ userId }, candidateClaimId, action, correction);
 }

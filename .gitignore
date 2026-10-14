@@ -10,6 +10,7 @@ out/
 coverage/
 playwright-report/
 test-results/
+artifacts/security-audit/
 
 # Local environment
 .env*

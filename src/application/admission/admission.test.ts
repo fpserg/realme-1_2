@@ -52,4 +52,59 @@ describe("admission application boundary", () => {
       }),
     ).rejects.toThrow("Only correction accepts corrected durable meaning.");
   });
+
+  it("accepts only a complete closed candidate-set-v2 correction", async () => {
+    const target = repository();
+    const correction = {
+      epistemic: { actor: "Warden", mode: "estimate" as const },
+      kind: "epistemic_proposition" as const,
+      object: "approximately one to two days",
+      predicate: "requires_remaining_time",
+      schema_version: "candidate-set-v2" as const,
+      subject: "roadmap",
+      supersedes_epistemic_assertion_id: "123e4567-e89b-42d3-a456-426614174000",
+    };
+    await decideCandidate(
+      "account-1",
+      "candidate-1",
+      "correct",
+      target,
+      correction,
+    );
+    expect(target.decide).toHaveBeenCalledWith(
+      { userId: "account-1" },
+      "candidate-1",
+      "correct",
+      correction,
+    );
+  });
+
+  it("fails closed for unsupported epistemic modes, participant qualifiers and nested meaning", async () => {
+    const base = {
+      epistemic: { actor: "Warden", mode: "estimate" },
+      kind: "epistemic_proposition",
+      object: true,
+      predicate: "expects_progress",
+      schema_version: "candidate-set-v2",
+      subject: "roadmap",
+    };
+    for (const correction of [
+      { ...base, epistemic: { actor: "Warden", mode: "other" } },
+      { ...base, participant: "Maksim" },
+      {
+        ...base,
+        epistemic: { actor: "Warden", mode: "estimate", proposition: base },
+      },
+    ]) {
+      await expect(
+        decideCandidate(
+          "account-1",
+          "candidate-1",
+          "correct",
+          repository(),
+          correction as never,
+        ),
+      ).rejects.toThrow("Invalid candidate-set-v2 meaning.");
+    }
+  });
 });
